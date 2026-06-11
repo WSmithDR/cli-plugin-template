@@ -1,0 +1,20 @@
+{
+  "//": "Ejemplos por transporte. Usá UNO por server en tu .mcp.json real.",
+
+  "srv-npx":    { "command": "npx", "args": ["-y", "@scope/paquete-mcp"] },
+  "srv-bun":    { "command": "bun", "args": ["run", "${CLAUDE_PLUGIN_ROOT}/server.ts"] },
+  "srv-uvx":    { "command": "uvx", "args": ["--from", "git+https://github.com/org/repo", "server"] },
+  "srv-php":    { "command": "php", "args": ["artisan", "mcp:serve"] },
+  "srv-docker": {
+    "command": "docker",
+    "args": ["run", "-i", "--rm", "-e", "API_TOKEN", "org/imagen-mcp"],
+    "env": { "API_TOKEN": "${API_TOKEN}" }
+  },
+  "srv-http":      { "type": "http", "url": "https://api.ejemplo.com/mcp" },
+  "srv-sse":       { "type": "sse",  "url": "https://mcp.ejemplo.com/sse" },
+  "srv-http-auth": {
+    "type": "http",
+    "url": "https://api.ejemplo.com/mcp",
+    "headers": { "Authorization": "Bearer ${API_KEY}" }
+  }
+}

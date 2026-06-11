@@ -1,0 +1,10 @@
+name: change-sizing
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: []
+description: >
+  Mantener commits y PRs revisables: commits atómicos (código+tests+docs juntos por
+  comportamiento), un presupuesto de líneas que alerta antes de un PR enorme, y estrategias
+  de PRs en cadena (stacked o feature-branch) cuando el cambio no entra en uno solo.
+provides:
+  - convenciones de commits/PRs (documentación)

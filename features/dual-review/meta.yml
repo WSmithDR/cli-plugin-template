@@ -1,0 +1,10 @@
+name: dual-review
+version: 1.0.0
+cli_compat: [claude-code]
+depends_on: [parallel-agents]
+description: >
+  Revisión adversarial doble: dos agentes revisores ciegos analizan el mismo target en
+  paralelo, se cruzan sus veredictos (confirmado vs sospechoso), se corrigen los issues
+  confirmados, y se re-juzga. Captura bugs que un solo reviewer pierde.
+provides:
+  - patrón de review (documentación)

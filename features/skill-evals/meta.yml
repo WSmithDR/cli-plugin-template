@@ -1,0 +1,10 @@
+name: skill-evals
+version: 1.0.0
+cli_compat: [claude-code]
+depends_on: [skill-authoring]
+description: >
+  Desarrollo de skills guiado por evals: casos de evaluación, corridas baseline (con/sin
+  skill) con análisis de varianza, y un loop que optimiza el campo description de la skill
+  para mejorar el triggering, eligiendo por test score para no sobreajustar.
+provides:
+  - evals/evals.json (schema) + loop de optimización (documentación)

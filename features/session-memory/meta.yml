@@ -1,0 +1,10 @@
+name: session-memory
+version: 1.0.0
+cli_compat: [claude-code]
+depends_on: [claude-code-hooks]
+description: >
+  Memoria persistente entre sesiones: un MCP server como almacén durable + hooks de sesión
+  que inyectan contexto al inicio (SessionStart), recuperan tras compactación, y empujan a
+  guardar (UserPromptSubmit), con lock distribuido para imports concurrentes.
+provides:
+  - .mcp.json + hooks/hooks.json (patrón)

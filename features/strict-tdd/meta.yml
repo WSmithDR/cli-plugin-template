@@ -1,0 +1,10 @@
+name: strict-tdd
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: [discipline-skills]
+description: >
+  TDD con evidencia verificable: una tabla RED/GREEN/TRIANGULATE/SAFETY-NET por unidad, y
+  una auditoría de calidad de assertions que prohíbe tautologías, ghost loops y mocks sin
+  verificación. No alcanza con "reporté que hice TDD" — se chequea.
+provides:
+  - support/tdd-evidence.md (plantilla)

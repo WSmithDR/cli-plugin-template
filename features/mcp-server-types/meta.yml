@@ -1,0 +1,10 @@
+name: mcp-server-types
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, codex, any]
+depends_on: []
+description: >
+  Los distintos transportes para declarar un MCP server en .mcp.json: stdio (npx, bun,
+  docker, uvx, php), HTTP, HTTP con auth Bearer, y SSE — con patrones de autenticación
+  por variable de entorno sin hardcodear secrets.
+provides:
+  - .mcp.json (ejemplos por transporte)

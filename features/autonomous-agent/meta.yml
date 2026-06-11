@@ -1,0 +1,10 @@
+name: autonomous-agent
+version: 1.0.0
+cli_compat: [claude-code]
+depends_on: [agent-authoring]
+description: >
+  Un agente que actúa de forma proactiva y autónoma sobre lo recién modificado, sin esperar
+  invocación explícita del usuario. Acotado a los cambios de la sesión actual para no tocar
+  todo el codebase.
+provides:
+  - agents/<name>.md (patrón)

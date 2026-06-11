@@ -1,0 +1,17 @@
+{
+  "skill": "<skill-name>",
+  "evals": [
+    {
+      "id": "caso-1",
+      "prompt": "<lo que un usuario pediría que debería disparar la skill>",
+      "files": ["fixtures/ejemplo.txt"],
+      "expectations": [
+        "<aserción verificable sobre el resultado, no tautológica>"
+      ]
+    }
+  ],
+  "config": {
+    "runs_per_config": 3,
+    "train_test_split": 0.6
+  }
+}

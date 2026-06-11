@@ -1,0 +1,10 @@
+name: hook-python-bootstrap
+version: 1.0.0
+cli_compat: [claude-code, any]
+depends_on: []
+description: >
+  Shim de shell que encuentra un Python 3 válido y ejecuta un hook con él, aislando al
+  hook de las variaciones del sistema (python3 vs python vs py -3, versión mínima, UTF-8,
+  rutas Windows/Git-Bash).
+provides:
+  - hooks/py-hook.sh (shim)

@@ -1,0 +1,10 @@
+name: advanced-hooks
+version: 1.0.0
+cli_compat: [claude-code]
+depends_on: [claude-code-hooks]
+description: >
+  Mecanismos avanzados de hooks de Claude Code: asyncRewake (revisión en background que
+  re-despierta al agente sin bloquear), filtrado por patrón de comando (if: Bash(...)),
+  y correr un agente LLM completo dentro de un hook.
+provides:
+  - hooks/hooks.json (patrones avanzados)
