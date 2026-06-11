@@ -22,7 +22,13 @@ commit lo vuelve automático y consistente.
 no en el actual. `post-commit` corre después de que el commit existe: lee el mensaje,
 bumpea el manifiesto, y hace `git commit --amend --no-edit --no-verify` para meter el
 cambio en el mismo commit. El `--no-verify` es seguro porque los tests ya corrieron
-en `pre-commit`, y evita un loop infinito de hooks.
+en `pre-commit`.
+
+**Recursión (importante)**: `--no-verify` **NO** saltea el hook `post-commit`. El
+`git commit --amend` re-dispara post-commit y, sin protección, bumpea dos veces. El
+hook usa un **sentinel file** (`.git/.version-bump-in-progress`): se crea antes del
+amend; la invocación re-disparada lo detecta y sale, garantizando un único bump. No
+confíes en inspeccionar HEAD para frenar la recursión —resulta poco fiable bajo amend.
 
 ## Integración
 
@@ -59,5 +65,7 @@ cada tipo de bump — copialos y adaptá el path del manifiesto.
 
 ## Changelog
 
+- **1.1.0** — guard de recursión con sentinel file (`--no-verify` no saltea
+  post-commit; el amend re-disparaba y bumpeaba dos veces).
 - **1.0.0** — versión inicial migrada desde `todo-plugin`. Usa `post-commit` con
   amend; reemplaza intentos previos con `commit-msg`/`prepare-commit-msg`.

@@ -8,7 +8,7 @@ Para el flujo de uso completo ver [AGENTS.md](AGENTS.md).
 | Feature | Versión | CLIs | Descripción |
 |---|---|---|---|
 | [`git-hooks`](features/git-hooks/README.md) | 1.0.0 | todos | Git hooks de desarrollo: instalación via symlink editor-agnóstica, pre-commit que corre tests, y arnés de testing con tmpdir aislado |
-| [`versioning`](features/versioning/README.md) | 1.0.0 | todos | Versionado semántico automático: `post-commit` bumpea según el prefijo del commit (conventional commits) y amenda el commit |
+| [`versioning`](features/versioning/README.md) | 1.1.0 | todos | Versionado semántico automático: `post-commit` bumpea según el prefijo del commit (conventional commits) y amenda el commit (con guard de recursión via sentinel) |
 | [`docs-conventions`](features/docs-conventions/README.md) | 1.0.0 | todos | Secciones estándar de README: install, update, verificación de versión, tabla de conventional commits |
 
 ## Integración con el CLI
