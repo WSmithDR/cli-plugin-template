@@ -16,6 +16,21 @@ vuelta las mejoras que sirven para todos.
   [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - **Guía completa para agentes** → [`AGENTS.md`](AGENTS.md).
 
+## Categorías (32 features)
+
+Ver el índice completo en [`CATALOG.md`](CATALOG.md).
+
+| Categoría | Features | Qué cubre |
+|---|---|---|
+| **Desarrollo y publicación** | 3 | git hooks de dev, versionado automático, convenciones de docs |
+| **Integración con el CLI** | 7 | compatibilidad multi-CLI, transportes MCP, hooks (básicos y avanzados), health check |
+| **Estado y configuración** | 4 | config por proyecto, reglas externalizadas, persistencia, memoria entre sesiones |
+| **Flujo de trabajo y crecimiento** | 5 | entry-point router, proposal gate, vocabulario, auto-mejora, planificación |
+| **Autoría de skills y agents** | 4 | escribir skills descubribles y agentes, discipline-skills, agente autónomo |
+| **Orquestación multi-agente** | 2 | subagentes en paralelo, pipeline con contratos de artefactos |
+| **Escala y eficiencia** | 3 | batching, scripts deterministas, worktree redirect |
+| **Calidad y verificación** | 4 | strict-TDD, doble review adversarial, sizing de cambios, evals de skills |
+
 ## Estructura
 
 ```
