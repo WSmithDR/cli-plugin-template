@@ -1,0 +1,11 @@
+{
+  "name": "<plugin>",
+  "version": "1.0.0",
+  "description": "<descripción del plugin>",
+  "author": { "name": "<autor>", "url": "https://github.com/<owner>" },
+  "repository": "https://github.com/<owner>/<plugin>",
+  "homepage": "https://github.com/<owner>/<plugin>#readme",
+  "license": "MIT",
+  "keywords": ["<kw1>", "<kw2>"],
+  "skills": "./skills/"
+}

@@ -1,0 +1,8 @@
+{
+  "mcp": {
+    "<srv>": {
+      "type": "local",
+      "command": ["bash", "bin/mcp/start-<srv>.sh"]
+    }
+  }
+}

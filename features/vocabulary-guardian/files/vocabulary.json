@@ -1,0 +1,16 @@
+{
+  "statuses": {
+    "<entidad>": ["pending", "approved", "discarded"]
+  },
+  "patterns": {
+    "<grupo>": ["valor-a", "valor-b"]
+  },
+  "scenarios": {},
+  "discard_reasons": ["duplicado", "fuera-de-alcance", "obsoleto"],
+  "_scans": {
+    "statuses": [
+      { "glob": "proposals/**/*.md", "type": "frontmatter", "field": "status" },
+      { "glob": "data/*.json", "type": "json", "field": "status" }
+    ]
+  }
+}

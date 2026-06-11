@@ -1,0 +1,10 @@
+{
+  "<umbral_numerico>": 150,
+  "<min_chars>": 100,
+  "<batch_size>": 10,
+  "_hotpatch": {
+    "purpose": "umbrales numéricos de comportamiento del plugin",
+    "owner": "hotpatch directo",
+    "consumers": ["bin/lib/config.py"]
+  }
+}
