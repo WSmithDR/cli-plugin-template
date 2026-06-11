@@ -1,0 +1,10 @@
+name: planning-workflow
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: []
+description: >
+  Escribir y ejecutar planes de implementación con checkpoints: tasks con criterios de
+  aceptación concretos (sin placeholders), self-review antes del handoff, y ejecución que
+  para a pedir ayuda en vez de improvisar.
+provides:
+  - plan template + convenciones (documentación)

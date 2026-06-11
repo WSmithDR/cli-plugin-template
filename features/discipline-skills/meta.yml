@@ -1,0 +1,10 @@
+name: discipline-skills
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: [skill-authoring]
+description: >
+  Patrón para skills que HACEN CUMPLIR una regla (no solo la explican): una "Iron Law"
+  innegociable, una tabla de Red Flags que detecta racionalizaciones, un proceso
+  ordenado obligatorio y un checklist de verificación.
+provides:
+  - skills/<name>/SKILL.md (plantilla de skill de disciplina)

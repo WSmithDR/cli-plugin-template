@@ -1,0 +1,10 @@
+name: agent-authoring
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: []
+description: >
+  Convenciones para definir subagentes: frontmatter con name + description "when to
+  use", scoping de tools por agente, y cuerpo estructurado (overview → task → fases →
+  constraints) para que el agente sepa exactamente qué producir.
+provides:
+  - agents/<name>.md (plantilla y convenciones)

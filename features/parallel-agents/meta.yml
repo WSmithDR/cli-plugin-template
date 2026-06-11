@@ -1,0 +1,10 @@
+name: parallel-agents
+version: 1.0.0
+cli_compat: [claude-code]
+depends_on: [agent-authoring]
+description: >
+  Despachar trabajo independiente a subagentes en paralelo y luego integrar. Identificar
+  dominios independientes, escribir tasks enfocadas con contexto completo, despachar en
+  un solo mensaje, e integrar resultados. Evita inundar el contexto principal.
+provides:
+  - patrón de orquestación (documentación)

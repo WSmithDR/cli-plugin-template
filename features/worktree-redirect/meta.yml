@@ -1,0 +1,10 @@
+name: worktree-redirect
+version: 1.0.0
+cli_compat: [claude-code, any]
+depends_on: []
+description: >
+  Detectar si el plugin corre dentro de un git worktree y redirigir su output de datos
+  al root del repo principal, para que los datos no se pierdan cuando el worktree
+  efímero se elimina.
+provides:
+  - snippet de detección de worktree (documentación)

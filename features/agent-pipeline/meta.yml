@@ -1,0 +1,10 @@
+name: agent-pipeline
+version: 1.0.0
+cli_compat: [claude-code]
+depends_on: [agent-authoring]
+description: >
+  Pipeline secuencial de agentes especializados con contratos de artefactos (JSON schema
+  por agente), patrón de dos fases (script determinista + juicio del LLM), y un agente
+  revisor/QA que valida la salida de otro antes de aceptarla.
+provides:
+  - patrón de orquestación secuencial (documentación)

@@ -1,0 +1,10 @@
+name: skill-authoring
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: []
+description: >
+  Convenciones para escribir SKILL.md descubribles y bien estructuradas: frontmatter
+  con description "Use when…" (CSO), nombre kebab-case, progressive disclosure, y
+  cobertura de keywords para que la skill correcta se dispare.
+provides:
+  - skills/<name>/SKILL.md (plantilla y convenciones)

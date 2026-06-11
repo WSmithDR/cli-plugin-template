@@ -1,0 +1,10 @@
+name: context-batching
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: []
+description: >
+  Procesar trabajo grande en lotes para no saturar la ventana de contexto, agrupando
+  ítems relacionados; y reprocesar de forma incremental usando fingerprints (SHA256 +
+  git diff) para tocar solo lo que cambió.
+provides:
+  - patrón de batching + fingerprints (documentación)

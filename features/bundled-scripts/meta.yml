@@ -1,0 +1,10 @@
+name: bundled-scripts
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: []
+description: >
+  Delegar el trabajo determinista (enumerar, contar, parsear, aplicar reglas) a scripts
+  incluidos en el plugin, reservando el LLM para el juicio. Más fiable, rápido y barato
+  que pedirle al modelo que cuente o liste.
+provides:
+  - bin/ o scripts/ (patrón)

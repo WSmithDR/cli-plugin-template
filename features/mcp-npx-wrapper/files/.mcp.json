@@ -1,0 +1,6 @@
+{
+  "<nombre>": {
+    "command": "npx",
+    "args": ["-y", "@scope/paquete-mcp"]
+  }
+}

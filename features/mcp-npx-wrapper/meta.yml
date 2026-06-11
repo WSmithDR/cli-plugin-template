@@ -1,0 +1,11 @@
+name: mcp-npx-wrapper
+version: 1.0.0
+cli_compat: [claude-code]
+depends_on: [multi-cli-compat]
+description: >
+  Publicar un plugin que es un wrapper fino de un MCP server externo de npm: un .mcp.json
+  con `npx -y <paquete>` y un plugin.json mínimo. La autenticación/env se maneja en el
+  MCP upstream. Cero código local.
+provides:
+  - .mcp.json
+  - .claude-plugin/plugin.json
