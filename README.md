@@ -18,11 +18,38 @@ vuelta las mejoras que sirven para todos.
 
 ## Como plugin instalable
 
-Además de consultarse como repo, el catálogo se instala como plugin de desarrollo:
+Además de consultarse como repo, el catálogo se instala como plugin de desarrollo.
 
+### Instalación
+
+**1. Registrar el marketplace (una sola vez, global):**
+```bash
+claude plugin marketplace add WSmithDR/cli-plugin-template
+```
+
+**2. Instalar en el proyecto de plugin:**
 ```bash
 claude plugin install cli-plugin-template@cli-plugin-template --scope project
 ```
+
+**Global (todos los proyectos):**
+```bash
+claude plugin install cli-plugin-template@cli-plugin-template
+```
+
+### Actualización
+
+**Scope project:**
+```bash
+claude plugin update cli-plugin-template@cli-plugin-template --scope project
+```
+
+**Scope user (global):**
+```bash
+claude plugin update cli-plugin-template@cli-plugin-template
+```
+
+### Capacidades
 
 Una vez instalado en un proyecto de plugin:
 - **`/plugin`** — menú de capacidades (router `plugin-dev`).
