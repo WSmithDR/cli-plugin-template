@@ -16,6 +16,23 @@ vuelta las mejoras que sirven para todos.
   [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - **Guía completa para agentes** → [`AGENTS.md`](AGENTS.md).
 
+## Como plugin instalable
+
+Además de consultarse como repo, el catálogo se instala como plugin de desarrollo:
+
+```bash
+claude plugin install cli-plugin-template@cli-plugin-template --scope project
+```
+
+Una vez instalado en un proyecto de plugin:
+- **`/plugin`** — menú de capacidades (router `plugin-dev`).
+- **`/plugin-audit`** — qué features del catálogo te faltan.
+- **`/plugin-feature <nombre>`** — integrar un feature.
+- **`/plugin-recommend`** — sugerir features desde una necesidad.
+- **`/plugin-promote`** — subir una mejora al catálogo.
+
+Al abrir un proyecto de plugin por primera vez, un aviso sugiere correr `/plugin-audit`.
+
 ## Categorías (32 features)
 
 Ver el índice completo en [`CATALOG.md`](CATALOG.md).

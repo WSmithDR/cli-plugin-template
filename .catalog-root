@@ -1,0 +1,2 @@
+Este archivo marca el repo del catálogo cli-plugin-template.
+El hook SessionStart lo usa para NO tratar al catálogo como un plugin consumidor.

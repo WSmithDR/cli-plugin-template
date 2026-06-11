@@ -36,3 +36,11 @@ Regla de decisión rápida:
   pasos concretos, comandos, y qué adaptar.
 - Este archivo (`AGENTS.md`) y `CLAUDE.md` son el mismo contenido — `CLAUDE.md`
   existe para que Claude Code lo cargue automáticamente.
+
+## Modo plugin
+
+Este repo también es un plugin instalable (`.claude-plugin/plugin.json`). Instalado en
+otro proyecto, expone las skills `plugin-dev` (router), `plugin-audit`, `plugin-feature`,
+`plugin-recommend`, `plugin-promote` y el comando `/plugin`, que leen el catálogo de
+`features/` localmente. El hook `SessionStart` sugiere una auditoría la primera vez en un
+proyecto de plugin. El propio repo se excluye con el sentinel `.catalog-root`.
