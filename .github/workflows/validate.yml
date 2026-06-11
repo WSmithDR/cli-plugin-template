@@ -31,3 +31,5 @@ jobs:
               || { echo "✗ $f"; fail=1; }
           done < <(find features -name '*.json')
           exit $fail
+      - name: Run meta-plugin hook tests
+        run: bash bin/test-hooks.sh
