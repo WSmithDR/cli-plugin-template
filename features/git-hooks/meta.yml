@@ -1,0 +1,12 @@
+name: git-hooks
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: []
+description: >
+  Infraestructura de git hooks para desarrollo de plugins: instalación via symlink
+  editor-agnóstica, pre-commit que corre la suite de tests, y arnés de testing.
+provides:
+  - bin/dev/setup.sh
+  - bin/dev/git-hooks/pre-commit
+  - bin/dev/test-hooks.sh
+  - .github/workflows/test.yml

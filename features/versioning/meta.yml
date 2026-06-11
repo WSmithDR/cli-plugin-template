@@ -1,0 +1,12 @@
+name: versioning
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: [git-hooks]
+description: >
+  Versionado semántico automático. El hook post-commit lee el prefijo del commit
+  (conventional commits), bumpea la versión en el manifiesto del plugin y amenda
+  el commit para incluir el cambio en el mismo objeto git.
+provides:
+  - bin/dev/git-hooks/post-commit
+adapt:
+  - "El path del manifiesto (.claude-plugin/plugin.json) puede variar según el CLI"

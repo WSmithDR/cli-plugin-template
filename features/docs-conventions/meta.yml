@@ -1,0 +1,10 @@
+name: docs-conventions
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: []
+description: >
+  Convenciones de documentación reusables para el README/CLAUDE.md de un plugin:
+  secciones de instalación, actualización, verificación de versión y tabla de
+  conventional commits.
+provides:
+  - secciones de markdown (plantillas, no archivos)
