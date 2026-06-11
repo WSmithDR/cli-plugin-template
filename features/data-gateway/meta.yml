@@ -1,0 +1,11 @@
+name: data-gateway
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: []
+description: >
+  Abstracción única de persistencia. Las skills nunca escriben a disco directamente:
+  pasan por un CLI unificado (bin/<plugin> data ...) respaldado por módulos en
+  bin/lib/. Cambiar el backend no toca ninguna skill.
+provides:
+  - bin/<plugin> (CLI unificado)
+  - bin/lib/gateway.py, paths.py, config.py (patrón)

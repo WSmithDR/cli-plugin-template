@@ -1,0 +1,11 @@
+name: entry-point-router
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: []
+description: >
+  Un único skill de entrada que lee el contexto disponible (git, archivos, mensaje del
+  usuario, historial) y decide qué escenario aplicar, delegando a sub-skills. El
+  usuario no necesita conocer cada skill por separado.
+provides:
+  - skills/<plugin>-context/SKILL.md (patrón)
+  - skills/<plugin>-context/scenarios/*.md (patrón)

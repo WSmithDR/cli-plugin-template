@@ -1,0 +1,12 @@
+name: growth-engine
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: []
+description: >
+  Motor de auto-mejora del plugin. Captura feedback/fricción mid-session sin
+  interrumpir el flujo, lo loguea, y un motor de hotpatch lo procesa después:
+  articula el gap, mapea el archivo correcto, aplica el parche y commitea.
+provides:
+  - skills/<plugin>-feedback-log/SKILL.md (patrón)
+  - skills/<plugin>-hotpatch/SKILL.md (patrón)
+  - metadata _hotpatch en archivos de control

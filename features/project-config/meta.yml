@@ -1,0 +1,10 @@
+name: project-config
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: []
+description: >
+  Configuración por proyecto: una skill detecta config faltante, pregunta de forma
+  interactiva, y persiste de forma atómica en un config.json local al proyecto.
+provides:
+  - skills/<plugin>-config/SKILL.md (patrón)
+  - <datadir>/config.json (schema)

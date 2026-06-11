@@ -1,0 +1,13 @@
+name: multi-cli-compat
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, lsp]
+depends_on: []
+description: >
+  Hacer que un plugin funcione en múltiples CLIs (Claude Code, OpenCode, Gemini CLI,
+  LSP) declarando los manifiestos de cada uno y compartiendo la misma config MCP.
+provides:
+  - .claude-plugin/plugin.json
+  - .mcp.json
+  - opencode.json
+  - .lsp.json
+  - AGENTS.md / CLAUDE.md / GEMINI.md

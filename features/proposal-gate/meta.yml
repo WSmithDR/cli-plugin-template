@@ -1,0 +1,11 @@
+name: proposal-gate
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: []
+description: >
+  Nunca ejecutar una acción irreversible sin aprobación humana explícita. La acción se
+  escribe primero como archivo de propuesta para revisión; el usuario aprueba, edita o
+  descarta antes de ejecutarse.
+provides:
+  - skills/<plugin>-propose/SKILL.md (patrón)
+  - proposals/ (directorio de revisión)

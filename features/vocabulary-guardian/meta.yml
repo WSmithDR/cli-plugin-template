@@ -1,0 +1,11 @@
+name: vocabulary-guardian
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: []
+description: >
+  Fuente única de verdad para términos, estados y constantes de dominio
+  (config/vocabulary.json). Una skill guardián valida antes de usar un término nuevo;
+  un escáner audita archivos en busca de valores no registrados.
+provides:
+  - config/vocabulary.json (schema)
+  - skills/<plugin>-vocab/SKILL.md (patrón)

@@ -1,0 +1,10 @@
+name: externalized-config
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: []
+description: >
+  Reglas, umbrales y patrones de comportamiento del plugin viven en archivos JSON en
+  config/ y se leen en tiempo real, no hardcodeados. Ajustar el comportamiento no
+  requiere tocar código ni redeploy.
+provides:
+  - config/*.json (thresholds, reglas, keywords)

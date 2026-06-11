@@ -1,0 +1,11 @@
+name: claude-code-hooks
+version: 1.0.0
+cli_compat: [claude-code]
+depends_on: []
+description: >
+  Patrones de Claude Code hooks: SessionStart para auto-setup, PostToolUse para
+  reaccionar a fallos, la convención exit 2 + stderr (bloqueante) vs exit 0
+  (informativo), y el manejo del gotcha CLAUDE_PLUGIN_ROOT.
+provides:
+  - hooks/hooks.json (estructura)
+  - bin/hooks/*.sh (patrón)

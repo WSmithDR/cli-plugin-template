@@ -1,0 +1,10 @@
+name: health-check
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: []
+description: >
+  Skill de diagnóstico que verifica que el plugin está bien integrado: versión,
+  skills disponibles, hooks registrados, MCPs requeridos vivos, y detección del
+  gotcha CLAUDE_PLUGIN_ROOT.
+provides:
+  - skills/<plugin>-health/SKILL.md (patrón)
