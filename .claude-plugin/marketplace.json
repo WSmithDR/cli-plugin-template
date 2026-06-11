@@ -1,0 +1,30 @@
+{
+  "name": "cli-plugin-template",
+  "owner": {
+    "name": "WSmithDR",
+    "url": "https://github.com/WSmithDR"
+  },
+  "metadata": {
+    "description": "Catálogo vivo de features reusables para plugins multi-CLI, instalable como meta-plugin de desarrollo.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "cli-plugin-template",
+      "source": "./",
+      "description": "Meta-plugin de desarrollo de plugins multi-CLI. Cataloga 32 features reusables y los entrega on-demand (auditar, integrar, recomendar, promover) con un aviso proactivo en proyectos de plugin.",
+      "version": "1.0.0",
+      "author": {
+        "name": "WSmithDR"
+      },
+      "category": "developer-tools",
+      "keywords": [
+        "plugin-development",
+        "cli-plugin",
+        "feature-catalog",
+        "claude-code",
+        "multi-cli"
+      ]
+    }
+  ]
+}
