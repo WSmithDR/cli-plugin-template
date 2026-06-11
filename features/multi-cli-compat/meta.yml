@@ -1,5 +1,5 @@
 name: multi-cli-compat
-version: 2.0.0
+version: 2.1.0
 cli_compat: [claude-code, opencode, gemini-cli, codex, cursor, copilot, lsp]
 depends_on: []
 description: >

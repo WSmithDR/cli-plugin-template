@@ -15,7 +15,7 @@ Para el flujo de uso completo ver [AGENTS.md](AGENTS.md).
 
 | Feature | Versión | CLIs | Descripción |
 |---|---|---|---|
-| [`multi-cli-compat`](features/multi-cli-compat/README.md) | 2.0.0 | todos | Compatibilidad real con Claude Code / Gemini / OpenCode / Codex / Cursor / Copilot: 3 estrategias, manifiestos por CLI, AGENTS.md/GEMINI.md, y **traducción de nombres de tools** entre CLIs |
+| [`multi-cli-compat`](features/multi-cli-compat/README.md) | 2.1.0 | todos | Compatibilidad real con Claude Code / Gemini / OpenCode / Codex / Cursor / Copilot: 3 estrategias + guía de cuál elegir, manifiestos por CLI, AGENTS.md/GEMINI.md, y **traducción de nombres de tools** entre CLIs |
 | [`mcp-npx-wrapper`](features/mcp-npx-wrapper/README.md) | 1.0.0 | claude-code | Plugin fino que envuelve un MCP externo de npm (`npx -y <paquete>`), sin código local |
 | [`claude-code-hooks`](features/claude-code-hooks/README.md) | 1.0.0 | claude-code | Patrones de hooks: SessionStart auto-setup, PostToolUse reacción a fallos, convención exit 2/stderr, gotcha CLAUDE_PLUGIN_ROOT |
 | [`health-check`](features/health-check/README.md) | 1.0.0 | todos | Skill de diagnóstico: versión, skills, hooks, MCPs vivos, detección de instalación incompleta |

@@ -21,6 +21,28 @@ resolver esto, el plugin "funciona" solo en Claude Code aunque copies el `.mcp.j
 | **B. Skills agnósticas** | Skills que no nombran tools (usan bash/python) | Medio | understand-anything |
 | **C. Skills con tool-mapping** | Skills que referencian tools específicas | Alto | superpowers |
 
+## Cuál elegir
+
+No compiten — se combinan por componente. La mayoría de los plugins reales mezclan **A + B**.
+
+```
+¿Tu funcionalidad es un MCP server?     → A  (y listo para esa parte)
+¿Tenés skills?                          → B  por default
+¿Una skill DEBE nombrar tools exactas?  → C  solo para esa skill
+```
+
+- **B es el mejor default** para plugins basados en skills: las skills se escriben en
+  lenguaje neutral (instruís vía `bash`/`python`/`node`, no "usá el tool `Read`"), así que
+  no hay tabla de mapeo que mantener. Disciplina: describí el *qué* ("editá `archivo.py`"),
+  no el *cómo con qué tool* ("usá Edit").
+- **A es imbatible en simplicidad** pero solo cubre la parte MCP. Un plugin con MCPs +
+  skills usa A para los servers y B para las skills.
+- **C es el más potente pero el de mayor mantenimiento** (tablas de mapeo + inyección por
+  CLI). Reservalo para skills que no pueden evitar nombrar tools específicas.
+
+> **Error a evitar**: saltar directo a C porque "es el más completo". Es el más caro de
+> mantener y casi siempre lo evitás escribiendo las skills en lenguaje neutral (B).
+
 ### A. MCP wrapper — un solo archivo universal
 
 El MCP protocol es agnóstico de CLI: **el mismo `.mcp.json` lo levanta cualquier CLI que
@@ -119,6 +141,8 @@ skills/MCP aparecen y que las instrucciones se cargan en ambos.
 
 ## Changelog
 
+- **2.1.0** — agregada la guía "Cuál elegir" (regla de decisión A/B/C y por qué B es el
+  mejor default).
 - **2.0.0** — reescritura completa: tres estrategias, matriz de manifiestos por CLI,
   patrón de archivos de instrucciones (AGENTS.md/GEMINI.md), tabla de mapeo de tools,
   inyección por CLI, gotcha de `model:`. (Antes solo cubría Claude Code + OpenCode.)
