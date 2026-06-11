@@ -1,0 +1,33 @@
+name: Validate catalog
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate catalog integrity
+        run: python3 bin/validate-catalog.py
+      - name: Validate shell scripts parse
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            bash -n "$f" || { echo "✗ $f"; fail=1; }
+          done < <(find features \( -name '*.sh' -o -name 'pre-commit' -o -name 'post-commit' \))
+          exit $fail
+      - name: Validate JSON files parse
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f" \
+              || { echo "✗ $f"; fail=1; }
+          done < <(find features -name '*.json')
+          exit $fail
