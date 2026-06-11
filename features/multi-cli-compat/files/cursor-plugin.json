@@ -1,0 +1,9 @@
+{
+  "//": "Va en .cursor-plugin/plugin.json (mismo formato sirve para .copilot-plugin/)",
+  "name": "<plugin>",
+  "displayName": "<Nombre visible>",
+  "description": "<descripción>",
+  "version": "1.0.0",
+  "skills": "./skills/",
+  "agents": "./agents/"
+}

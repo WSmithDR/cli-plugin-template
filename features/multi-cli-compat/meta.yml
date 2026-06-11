@@ -1,13 +1,19 @@
 name: multi-cli-compat
-version: 1.0.0
-cli_compat: [claude-code, opencode, gemini-cli, lsp]
+version: 2.0.0
+cli_compat: [claude-code, opencode, gemini-cli, codex, cursor, copilot, lsp]
 depends_on: []
 description: >
-  Hacer que un plugin funcione en múltiples CLIs (Claude Code, OpenCode, Gemini CLI,
-  LSP) declarando los manifiestos de cada uno y compartiendo la misma config MCP.
+  Hacer que un plugin funcione en varios CLIs (Claude Code, Gemini, OpenCode, Codex,
+  Cursor, Copilot): tres estrategias (MCP wrapper / skills agnósticas / skills con
+  tool-mapping), manifiestos por CLI, archivos de instrucciones (AGENTS.md/GEMINI.md),
+  y traducción de nombres de tools entre plataformas.
 provides:
   - .claude-plugin/plugin.json
-  - .mcp.json
-  - opencode.json
-  - .lsp.json
-  - AGENTS.md / CLAUDE.md / GEMINI.md
+  - .codex-plugin/plugin.json
+  - .cursor-plugin/plugin.json
+  - .copilot-plugin/plugin.json
+  - gemini-extension.json + GEMINI.md
+  - .mcp.json + opencode.json + .lsp.json
+  - AGENTS.md / CLAUDE.md
+  - references/tool-mapping.md
+  - install-skills.sh

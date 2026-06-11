@@ -1,0 +1,8 @@
+{
+  "//": "Va en .codex-plugin/plugin.json — Codex requiere el skills path explícito",
+  "name": "<plugin>",
+  "description": "<descripción>",
+  "version": "1.0.0",
+  "skills": "./skills/",
+  "agents": "./agents/"
+}
