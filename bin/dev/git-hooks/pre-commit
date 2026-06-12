@@ -1,0 +1,26 @@
+#!/bin/bash
+# Pre-commit del catálogo cli-plugin-template.
+# Instalado via: bash bin/dev/setup.sh
+#
+# Corre, en orden, y cancela el commit si algo falla:
+#   1. validate-catalog.py  — coherencia features/ ↔ CATALOG.md ↔ meta.yml
+#   2. test-hooks.sh        — tests del hook SessionStart
+#   3. audit de portabilidad — bloquea solo ante hallazgos CRITICAL (--quiet)
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+fail() { echo ""; echo "✗ $1 — commit cancelado."; exit 1; }
+
+echo "→ Validando catálogo..."
+python3 bin/validate-catalog.py            || fail "catálogo inválido"
+
+echo "→ Corriendo tests..."
+bash bin/test-hooks.sh                      || fail "tests fallaron"
+
+echo "→ Auditando portabilidad..."
+python3 features/portability-audit/files/audit-portability.py . --quiet \
+    || fail "hay hallazgos CRITICAL de portabilidad (rutas absolutas o secretos)"
+
+echo "✓ Pre-commit OK"

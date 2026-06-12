@@ -1,0 +1,11 @@
+name: portability-audit
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: [bundled-scripts]
+description: >
+  Escáner determinista que detecta lo que rompe portabilidad y agnosticismo de un
+  plugin: rutas absolutas atadas a una máquina, referencias a dirs del plugin sin
+  ${CLAUDE_PLUGIN_ROOT}, paths acoplados a Claude Code, `model: inherit`, secretos
+  hardcodeados e intérpretes no portables. Reporta por severidad; usable en CI.
+provides:
+  - bin/audit-portability.py (script)

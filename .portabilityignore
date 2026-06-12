@@ -1,0 +1,14 @@
+# Exclusiones del audit de portabilidad para ESTE repo (el catálogo).
+# Es un meta-repo didáctico: contiene anti-patrones a propósito (esqueletos para
+# otros plugins y docs que ilustran qué NO hacer). El audit solo debe cubrir la
+# superficie viva del plugin (skills/, commands/, bin/, hooks/, manifiestos).
+
+# Esqueletos destinados a OTROS plugins y docs de cada feature: se adaptan al
+# copiarse, así que sus rutas relativas/ejemplos son intencionales.
+features/**
+
+# Planes y specs: prosa con rutas de ejemplo (/home/...).
+docs/**
+
+# Esta skill documenta el propio audit, con ejemplos de rutas "malas".
+skills/plugin-audit/SKILL.md

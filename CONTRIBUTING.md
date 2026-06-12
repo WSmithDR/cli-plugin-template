@@ -10,6 +10,19 @@ Cuando una mejora nace en un plugin concreto (ej. `todo-plugin`) y sirve para
 
 Ante la duda: si tuvieras que copiar y pegar esto en otro plugin, va al catálogo.
 
+## Setup de desarrollo
+
+Después de clonar, instalá los git hooks:
+
+```bash
+bash bin/dev/setup.sh
+```
+
+El `pre-commit` valida el catálogo (`validate-catalog.py`), corre los tests
+(`test-hooks.sh`) y audita portabilidad (`features/portability-audit/`, bloquea ante
+rutas absolutas o secretos). Las exclusiones del audit para este repo viven en
+`.portabilityignore`.
+
 ## Cómo promover un feature nuevo
 
 1. Creá `features/<nombre>/` con esta estructura:
