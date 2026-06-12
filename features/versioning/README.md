@@ -47,6 +47,14 @@ confíes en inspeccionar HEAD para frenar la recursión —resulta poco fiable b
 4. Asegurate de que `setup.sh` instale el hook (incluye `install_hook "post-commit"`).
 5. `chmod +x bin/dev/git-hooks/post-commit && bash bin/dev/setup.sh`
 
+### Bump manual (sin el hook)
+
+Si no querés el bump automático en cada commit, podés bumpear a demanda con un script que
+sincroniza **todos** los manifiestos a la vez (plugin.json como fuente de verdad). En este
+repo es `bin/bump-version.py` (`major|minor|patch`, `--set X.Y.Z`, `--sync`, `--check`).
+Útil cuando el plugin publica por marketplace y tiene manifiestos por CLI: el hook solo
+toca `plugin.json`/`marketplace.json`, el script cubre también gemini/codex/cursor/copilot.
+
 ### Seguridad
 
 El hook lee la versión actual con Python. **No interpoles variables de shell dentro

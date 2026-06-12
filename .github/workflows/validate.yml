@@ -41,5 +41,7 @@ jobs:
         run: bash bin/test-catalog-gaps.sh
       - name: Run skill-evals validator tests
         run: bash bin/test-evals.sh
+      - name: Run version-bump tests
+        run: bash bin/test-bump-version.sh
       - name: Portability audit (block on CRITICAL)
         run: python3 features/portability-audit/files/audit-portability.py . --quiet

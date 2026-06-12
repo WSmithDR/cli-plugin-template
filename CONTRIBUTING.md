@@ -18,10 +18,28 @@ Después de clonar, instalá los git hooks:
 bash bin/dev/setup.sh
 ```
 
-El `pre-commit` valida el catálogo (`validate-catalog.py`), corre los tests
-(`test-hooks.sh`) y audita portabilidad (`features/portability-audit/`, bloquea ante
+El `pre-commit` valida el catálogo y los evals, corre los tests (hooks, gap de catálogo,
+evals, bump-version) y audita portabilidad (`features/portability-audit/`, bloquea ante
 rutas absolutas o secretos). Las exclusiones del audit para este repo viven en
 `.portabilityignore`.
+
+## Publicar una versión
+
+La versión del plugin vive en varios manifiestos (`.claude-plugin/plugin.json`,
+`marketplace.json`, y los manifiestos por CLI). **No la edites a mano** —se desincronizan
+y `/plugin install` saltea el update. Usá el script, que trata `plugin.json` como fuente
+de verdad y sincroniza el resto:
+
+```bash
+python3 bin/bump-version.py minor     # major | minor | patch
+python3 bin/bump-version.py --set 2.1.0
+python3 bin/bump-version.py --check    # ¿están todos sincronizados?
+```
+
+`validate-catalog.py` (y por ende CI) falla si algún manifiesto quedó fuera de sync. Si
+instalaste el hook `post-commit` del feature `versioning`, el bump es automático según el
+prefijo del commit y no necesitás correr el script a mano. Tras publicar, los usuarios
+toman la versión con `/plugin marketplace update` + `/plugin install`.
 
 ## Cómo promover un feature nuevo
 
