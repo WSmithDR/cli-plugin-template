@@ -1,0 +1,54 @@
+#!/bin/bash
+# post-commit del catálogo: auto-bump de versión en TODOS los manifiestos.
+# Instalado via: bash bin/dev/setup.sh
+#
+# Lee el prefijo del commit (conventional commits) y delega en bin/bump-version.py,
+# que sincroniza plugin.json + marketplace.json + los manifiestos por CLI (gemini/
+# codex/cursor/copilot). Después amenda el commit para incluir el bump en el mismo
+# objeto git. Delegar en bump-version.py es lo que mantiene los 6 manifiestos en
+# sync —si bumpeáramos solo plugin.json, el pre-commit del próximo commit fallaría.
+#
+#   feat:            -> minor
+#   feat!:/BREAKING  -> major
+#   resto            -> patch
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+SENTINEL="$REPO_ROOT/.git/.version-bump-in-progress"
+
+# Recursion guard: el `git commit --amend` de abajo re-dispara post-commit
+# (--no-verify NO saltea post-commit). El sentinel frena la segunda invocación.
+if [ -f "$SENTINEL" ]; then
+    rm -f "$SENTINEL"
+    exit 0
+fi
+
+# Bump manual: si plugin.json ya está en este commit, asumimos que la versión se
+# tocó a mano (p.ej. con bump-version.py) y no volvemos a bumpear.
+if git show --name-only --format="" HEAD | grep -qx "\.claude-plugin/plugin\.json"; then
+    exit 0
+fi
+
+MSG="$(git log -1 --pretty=%B)"
+if echo "$MSG" | grep -qiE "(BREAKING[ -]CHANGE|^[a-z]+(\(.+\))?!:)"; then
+    PART="major"
+elif echo "$MSG" | grep -qiE "^feat(\(.+\))?:"; then
+    PART="minor"
+else
+    PART="patch"
+fi
+
+# bump-version.py sincroniza los 6 manifiestos; mostramos solo la línea de versión.
+python3 bin/bump-version.py "$PART" | grep -E "versión →" || true
+
+# Stagear los manifiestos que el bump pudo tocar (los que existan).
+for f in .claude-plugin/plugin.json .claude-plugin/marketplace.json \
+         gemini-extension.json .codex-plugin/plugin.json \
+         .cursor-plugin/plugin.json .copilot-plugin/plugin.json; do
+    [ -f "$f" ] && git add "$f"
+done
+
+touch "$SENTINEL"
+git commit --amend --no-edit --no-verify
+rm -f "$SENTINEL"

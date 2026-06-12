@@ -25,6 +25,7 @@ bash bin/test-hooks.sh                      || fail "tests de hooks fallaron"
 bash bin/test-catalog-gaps.sh              || fail "tests de gap de catálogo fallaron"
 bash bin/test-evals.sh                      || fail "tests de evals fallaron"
 bash bin/test-bump-version.sh              || fail "tests de bump-version fallaron"
+bash bin/test-post-commit.sh               || fail "tests de post-commit fallaron"
 
 echo "→ Auditando portabilidad..."
 python3 features/portability-audit/files/audit-portability.py . --quiet \

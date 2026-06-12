@@ -43,5 +43,7 @@ jobs:
         run: bash bin/test-evals.sh
       - name: Run version-bump tests
         run: bash bin/test-bump-version.sh
+      - name: Run post-commit auto-bump tests
+        run: bash bin/test-post-commit.sh
       - name: Portability audit (block on CRITICAL)
         run: python3 features/portability-audit/files/audit-portability.py . --quiet
