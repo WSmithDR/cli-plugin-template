@@ -39,8 +39,9 @@ claude plugin install cli-plugin-template@cli-plugin-template
 
 ### Actualización
 
-El marketplace cachea una copia local; **refrescala y reinstalá** para tomar la versión
-nueva (no alcanza con que cambie el repo):
+El CLI cachea una copia local del plugin: **refrescá el marketplace y reinstalá**. No
+alcanza con que cambie el repo, y `claude plugin update` sin refrescar puede saltear el
+update por "misma versión":
 
 **Scope project:**
 ```bash
