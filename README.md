@@ -39,15 +39,23 @@ claude plugin install cli-plugin-template@cli-plugin-template
 
 ### Actualización
 
+El marketplace cachea una copia local; **refrescala y reinstalá** para tomar la versión
+nueva (no alcanza con que cambie el repo):
+
 **Scope project:**
 ```bash
-claude plugin update cli-plugin-template@cli-plugin-template --scope project
+/plugin marketplace update cli-plugin-template
+/plugin install cli-plugin-template@cli-plugin-template --scope project
 ```
 
-**Scope user (global):**
+**Global (todos los proyectos):**
 ```bash
-claude plugin update cli-plugin-template@cli-plugin-template
+/plugin marketplace update cli-plugin-template
+/plugin install cli-plugin-template@cli-plugin-template
 ```
+
+En una sesión activa, aplicá sin reiniciar con `/reload-plugins`. Para verificar la versión
+instalada, corré `/cli-plugin-template-health`.
 
 ### Capacidades
 
@@ -60,7 +68,7 @@ Una vez instalado en un proyecto de plugin:
 
 Al abrir un proyecto de plugin por primera vez, un aviso sugiere correr `/plugin-audit`.
 
-## Categorías (32 features)
+## Categorías
 
 Ver el índice completo en [`CATALOG.md`](CATALOG.md).
 
@@ -73,7 +81,7 @@ Ver el índice completo en [`CATALOG.md`](CATALOG.md).
 | **Autoría de skills y agents** | 4 | escribir skills descubribles y agentes, discipline-skills, agente autónomo |
 | **Orquestación multi-agente** | 2 | subagentes en paralelo, pipeline con contratos de artefactos |
 | **Escala y eficiencia** | 3 | batching, scripts deterministas, worktree redirect |
-| **Calidad y verificación** | 4 | strict-TDD, doble review adversarial, sizing de cambios, evals de skills |
+| **Calidad y verificación** | 5 | strict-TDD, doble review adversarial, sizing de cambios, evals de skills, auditoría de portabilidad |
 
 ## Estructura
 
