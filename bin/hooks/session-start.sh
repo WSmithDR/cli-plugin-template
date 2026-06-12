@@ -30,7 +30,7 @@ if [ -n "$NAME" ] && [ -x "$CPT" -o -f "$CPT" ]; then
     REGISTERED=$(python3 "$CPT" registry resolve "$NAME" 2>/dev/null || true)
     if [ -z "$REGISTERED" ]; then
         MSG="$MSG
-Este plugin no está en el registry de evolución — corré /plugin register para que cli-plugin-template administre su evolución (captura de fricción y parcheo asistido)."
+Este plugin no está en el registry de evolución — corré /plugin-dev register para que cli-plugin-template administre su evolución (captura de fricción y parcheo asistido)."
     fi
 fi
 

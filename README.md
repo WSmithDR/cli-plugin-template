@@ -61,11 +61,13 @@ instalada, corré `/cli-plugin-template-health`.
 ### Capacidades
 
 Una vez instalado en un proyecto de plugin:
-- **`/plugin`** — menú de capacidades (router `plugin-dev`).
+- **`/plugin-dev`** — menú de capacidades (router `plugin-dev`). Se llama `/plugin-dev` y no `/plugin` para no chocar con el comando nativo `/plugin` de Claude Code.
 - **`/plugin-audit`** — qué features del catálogo te faltan.
 - **`/plugin-feature <nombre>`** — integrar un feature.
 - **`/plugin-recommend`** — sugerir features desde una necesidad.
 - **`/plugin-promote`** — subir una mejora al catálogo.
+- **`/plugin-register`** — dar de alta el plugin para que el meta-plugin administre su evolución.
+- **`/plugin-feedback-log`** — capturar una fricción/feedback de una skill de un plugin propio.
 
 Al abrir un proyecto de plugin por primera vez, un aviso sugiere correr `/plugin-audit`.
 
