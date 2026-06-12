@@ -235,3 +235,48 @@ def proposal_set_status(plugin: str, slug: str, status: str) -> str:
         content = re.sub(r"^---\s*$", f"---\nstatus: {status}", content, count=1, flags=re.MULTILINE)
     _write(path, content)
     return str(path)
+
+
+# ── growth dashboard (P4) ────────────────────────────────────
+
+PROPOSAL_STATUSES = ("pending", "approved", "discarded")
+
+
+def _known_plugins() -> list[str]:
+    """Plugins registrados + cualquier subdir con datos (feedbacks/ o proposals/)."""
+    names = {e["name"] for e in registry_load()}
+    root = paths.data_dir()
+    if root.exists():
+        for child in root.iterdir():
+            if child.is_dir() and ((child / "feedbacks").is_dir() or (child / "proposals").is_dir()):
+                names.add(child.name)
+    return sorted(names)
+
+
+def growth_summary(plugin: Optional[str] = None) -> dict:
+    """Estado de evolución agregado: por plugin, feedbacks (pendientes/aplicados) y
+    propuestas por status. plugin=None → todos los conocidos."""
+    plugins = [paths.slugify(plugin)] if plugin else _known_plugins()
+    registered = {e["name"]: e for e in registry_load()}
+
+    rows = []
+    for p in plugins:
+        fb_total = len(feedback_list(plugin=p))
+        fb_pending = len(feedback_list(plugin=p, pending_only=True))
+        props = {s: len(proposal_list(plugin=p, status=s)) for s in PROPOSAL_STATUSES}
+        rows.append({
+            "name": p,
+            "registered": p in registered,
+            "local_path": registered.get(p, {}).get("local_path", ""),
+            "feedbacks": {"pending": fb_pending, "applied": fb_total - fb_pending, "total": fb_total},
+            "proposals": {**props, "total": sum(props.values())},
+        })
+
+    totals = {
+        "plugins": len(rows),
+        "feedbacks_pending": sum(r["feedbacks"]["pending"] for r in rows),
+        "feedbacks_applied": sum(r["feedbacks"]["applied"] for r in rows),
+        "proposals_pending": sum(r["proposals"]["pending"] for r in rows),
+        "proposals_approved": sum(r["proposals"]["approved"] for r in rows),
+    }
+    return {"plugins": rows, "totals": totals}

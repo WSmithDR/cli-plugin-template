@@ -19,6 +19,7 @@ del usuario; NO invoques las sub-skills directamente como respuesta — pasá po
 | quiere **dar de alta** el plugin para administrar su evolución: "registrá este plugin", "que cli-plugin-template administre su evolución" | `plugin-register` |
 | reporta **fricción/corrección sobre una skill** de un plugin propio: "esto falló", "anotá esta fricción", "guardá este feedback del plugin" | `plugin-feedback-log` |
 | quiere **procesar/aplicar** la fricción capturada: "procesá los pendientes", "aplicá el fix", o el hook avisó "PENDING PLUGIN FEEDBACK" | `plugin-hotpatch` |
+| quiere **ver el estado** de evolución: "qué hay pendiente en mis plugins", "mostrame el dashboard", "cómo viene la evolución" | `plugin-growth` |
 
 **Desempate:** el verbo no decide la ruta —decide *qué* se nombra. Si el mensaje nombra un
 feature concreto del catálogo → `plugin-feature`, aunque diga "quiero/necesito". Si solo

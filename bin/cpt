@@ -91,6 +91,11 @@ def main() -> int:
     p_status.add_argument("slug")
     p_status.add_argument("status")
 
+    # status (dashboard) ───────────────────────────────────────
+    st = sub.add_parser("status", help="dashboard de evolución de los plugins")
+    st.add_argument("--plugin", default=None)
+    st.add_argument("--json", action="store_true")
+
     ns = parser.parse_args()
 
     if ns.group == "registry":
@@ -127,7 +132,36 @@ def main() -> int:
         elif ns.op == "set-status":
             print(gateway.proposal_set_status(ns.plugin, ns.slug, ns.status))
 
+    elif ns.group == "status":
+        summary = gateway.growth_summary(plugin=ns.plugin)
+        if ns.json:
+            print(json.dumps(summary, ensure_ascii=False, indent=2))
+        else:
+            _print_status(summary)
+
     return 0
+
+
+def _print_status(summary: dict) -> None:
+    rows = summary["plugins"]
+    t = summary["totals"]
+    if not rows:
+        print("EVOLUCIÓN DE PLUGINS — sin plugins registrados ni datos en el store.")
+        print("Registrá uno con la skill plugin-register.")
+        return
+    print(f"EVOLUCIÓN DE PLUGINS  ({t['plugins']} plugins · "
+          f"{t['feedbacks_pending']} feedbacks pendientes · "
+          f"{t['proposals_pending']} propuestas pending)")
+    print("─" * 72)
+    width = max(len(r["name"]) for r in rows)
+    for r in rows:
+        fb, pr = r["feedbacks"], r["proposals"]
+        flag = "" if r["registered"] else " (no registrado)"
+        print(f"{r['name']:<{width}}  ▸ feedbacks: {fb['pending']} pend / {fb['applied']} aplicados"
+              f"   propuestas: {pr['pending']} pending · {pr['approved']} approved · "
+              f"{pr['discarded']} discarded{flag}")
+        if r["local_path"]:
+            print(f"{'':<{width}}    {r['local_path']}")
 
 
 if __name__ == "__main__":

@@ -72,6 +72,7 @@ la skill `plugin-dev`). No hay un `/plugin` para no chocar con el comando nativo
 - **`plugin-register`** — dar de alta el plugin para que el meta-plugin administre su evolución.
 - **`plugin-feedback-log`** — capturar una fricción/feedback de una skill de un plugin propio.
 - **`plugin-hotpatch`** — procesar la fricción capturada: proponer y aplicar el fix en el repo del plugin, con gate de aprobación.
+- **`plugin-growth`** — dashboard de evolución: registrados, feedbacks pendientes/aplicados y propuestas por status, de un vistazo.
 
 Al abrir un proyecto de plugin por primera vez, un aviso sugiere correr `/plugin-audit`.
 
