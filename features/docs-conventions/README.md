@@ -39,21 +39,28 @@ claude plugin install <plugin>@<marketplace>
 
 ### Sección: Actualización + verificación de versión
 
+> El CLI cachea una copia del plugin: **refrescá el marketplace y reinstalá**. No alcanza
+> con que cambie el repo, y `claude plugin update` sin refrescar puede saltear el update
+> por "misma versión".
+
 ```markdown
 ## Actualizar
 
 **Scope project:**
 \```bash
-claude plugin update <plugin>@<marketplace> --scope project
+/plugin marketplace update <marketplace>
+/plugin install <plugin>@<marketplace> --scope project
 \```
 
-**Scope user (global):**
+**Global (todos los proyectos):**
 \```bash
-claude plugin update <plugin>@<marketplace>
+/plugin marketplace update <marketplace>
+/plugin install <plugin>@<marketplace>
 \```
 
-Para verificar que el update tomó efecto, ejecutar `/<plugin>-health` — la versión
-mostrada debe coincidir con la última publicada.
+En una sesión activa, aplicá sin reiniciar con `/reload-plugins`. Para verificar que el
+update tomó efecto, ejecutar `/<plugin>-health` — la versión mostrada debe coincidir con
+la última publicada.
 ```
 
 ### Sección: Convención de versionado
@@ -94,6 +101,9 @@ publicada.
 
 ## Changelog
 
+- **1.1.1** — la sección de Actualización usa el flujo confiable (`/plugin marketplace
+  update` + reinstalar) en vez de `claude plugin update`, que puede saltear el update por
+  "misma versión" sin refrescar el cache.
 - **1.1.0** — agregada la sección `## Tests` (verificación de la integración de los
   docs), para cumplir el contrato de secciones requeridas del catálogo.
 - **1.0.0** — versión inicial, consolidada desde `todo-plugin`.
