@@ -45,12 +45,12 @@ PY
 - ✗ leer `plugin.json` → instalación incompleta o `CLAUDE_PLUGIN_ROOT` mal resuelto (ver gotcha).
 - ✗ desync con marketplace → reinstalá/actualizá: `claude plugin update cli-plugin-template`.
 
-## 2. Skills del catálogo (7) + la propia health
+## 2. Skills del catálogo (8) + la propia health
 
-Deben existir las 7 skills del catálogo y esta misma:
+Deben existir las 8 skills del catálogo y esta misma:
 
 ```bash
-for s in plugin-dev plugin-audit plugin-feature plugin-recommend plugin-promote plugin-register plugin-feedback-log cli-plugin-template-health; do
+for s in plugin-dev plugin-audit plugin-feature plugin-recommend plugin-promote plugin-register plugin-feedback-log plugin-hotpatch cli-plugin-template-health; do
   [ -f "${CLAUDE_PLUGIN_ROOT}/skills/$s/SKILL.md" ] && echo "✓ $s" || echo "✗ falta skill: $s"
 done
 ```
@@ -109,7 +109,7 @@ cli-plugin-template — health check
 ✓ CLAUDE_PLUGIN_ROOT=/path/to/plugin
 ✓ cli-plugin-template v1.1.0
 ✓ marketplace v1.1.0
-✓ Skills: 8/8 (7 catálogo + health)
+✓ Skills: 9/9 (8 catálogo + health)
 ✓ CATALOG.md + features/ + validate-catalog OK
 ✓ Hook SessionStart registrado + script presente
 

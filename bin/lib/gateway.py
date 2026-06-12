@@ -159,3 +159,79 @@ def feedback_list(plugin: Optional[str] = None, pending_only: bool = False) -> l
                 continue
             result.append(f"{p}/{_strip_prefix(f.stem)}")
     return result
+
+
+def feedback_mark_applied(plugin: str, slug: str, applied_at: Optional[str] = None) -> str:
+    """Marca un feedback como aplicado: applied:false→true y agrega/actualiza applied_at.
+    Devuelve la ruta. Idempotente."""
+    path = paths.feedbacks_dir(plugin) / f"feedback_{paths.slugify(slug)}.md"
+    content = _read(path)
+    if not content:
+        raise FileNotFoundError(f"feedback no existe: {plugin}/{slug}")
+    stamp = applied_at or _today()
+    if re.search(r"^applied:", content, re.MULTILINE):
+        content = re.sub(r"^applied:.*$", "applied: true", content, count=1, flags=re.MULTILINE)
+    if re.search(r"^applied_at:", content, re.MULTILINE):
+        content = re.sub(r"^applied_at:.*$", f"applied_at: {stamp}", content, count=1, flags=re.MULTILINE)
+    else:
+        content = re.sub(r"^applied: true$", f"applied: true\napplied_at: {stamp}",
+                         content, count=1, flags=re.MULTILINE)
+    _write(path, content)
+    return str(path)
+
+
+# ── proposals (gate de aprobación, baranda 2) ────────────────
+
+def proposal_save(plugin: str, slug: str, content: str) -> str:
+    path = paths.proposals_dir(plugin) / f"{paths.slugify(slug)}.md"
+    _write(path, content)
+    return str(path)
+
+
+def proposal_load(plugin: str, slug: str) -> str:
+    path = paths.proposals_dir(plugin) / f"{paths.slugify(slug)}.md"
+    return _read(path)
+
+
+def _status_of(path: Path) -> str:
+    m = re.search(r"^status:\s*(\S+)", path.read_text(encoding="utf-8"), re.MULTILINE)
+    return m.group(1) if m else ""
+
+
+def proposal_list(plugin: Optional[str] = None, status: Optional[str] = None) -> list[str]:
+    """Lista propuestas como '<plugin>/<slug>'. status filtra por el frontmatter."""
+    if plugin is not None:
+        plugins = [paths.slugify(plugin)]
+    else:
+        plugins = sorted({e["name"] for e in registry_load()})
+        root = paths.data_dir()
+        if root.exists():
+            for child in root.iterdir():
+                if child.is_dir() and (child / "proposals").is_dir():
+                    plugins.append(child.name)
+        plugins = sorted(set(plugins))
+
+    result: list[str] = []
+    for p in plugins:
+        d = paths.proposals_dir(p)
+        if not d.exists():
+            continue
+        for f in sorted(d.glob("*.md")):
+            if status is not None and _status_of(f) != status:
+                continue
+            result.append(f"{p}/{f.stem}")
+    return result
+
+
+def proposal_set_status(plugin: str, slug: str, status: str) -> str:
+    """Actualiza el status del frontmatter de una propuesta. Devuelve la ruta."""
+    path = paths.proposals_dir(plugin) / f"{paths.slugify(slug)}.md"
+    content = _read(path)
+    if not content:
+        raise FileNotFoundError(f"propuesta no existe: {plugin}/{slug}")
+    if re.search(r"^status:", content, re.MULTILINE):
+        content = re.sub(r"^status:.*$", f"status: {status}", content, count=1, flags=re.MULTILINE)
+    else:
+        content = re.sub(r"^---\s*$", f"---\nstatus: {status}", content, count=1, flags=re.MULTILINE)
+    _write(path, content)
+    return str(path)

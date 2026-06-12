@@ -60,6 +60,37 @@ def main() -> int:
     f_list.add_argument("--plugin", default=None)
     f_list.add_argument("--pending", action="store_true")
 
+    f_show = fb_sub.add_parser("show", help="imprimir el contenido de un feedback")
+    f_show.add_argument("plugin")
+    f_show.add_argument("slug")
+
+    f_apply = fb_sub.add_parser("apply", help="marcar un feedback como aplicado")
+    f_apply.add_argument("plugin")
+    f_apply.add_argument("slug")
+    f_apply.add_argument("--at", default=None, help="fecha applied_at (default: hoy UTC)")
+
+    # proposal ─────────────────────────────────────────────────
+    pr = sub.add_parser("proposal", help="gate de aprobación de patches")
+    pr_sub = pr.add_subparsers(dest="op", required=True)
+
+    p_save = pr_sub.add_parser("save", help="guardar/sobrescribir una propuesta")
+    p_save.add_argument("plugin")
+    p_save.add_argument("slug")
+    p_save.add_argument("content", nargs="?", default="-")
+
+    p_show = pr_sub.add_parser("show", help="imprimir una propuesta")
+    p_show.add_argument("plugin")
+    p_show.add_argument("slug")
+
+    p_list = pr_sub.add_parser("list", help="listar propuestas")
+    p_list.add_argument("--plugin", default=None)
+    p_list.add_argument("--status", default=None)
+
+    p_status = pr_sub.add_parser("set-status", help="cambiar el status de una propuesta")
+    p_status.add_argument("plugin")
+    p_status.add_argument("slug")
+    p_status.add_argument("status")
+
     ns = parser.parse_args()
 
     if ns.group == "registry":
@@ -81,6 +112,20 @@ def main() -> int:
             print(gateway.feedback_save(ns.plugin, ns.slug, _read_content(ns.content)))
         elif ns.op == "list":
             print("\n".join(gateway.feedback_list(plugin=ns.plugin, pending_only=ns.pending)))
+        elif ns.op == "show":
+            print(gateway.feedback_load(ns.plugin, ns.slug), end="")
+        elif ns.op == "apply":
+            print(gateway.feedback_mark_applied(ns.plugin, ns.slug, applied_at=ns.at))
+
+    elif ns.group == "proposal":
+        if ns.op == "save":
+            print(gateway.proposal_save(ns.plugin, ns.slug, _read_content(ns.content)))
+        elif ns.op == "show":
+            print(gateway.proposal_load(ns.plugin, ns.slug), end="")
+        elif ns.op == "list":
+            print("\n".join(gateway.proposal_list(plugin=ns.plugin, status=ns.status)))
+        elif ns.op == "set-status":
+            print(gateway.proposal_set_status(ns.plugin, ns.slug, ns.status))
 
     return 0
 

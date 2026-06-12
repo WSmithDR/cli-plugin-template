@@ -43,7 +43,7 @@ Este repo también es un plugin instalable (`.claude-plugin/plugin.json`), con m
 para Gemini CLI, OpenCode, Codex, Cursor y Copilot (dogfooding de `multi-cli-compat`).
 Instalado en otro proyecto, expone las skills `plugin-dev` (router), `plugin-audit`,
 `plugin-feature`, `plugin-recommend`, `plugin-promote`, `plugin-register`,
-`plugin-feedback-log` y `cli-plugin-template-health` (diagnóstico), que leen el catálogo de
+`plugin-feedback-log`, `plugin-hotpatch` y `cli-plugin-template-health` (diagnóstico), que leen el catálogo de
 `features/` localmente. No hay comando slash: el router es la skill `plugin-dev`, que se
 invoca al expresar la intención (evita chocar con el `/plugin` nativo de Claude Code). El
 hook `SessionStart` sugiere una auditoría la primera vez en un proyecto de plugin. El

@@ -18,6 +18,7 @@ del usuario; NO invoques las sub-skills directamente como respuesta — pasá po
 | menciona el **catálogo** o "para todos los plugins": "esto sirve para todos", "subí/promové esto al catálogo" | `plugin-promote` |
 | quiere **dar de alta** el plugin para administrar su evolución: "registrá este plugin", "que cli-plugin-template administre su evolución" | `plugin-register` |
 | reporta **fricción/corrección sobre una skill** de un plugin propio: "esto falló", "anotá esta fricción", "guardá este feedback del plugin" | `plugin-feedback-log` |
+| quiere **procesar/aplicar** la fricción capturada: "procesá los pendientes", "aplicá el fix", o el hook avisó "PENDING PLUGIN FEEDBACK" | `plugin-hotpatch` |
 
 **Desempate:** el verbo no decide la ruta —decide *qué* se nombra. Si el mensaje nombra un
 feature concreto del catálogo → `plugin-feature`, aunque diga "quiero/necesito". Si solo
@@ -34,9 +35,11 @@ El catálogo vive en `${CLAUDE_PLUGIN_ROOT}/features/`. Cada feature tiene `READ
 (qué/por qué/cómo) + `files/` (esqueletos) + `meta.yml` (version, cli_compat, depends_on).
 El índice es `${CLAUDE_PLUGIN_ROOT}/CATALOG.md`.
 
-**Evolución de plugins (registro + feedback).** Además del catálogo, el meta-plugin
+**Evolución de plugins (registro + feedback + parcheo).** Además del catálogo, el meta-plugin
 administra la evolución de tus plugins propios vía un store externo
 (`~/.local/share/cli-plugin-template/`, override `CLI_PLUGIN_TEMPLATE_DATA_DIR`) operado
 por `${CLAUDE_PLUGIN_ROOT}/bin/cpt`. `registry.json` es el allowlist (qué plugins son
-tuyos y dónde viven); cada plugin tiene su subdir con `feedbacks/`. Solo se administran
-plugins dados de alta con `plugin-register`.
+tuyos y dónde viven); cada plugin tiene su subdir con `feedbacks/` y `proposals/`. El ciclo:
+`plugin-register` (alta) → `plugin-feedback-log` (captura fricción, `applied:false`) →
+`plugin-hotpatch` (propone y aplica el fix en el repo del plugin, con gate de aprobación).
+Solo se administran plugins dados de alta.
