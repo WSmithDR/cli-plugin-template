@@ -1,3 +1,7 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# Overrides personales de Claude Code (NO el settings.json compartido, que se
+# commitea a propósito para self-dogfooding — ver AGENTS.md "Modo plugin").
+.claude/settings.local.json

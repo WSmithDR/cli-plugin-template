@@ -46,3 +46,8 @@ Instalado en otro proyecto, expone las skills `plugin-dev` (router), `plugin-aud
 (diagnóstico) y el comando `/plugin`, que leen el catálogo de `features/` localmente. El
 hook `SessionStart` sugiere una auditoría la primera vez en un proyecto de plugin. El
 propio repo se excluye con el sentinel `.catalog-root`.
+
+**Self-dogfooding (a propósito):** este repo habilita su propio plugin vía
+`.claude/settings.json` (`enabledPlugins`), para que al desarrollar el catálogo las skills
+estén activas y se apliquen sobre sí mismo. Ese archivo está committeado adrede — no lo
+borres. Solo `.claude/settings.local.json` (overrides personales) queda fuera de git.
