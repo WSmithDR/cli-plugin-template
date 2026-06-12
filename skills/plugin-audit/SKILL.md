@@ -17,16 +17,37 @@ Si no, decilo y salí.
 
 ## Parte A — Gap de catálogo
 
-1. Leé el índice del catálogo: `cat "${CLAUDE_PLUGIN_ROOT}/CATALOG.md"`.
-2. Para cada categoría relevante, chequeá señales en el proyecto y marcá faltante/presente:
-   - **versioning**: ¿hay un git hook que bumpea versión? (buscar `bin/dev/git-hooks/post-commit` o similar)
-   - **git-hooks**: ¿hay `bin/dev/setup.sh` + tests?
-   - **health-check**: ¿hay una skill `*-health`?
-   - **claude-code-hooks / advanced-hooks**: ¿hay `hooks/hooks.json`?
-   - **docs-conventions**: ¿el README tiene secciones de install/update/versionado?
-   - **multi-cli-compat**: ¿hay manifiestos para otros CLIs (gemini-extension.json, .codex-plugin, opencode.json)?
-   - **project-config / health-check / data-gateway / etc.**: señales análogas.
-3. Reportá una tabla: Feature | Estado (✓ presente / ✗ falta) | Cómo integrarlo (`/plugin-feature <x>`).
+Lo determinista lo hace un script bundled (principio `bundled-scripts`): no
+enumeres las señales por feature a ojo. Corré el detector sobre la cwd:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit-catalog-gaps.py" .
+```
+
+Para cada feature detectable por señales de archivo marca de forma determinista:
+
+| Estado | Significa |
+|---|---|
+| ✓ presente | la señal del feature aparece en el árbol |
+| ✗ falta    | no aparece → candidato a integrar con `/plugin-feature <x>` |
+| · n/d      | no es detectable con baja tasa de falsos positivos (requiere juicio) |
+
+El script cubre: `versioning`, `git-hooks`, `health-check`, `claude-code-hooks`,
+`docs-conventions`, `multi-cli-compat`, `externalized-config`,
+`vocabulary-guardian`, `data-gateway`, `bundled-scripts`, `proposal-gate` y marca
+`entry-point-router` como n/d. Sale con exit 0 siempre (es un reporte, no un gate);
+soporta `--json`.
+
+Interpretá la salida (no la repitas cruda):
+- **✗ falta** = candidato a integrar. Priorizá por valor/costo: features de alto
+  valor y bajo costo primero (p.ej. `versioning`, `docs-conventions`).
+- **· n/d** = revisalo a mano si tiene sentido para el plugin; el script no lo
+  afirma ni lo niega.
+- Para features fuera del set detectable (los semánticos del catálogo), usá
+  `cat "${CLAUDE_PLUGIN_ROOT}/CATALOG.md"` como referencia y tu juicio.
+
+Reportá una tabla: Feature | Estado (✓ presente / ✗ falta / · n/d) | Cómo
+integrarlo (`/plugin-feature <x>`), basada en lo que devolvió el script.
 
 ## Parte B — Higiene de portabilidad y agnosticismo
 

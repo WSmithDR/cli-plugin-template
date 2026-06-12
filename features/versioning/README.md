@@ -40,7 +40,10 @@ confíes en inspeccionar HEAD para frenar la recursión —resulta poco fiable b
    ```
 3. **Adaptá el path del manifiesto** dentro de `post-commit`. Por defecto apunta a
    `.claude-plugin/plugin.json` (Claude Code). Cambialo si tu CLI usa otro archivo
-   de versión.
+   de versión. Si publicás por marketplace, el hook también sincroniza
+   `.claude-plugin/marketplace.json` (cuando existe): bumpea `metadata.version` y la
+   entry cuyo `name` matchee el del plugin. Sin esto, el marketplace queda atrasado y
+   `/plugin install` saltea el update por "misma versión".
 4. Asegurate de que `setup.sh` instale el hook (incluye `install_hook "post-commit"`).
 5. `chmod +x bin/dev/git-hooks/post-commit && bash bin/dev/setup.sh`
 
@@ -65,6 +68,9 @@ cada tipo de bump — copialos y adaptá el path del manifiesto.
 
 ## Changelog
 
+- **1.2.0** — el hook sincroniza `marketplace.json` además de `plugin.json` (bumpea
+  `metadata.version` y la entry del plugin por `name`). Evita el drift que dejaba el
+  marketplace atrasado respecto del manifiesto.
 - **1.1.0** — guard de recursión con sentinel file (`--no-verify` no saltea
   post-commit; el amend re-disparaba y bumpeaba dos veces).
 - **1.0.0** — versión inicial migrada desde `todo-plugin`. Usa `post-commit` con

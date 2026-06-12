@@ -39,8 +39,10 @@ Regla de decisión rápida:
 
 ## Modo plugin
 
-Este repo también es un plugin instalable (`.claude-plugin/plugin.json`). Instalado en
-otro proyecto, expone las skills `plugin-dev` (router), `plugin-audit`, `plugin-feature`,
-`plugin-recommend`, `plugin-promote` y el comando `/plugin`, que leen el catálogo de
-`features/` localmente. El hook `SessionStart` sugiere una auditoría la primera vez en un
-proyecto de plugin. El propio repo se excluye con el sentinel `.catalog-root`.
+Este repo también es un plugin instalable (`.claude-plugin/plugin.json`), con manifiestos
+para Gemini CLI, OpenCode, Codex, Cursor y Copilot (dogfooding de `multi-cli-compat`).
+Instalado en otro proyecto, expone las skills `plugin-dev` (router), `plugin-audit`,
+`plugin-feature`, `plugin-recommend`, `plugin-promote`, `cli-plugin-template-health`
+(diagnóstico) y el comando `/plugin`, que leen el catálogo de `features/` localmente. El
+hook `SessionStart` sugiere una auditoría la primera vez en un proyecto de plugin. El
+propio repo se excluye con el sentinel `.catalog-root`.

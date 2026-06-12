@@ -83,6 +83,17 @@ bash bin/dev/setup.sh
 Corre los tests antes de cada commit y versiona automáticamente.
 ```
 
+## Tests
+
+Verificá que el README integrado tenga las secciones de **install**, **update +
+verificación de versión** y **versionado**, y que `<plugin>`/`<marketplace>` estén
+reemplazados por los valores reales (sin placeholders colgando). Como prueba de humo,
+seguí literalmente los comandos de la sección Instalación en una máquina limpia y
+confirmá que el plugin queda instalado y que `/<plugin>-health` reporta la versión
+publicada.
+
 ## Changelog
 
+- **1.1.0** — agregada la sección `## Tests` (verificación de la integración de los
+  docs), para cumplir el contrato de secciones requeridas del catálogo.
 - **1.0.0** — versión inicial, consolidada desde `todo-plugin`.

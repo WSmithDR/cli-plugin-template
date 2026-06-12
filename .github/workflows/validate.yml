@@ -21,7 +21,7 @@ jobs:
           fail=0
           while IFS= read -r f; do
             bash -n "$f" || { echo "✗ $f"; fail=1; }
-          done < <(find features \( -name '*.sh' -o -name 'pre-commit' -o -name 'post-commit' \))
+          done < <(find features bin \( -name '*.sh' -o -name 'pre-commit' -o -name 'post-commit' \))
           exit $fail
       - name: Validate JSON files parse
         run: |
@@ -29,7 +29,13 @@ jobs:
           while IFS= read -r f; do
             python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f" \
               || { echo "✗ $f"; fail=1; }
-          done < <(find features -name '*.json')
+          done < <(find features .claude-plugin .codex-plugin .cursor-plugin .copilot-plugin \
+                     -name '*.json' 2>/dev/null; \
+                   ls gemini-extension.json opencode.json 2>/dev/null)
           exit $fail
       - name: Run meta-plugin hook tests
         run: bash bin/test-hooks.sh
+      - name: Run catalog-gap audit tests
+        run: bash bin/test-catalog-gaps.sh
+      - name: Portability audit (block on CRITICAL)
+        run: python3 features/portability-audit/files/audit-portability.py . --quiet

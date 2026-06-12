@@ -1,7 +1,7 @@
 {
   "name": "cli-plugin-template",
-  "version": "1.1.0",
-  "description": "Meta-plugin de desarrollo de plugins multi-CLI. Cataloga 33 features reusables y los entrega on-demand (auditar, integrar, recomendar, promover) con un aviso proactivo en proyectos de plugin.",
+  "version": "1.2.0",
+  "description": "Meta-plugin de desarrollo de plugins multi-CLI. Cataloga features reusables y los entrega on-demand (auditar, integrar, recomendar, promover) con un aviso proactivo en proyectos de plugin.",
   "author": { "name": "WSmithDR", "url": "https://github.com/WSmithDR" },
   "repository": "https://github.com/WSmithDR/cli-plugin-template",
   "license": "MIT",
