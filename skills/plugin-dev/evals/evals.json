@@ -1,0 +1,104 @@
+{
+  "skill": "plugin-dev",
+  "description": "Evals del router del catálogo. Miden dos cosas: (1) que plugin-dev se dispare ante una intención de desarrollo de plugin, y (2) que enrute a la sub-skill correcta. Incluye casos ambiguos (debe preguntar) y negativos (no debe disparar).",
+  "evals": [
+    {
+      "id": "route-audit-revisar",
+      "prompt": "revisá si mi plugin está bien armado",
+      "expected_route": "plugin-audit",
+      "expectations": [
+        "Enruta a plugin-audit y no a otra sub-skill.",
+        "No empieza a integrar features ni a modificar archivos: el audit solo reporta."
+      ]
+    },
+    {
+      "id": "route-audit-que-falta",
+      "prompt": "¿qué features del catálogo me faltan?",
+      "expected_route": "plugin-audit",
+      "expectations": [
+        "Enruta a plugin-audit (gap de catálogo), no a plugin-recommend."
+      ]
+    },
+    {
+      "id": "route-feature-nombrado",
+      "prompt": "integrá el feature health-check en mi plugin",
+      "expected_route": "plugin-feature",
+      "expectations": [
+        "Enruta a plugin-feature porque el usuario nombra un feature concreto del catálogo.",
+        "No enruta a plugin-recommend (no hay que recomendar: el feature ya está elegido)."
+      ]
+    },
+    {
+      "id": "route-feature-quiero-feature",
+      "prompt": "quiero meter versionado automático y git-hooks en mi plugin",
+      "expected_route": "plugin-feature",
+      "expectations": [
+        "Enruta a plugin-feature: aunque dice 'quiero', nombra features concretos (versioning, git-hooks).",
+        "No enruta a plugin-recommend pese al verbo 'quiero'."
+      ]
+    },
+    {
+      "id": "route-recommend-sintoma",
+      "prompt": "cómo hago que mis skills se disparen de forma más confiable",
+      "expected_route": "plugin-recommend",
+      "expectations": [
+        "Enruta a plugin-recommend: es un síntoma/necesidad sin nombrar un feature.",
+        "No enruta a plugin-feature (no hay feature nombrado todavía)."
+      ]
+    },
+    {
+      "id": "route-recommend-necesidad",
+      "prompt": "necesito que mi plugin no pierda datos entre sesiones, ¿qué me conviene?",
+      "expected_route": "plugin-recommend",
+      "expectations": [
+        "Enruta a plugin-recommend y mapea la necesidad a uno o más features candidatos (p.ej. session-memory)."
+      ]
+    },
+    {
+      "id": "route-promote-sirve-para-todos",
+      "prompt": "esta mejora que hice sirve para cualquier plugin, subila al catálogo",
+      "expected_route": "plugin-promote",
+      "expectations": [
+        "Enruta a plugin-promote (loop inverso hacia el catálogo)."
+      ]
+    },
+    {
+      "id": "route-promote-promover",
+      "prompt": "quiero promover este patrón de hooks al catálogo para que lo herede el resto",
+      "expected_route": "plugin-promote",
+      "expectations": [
+        "Enruta a plugin-promote pese al verbo 'quiero' (la señal es 'promover al catálogo')."
+      ]
+    },
+    {
+      "id": "ambiguo-mejora-generica",
+      "prompt": "mejorá mi plugin",
+      "expected_route": "ask",
+      "expectations": [
+        "No enruta a ciegas: hace UNA pregunta corta de desambiguación (auditar / integrar / recomendar / promover) antes de elegir."
+      ]
+    },
+    {
+      "id": "negativo-bug-app",
+      "prompt": "arreglá este bug en mi función de login",
+      "expected_route": "none",
+      "expectations": [
+        "plugin-dev NO se activa: no es desarrollo de un plugin multi-CLI, es código de aplicación.",
+        "No enruta a ninguna sub-skill del catálogo."
+      ]
+    },
+    {
+      "id": "negativo-tests-modulo",
+      "prompt": "escribí tests para este módulo de pagos",
+      "expected_route": "none",
+      "expectations": [
+        "plugin-dev NO se activa: tarea de testing de app, fuera del dominio del catálogo."
+      ]
+    }
+  ],
+  "config": {
+    "runs_per_config": 3,
+    "train_test_split": 0.6,
+    "baseline": "sin la skill plugin-dev cargada"
+  }
+}

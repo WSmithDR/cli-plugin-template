@@ -12,12 +12,19 @@ del usuario; NO invoques las sub-skills directamente como respuesta — pasá po
 
 | Intención del usuario | Skill |
 |---|---|
-| "¿qué me falta?", "revisá mi plugin", "está bien armado?" | `plugin-audit` |
-| "integrá <feature>", "agregá versionado/hooks/health-check" | `plugin-feature` |
-| "quiero X", "cómo hago que mis skills se disparen", "necesito Y" | `plugin-recommend` |
-| "esto sirve para todos", "subí esto al catálogo" | `plugin-promote` |
+| chequear el plugin contra el catálogo: "¿qué me falta?", "revisá mi plugin", "está bien armado?" | `plugin-audit` |
+| nombra uno o más **features concretos** del catálogo (versionado, hooks, health-check…), con cualquier verbo ("integrá", "agregá", "quiero meter") | `plugin-feature` |
+| describe una **necesidad o síntoma sin nombrar un feature** ("que mis skills se disparen mejor", "no perder datos entre sesiones") | `plugin-recommend` |
+| menciona el **catálogo** o "para todos los plugins": "esto sirve para todos", "subí/promové esto al catálogo" | `plugin-promote` |
 
-Si la intención es ambigua, preguntá con una opción corta antes de enrutar.
+**Desempate:** el verbo no decide la ruta —decide *qué* se nombra. Si el mensaje nombra un
+feature concreto del catálogo → `plugin-feature`, aunque diga "quiero/necesito". Si solo
+describe una necesidad sin nombrar feature → `plugin-recommend`. Si menciona "al catálogo /
+para todos los plugins" → `plugin-promote`, aunque diga "quiero".
+
+Si la intención es ambigua (p.ej. "mejorá mi plugin"), preguntá con una opción corta antes
+de enrutar. Si no es desarrollo de un plugin (código de app, bugs, tests de un módulo), no
+enrutes: `plugin-dev` no aplica.
 
 ## Contexto
 

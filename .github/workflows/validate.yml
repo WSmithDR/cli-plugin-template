@@ -16,6 +16,8 @@ jobs:
           python-version: "3.12"
       - name: Validate catalog integrity
         run: python3 bin/validate-catalog.py
+      - name: Validate skill evals schema
+        run: python3 bin/validate-evals.py
       - name: Validate shell scripts parse
         run: |
           fail=0
@@ -37,5 +39,7 @@ jobs:
         run: bash bin/test-hooks.sh
       - name: Run catalog-gap audit tests
         run: bash bin/test-catalog-gaps.sh
+      - name: Run skill-evals validator tests
+        run: bash bin/test-evals.sh
       - name: Portability audit (block on CRITICAL)
         run: python3 features/portability-audit/files/audit-portability.py . --quiet

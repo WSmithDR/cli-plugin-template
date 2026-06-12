@@ -3,9 +3,10 @@
 # Instalado via: bash bin/dev/setup.sh
 #
 # Corre, en orden, y cancela el commit si algo falla:
-#   1. validate-catalog.py  — coherencia features/ ↔ CATALOG.md ↔ meta.yml
-#   2. test-hooks.sh        — tests del hook SessionStart
-#   3. audit de portabilidad — bloquea solo ante hallazgos CRITICAL (--quiet)
+#   1. validate-catalog.py  — coherencia features/ ↔ CATALOG.md ↔ meta.yml + sync de versión
+#   2. validate-evals.py    — schema de los evals de skills
+#   3. tests                — hook SessionStart, gap de catálogo, evals
+#   4. audit de portabilidad — bloquea solo ante hallazgos CRITICAL (--quiet)
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -16,8 +17,13 @@ fail() { echo ""; echo "✗ $1 — commit cancelado."; exit 1; }
 echo "→ Validando catálogo..."
 python3 bin/validate-catalog.py            || fail "catálogo inválido"
 
+echo "→ Validando evals..."
+python3 bin/validate-evals.py              || fail "evals inválidos"
+
 echo "→ Corriendo tests..."
-bash bin/test-hooks.sh                      || fail "tests fallaron"
+bash bin/test-hooks.sh                      || fail "tests de hooks fallaron"
+bash bin/test-catalog-gaps.sh              || fail "tests de gap de catálogo fallaron"
+bash bin/test-evals.sh                      || fail "tests de evals fallaron"
 
 echo "→ Auditando portabilidad..."
 python3 features/portability-audit/files/audit-portability.py . --quiet \
