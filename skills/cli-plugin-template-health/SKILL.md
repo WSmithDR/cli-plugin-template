@@ -55,17 +55,10 @@ for s in plugin-dev plugin-audit plugin-feature plugin-recommend plugin-promote 
 done
 ```
 - ✗ falta una skill → instalación incompleta; reinstalá. `plugin-dev` es el router de
-  entrada: sin él, `/plugin-dev` no enruta.
+  entrada: sin él, el ruteo del catálogo no funciona. (No hay comando slash: el router
+  es una skill que se invoca al expresar la intención.)
 
-## 3. Comando `/plugin-dev`
-
-```bash
-[ -f "${CLAUDE_PLUGIN_ROOT}/commands/plugin-dev.md" ] \
-  && echo "✓ comando /plugin-dev" || echo "✗ falta commands/plugin-dev.md"
-```
-- ✗ → sin el comando no hay menú de capacidades; reinstalá el plugin.
-
-## 4. Catálogo legible
+## 3. Catálogo legible
 
 El catálogo es el corazón del meta-plugin: `plugin-audit`/`plugin-feature` lo leen.
 Debe existir `CATALOG.md` y el validador debe pasar.
@@ -83,7 +76,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/validate-catalog.py" \
 - ✗ `validate-catalog` falla → reportá las líneas que imprimió (feature sin meta.yml,
   desync CATALOG↔features, etc.). Es un problema del catálogo, no del entorno.
 
-## 5. Hook SessionStart
+## 4. Hook SessionStart
 
 El hook debe estar registrado en `hooks/hooks.json` y su script debe existir.
 
@@ -117,7 +110,6 @@ cli-plugin-template — health check
 ✓ cli-plugin-template v1.1.0
 ✓ marketplace v1.1.0
 ✓ Skills: 8/8 (7 catálogo + health)
-✓ Comando /plugin-dev
 ✓ CATALOG.md + features/ + validate-catalog OK
 ✓ Hook SessionStart registrado + script presente
 

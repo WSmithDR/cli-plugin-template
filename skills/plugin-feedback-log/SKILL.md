@@ -28,8 +28,8 @@ otro proyecto.
    PLUGIN=$(python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" registry resolve "<skill_namespace>")
    ```
 3. **Si NO resuelve** (vacío / rc=1): el plugin no está en el allowlist. NO guardar.
-   Avisar: *"Ese plugin no está registrado. Corré /plugin register en su repo para que
-   cli-plugin-template administre su evolución."* y terminar.
+   Avisar: *"Ese plugin no está registrado. Decime 'registrá este plugin' en su repo
+   (skill plugin-register) para que cli-plugin-template administre su evolución."* y terminar.
 
 El registry es la baranda: el meta-plugin solo administra plugins dados de alta.
 

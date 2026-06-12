@@ -59,7 +59,7 @@ result=$(run_in_tmpdir '
     rm -rf "$CLI_PLUGIN_TEMPLATE_DATA_DIR"
     [ $rc -eq 0 ] && echo "$out" | grep -q "registry de evolución" && echo OK || echo "rc=$rc out=$out"
 ')
-[ "$result" = "OK" ] && _pass "plugin no registrado → ofrece /plugin-dev register" || _fail "no registrado → $result"
+[ "$result" = "OK" ] && _pass "plugin no registrado → ofrece registrarlo (plugin-register)" || _fail "no registrado → $result"
 
 # Caso 6: plugin ya registrado → aviso de auditoría SIN la oferta de registro
 result=$(run_in_tmpdir '
