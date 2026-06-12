@@ -50,6 +50,29 @@ result=$(run_in_tmpdir '
 ')
 [ "$result" = "OK" ] && _pass "segunda sesión → sin aviso" || _fail "segunda sesión → $result"
 
+# Caso 5: plugin con plugin.json, NO registrado → aviso incluye oferta de registro
+result=$(run_in_tmpdir '
+    export CLI_PLUGIN_TEMPLATE_DATA_DIR=$(mktemp -d)
+    git init -q; mkdir -p .claude-plugin
+    printf "{\"name\":\"testplug\"}" > .claude-plugin/plugin.json
+    out=$(bash '"$HOOK"' 2>&1); rc=$?
+    rm -rf "$CLI_PLUGIN_TEMPLATE_DATA_DIR"
+    [ $rc -eq 0 ] && echo "$out" | grep -q "registry de evolución" && echo OK || echo "rc=$rc out=$out"
+')
+[ "$result" = "OK" ] && _pass "plugin no registrado → ofrece /plugin register" || _fail "no registrado → $result"
+
+# Caso 6: plugin ya registrado → aviso de auditoría SIN la oferta de registro
+result=$(run_in_tmpdir '
+    export CLI_PLUGIN_TEMPLATE_DATA_DIR=$(mktemp -d)
+    git init -q; mkdir -p .claude-plugin
+    printf "{\"name\":\"testplug\"}" > .claude-plugin/plugin.json
+    python3 '"$SCRIPT_DIR/cpt"' registry register testplug "$PWD" >/dev/null
+    out=$(bash '"$HOOK"' 2>&1); rc=$?
+    rm -rf "$CLI_PLUGIN_TEMPLATE_DATA_DIR"
+    echo "$out" | grep -q "CLI-PLUGIN-TEMPLATE" && ! echo "$out" | grep -q "registry de evolución" && echo OK || echo "rc=$rc out=$out"
+')
+[ "$result" = "OK" ] && _pass "plugin registrado → sin oferta de registro" || _fail "registrado → $result"
+
 echo ""
 echo "Resultado: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ] && exit 0 || exit 1

@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+"""CLI unificado del meta-plugin (cli-plugin-template).
+
+Punto de entrada para TODAS las operaciones del store de evolución de plugins.
+Las skills y hooks lo invocan:
+    python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" registry register <name> <path>
+    python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" feedback save <plugin> <slug> -
+
+Grupos:
+    registry  register | list | resolve   (allowlist de plugins propios)
+    feedback  save | list                 (captura de fricción por plugin)
+"""
+import argparse
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+import gateway  # noqa: E402
+
+
+def _read_content(arg: str) -> str:
+    """'-' lee stdin (heredoc); cualquier otra cosa es contenido literal."""
+    return sys.stdin.read() if arg == "-" else arg
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(prog="cpt")
+    sub = parser.add_subparsers(dest="group", required=True)
+
+    # registry ────────────────────────────────────────────────
+    reg = sub.add_parser("registry", help="allowlist de plugins propios")
+    reg_sub = reg.add_subparsers(dest="op", required=True)
+
+    r_register = reg_sub.add_parser("register", help="dar de alta / actualizar un plugin")
+    r_register.add_argument("name")
+    r_register.add_argument("local_path")
+    r_register.add_argument("--remote", default="")
+    r_register.add_argument("--manifest", default=".claude-plugin/plugin.json")
+    r_register.add_argument("--namespace", action="append", dest="namespaces",
+                            help="skill namespace del plugin (repetible); default = name")
+
+    reg_sub.add_parser("list", help="listar plugins registrados")
+
+    r_resolve = reg_sub.add_parser("resolve", help="skill namespace → name del plugin")
+    r_resolve.add_argument("skill_namespace")
+
+    # feedback ─────────────────────────────────────────────────
+    fb = sub.add_parser("feedback", help="captura de fricción por plugin")
+    fb_sub = fb.add_subparsers(dest="op", required=True)
+
+    f_save = fb_sub.add_parser("save", help="guardar un feedback")
+    f_save.add_argument("plugin")
+    f_save.add_argument("slug")
+    f_save.add_argument("content", nargs="?", default="-",
+                        help="'-' (default) lee stdin; o contenido literal")
+
+    f_list = fb_sub.add_parser("list", help="listar feedbacks")
+    f_list.add_argument("--plugin", default=None)
+    f_list.add_argument("--pending", action="store_true")
+
+    ns = parser.parse_args()
+
+    if ns.group == "registry":
+        if ns.op == "register":
+            entry = gateway.registry_register(
+                ns.name, ns.local_path, remote=ns.remote,
+                manifest=ns.manifest, skill_namespaces=ns.namespaces)
+            print(json.dumps(entry, ensure_ascii=False))
+        elif ns.op == "list":
+            print(json.dumps(gateway.registry_list(), ensure_ascii=False, indent=2))
+        elif ns.op == "resolve":
+            out = gateway.registry_resolve_namespace(ns.skill_namespace)
+            print(out if out is not None else "", end="")
+            if out is None:
+                return 1
+
+    elif ns.group == "feedback":
+        if ns.op == "save":
+            print(gateway.feedback_save(ns.plugin, ns.slug, _read_content(ns.content)))
+        elif ns.op == "list":
+            print("\n".join(gateway.feedback_list(plugin=ns.plugin, pending_only=ns.pending)))
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
