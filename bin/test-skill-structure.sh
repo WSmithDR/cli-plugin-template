@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AUDIT="$SCRIPT_DIR/audit-skill-structure.py"
+AUDIT="$SCRIPT_DIR/../features/skill-structure-audit/files/audit-skill-structure.py"
 PASS=0; FAIL=0
 _pass() { echo "  PASS: $1"; PASS=$((PASS + 1)); }
 _fail() { echo "  FAIL: $1"; FAIL=$((FAIL + 1)); }

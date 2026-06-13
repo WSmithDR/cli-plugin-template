@@ -29,8 +29,8 @@ bash bin/test-post-commit.sh               || fail "tests de post-commit fallaro
 bash bin/test-skill-structure.sh           || fail "tests de audit-skill-structure fallaron"
 
 echo "→ Auditando estructura de skills..."
-python3 bin/audit-skill-structure.py --threshold ERROR \
-    || fail "violaciones ESTRUCTURALES en skills/ (scripts sueltos en raíz)"
+python3 features/skill-structure-audit/files/audit-skill-structure.py --threshold ERROR \
+    || fail "violaciones ESTRUCTURALES en skills/ (scripts sueltos / bloques embebidos)"
 
 echo "→ Auditando portabilidad..."
 python3 features/portability-audit/files/audit-portability.py . --quiet \

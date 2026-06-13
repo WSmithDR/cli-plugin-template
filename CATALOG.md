@@ -72,6 +72,7 @@ Para el flujo de uso completo ver [AGENTS.md](AGENTS.md).
 |---|---|---|---|
 | [`strict-tdd`](features/strict-tdd/README.md) | 1.0.0 | todos | TDD con evidencia verificable: tabla RED/GREEN/TRIANGULATE/SAFETY-NET + auditoría de assertions (sin tautologías ni mocks vacíos) |
 | [`portability-audit`](features/portability-audit/README.md) | 1.0.0 | todos | Escáner determinista de portabilidad/agnosticismo: rutas absolutas, refs a dirs del plugin sin `${CLAUDE_PLUGIN_ROOT}`, paths `.claude/`, `model: inherit`, secretos e intérpretes no portables. Por severidad, usable en CI |
+| [`skill-structure-audit`](features/skill-structure-audit/README.md) | 1.0.0 | todos | Escáner determinista de estructura de skills: scripts sueltos en la raíz de la skill y bloques de script (>2 líneas) embebidos en SKILL.md. Fuerza modularización (lógica→`scripts/`, plantillas→`references/`). Por severidad, usable en CI |
 | [`dual-review`](features/dual-review/README.md) | 1.0.0 | claude-code | Revisión adversarial con dos jueces ciegos en paralelo, cruce confirmado/sospechoso, fix y re-juicio |
 | [`change-sizing`](features/change-sizing/README.md) | 1.0.0 | todos | Commits atómicos + presupuesto de líneas + PRs en cadena (stacked / feature-branch) para mantener todo revisable |
 | [`skill-evals`](features/skill-evals/README.md) | 1.0.0 | claude-code | Testear skills con evals + análisis de varianza, y optimizar el `description` para mejorar el triggering |

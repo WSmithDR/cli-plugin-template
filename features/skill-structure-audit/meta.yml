@@ -1,0 +1,12 @@
+name: skill-structure-audit
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: [bundled-scripts]
+description: >
+  Escáner determinista que hace cumplir la modularización de skills: SKILL.md
+  contiene solo instrucciones, no código. Detecta scripts/configs sueltos en la
+  raíz de la skill y bloques de script (bash/python/sh/...) de más de 2 líneas
+  embebidos en SKILL.md. La lógica va en scripts/, las plantillas de datos en
+  references/. Reporta por severidad (ERROR/WARNING); usable en CI.
+provides:
+  - bin/audit-skill-structure.py (script)

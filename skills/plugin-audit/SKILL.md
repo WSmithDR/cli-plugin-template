@@ -1,16 +1,18 @@
 ---
 name: plugin-audit
-description: Use when you want to check the current plugin project against the cli-plugin-template catalog — which catalog features are missing or look outdated, AND whether the plugin has portability/agnosticism problems (absolute paths, unrooted refs, CLI coupling, hardcoded secrets). Reports gaps and hygiene findings with how to fix each.
+description: Use when you want to check the current plugin project against the cli-plugin-template catalog — which catalog features are missing or look outdated, whether the plugin has portability/agnosticism problems (absolute paths, unrooted refs, CLI coupling, hardcoded secrets), AND whether its skills are modularized (no scripts loose in the skill root, no script blocks embedded in SKILL.md). Reports gaps and hygiene findings with how to fix each.
 ---
 
 # plugin-audit — auditar el plugin
 
-Auditá el proyecto actual (un plugin) en **dos dimensiones** y reportá. No modifiques
+Auditá el proyecto actual (un plugin) en **tres dimensiones** y reportá. No modifiques
 nada: solo reportás.
 
 1. **Gap de catálogo** — qué features del catálogo faltan o están atrasados.
 2. **Higiene de portabilidad y agnosticismo** — qué ata el plugin a una máquina o a un
    solo CLI (escalabilidad).
+3. **Estructura de skills** — si las skills están modularizadas (sin scripts sueltos en
+   la raíz ni bloques de script embebidos en `SKILL.md`).
 
 Empezá confirmando que la cwd es un proyecto de plugin: existe `.claude-plugin/plugin.json`.
 Si no, decilo y salí.
@@ -82,6 +84,36 @@ Para cada hallazgo, mapeá al feature que lo resuelve cuando aplique:
 > El script sale con exit 1 si hay algún CRITICAL — si el plugin tiene `git-hooks`,
 > sugerí engancharlo en pre-commit/CI para que no vuelva a colarse.
 
+## Parte C — Estructura de skills (modularización)
+
+Lo determinista lo hace un script bundled (principio `bundled-scripts`): no enumeres
+las skills ni leas cada `SKILL.md` a mano. Corré el escáner sobre la cwd:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/features/skill-structure-audit/files/audit-skill-structure.py"
+```
+
+La regla: `SKILL.md` contiene solo instrucciones. La lógica va en `scripts/`, las
+plantillas de datos en `references/`. Detecta, por severidad:
+
+| Severidad | Tipo | Qué significa |
+|---|---|---|
+| ERROR | `script suelto` | `.sh`/`.py`/`.js`… en la raíz de la skill → debe ir a `scripts/` |
+| ERROR | `bloque embebido` | bloque de script de **>2 líneas** en `SKILL.md` → lógica a `scripts/`, plantilla a `references/` |
+| ERROR | `falta SKILL.md` | el dir de la skill no tiene `SKILL.md` |
+| WARNING | `archivo suelto` | `.md`/`.json`/`.yml`… en la raíz de la skill → a `references/` o `files/` |
+
+Interpretá la salida (no la repitas cruda):
+- **ERROR** = viola la modularización. Bloquea el orden del plugin; mapeá al fix de la tabla.
+- **WARNING** = deuda de orden (archivos sueltos que conviene reubicar).
+
+Para cada hallazgo, el fix es mover el contenido al subdir correcto y dejar en `SKILL.md`
+solo la invocación (≤2 líneas). El feature que lo resuelve y lo hace cumplir en CI es
+`skill-structure-audit`.
+
+> El script soporta `--threshold ERROR` (sale 1 solo ante ERROR) — si el plugin tiene
+> `git-hooks`, sugerí engancharlo en pre-commit para que no vuelva a colarse.
+
 ## Salida sugerida
 
 ```
@@ -98,5 +130,8 @@ B) Portabilidad y agnosticismo  (CRITICAL: 1  WARNING: 2  INFO: 0)
   ⚠ unrooted-ref    skills/x/SKILL.md:8  cat features/…  → prefijar ${CLAUDE_PLUGIN_ROOT}/
   ⚠ model-inherit   agents/y.md:3                       → omitir `model:`  (multi-cli-compat)
 
-Sugerencia: primero el CRITICAL (no es portable), después versioning (alto valor, bajo costo).
+C) Estructura de skills  (ERROR: 1  WARNING: 0)
+  ✗ bloque embebido  skills/x/SKILL.md:24  bash de 19 líneas  → mover a scripts/
+
+Sugerencia: primero el CRITICAL (no es portable), después el bloque embebido (skill-structure-audit), después versioning.
 ```
