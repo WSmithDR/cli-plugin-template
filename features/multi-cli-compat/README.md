@@ -109,6 +109,37 @@ Cómo llega el contenido inicial (regla de "usar skills", tabla de tools) a cada
 - **Codex**: un script de sync copia `skills/` + `.codex-plugin/` al fork de plugins de Codex.
 - **Claude Code / Cursor / Copilot**: leen `CLAUDE.md`/`AGENTS.md` y auto-descubren skills.
 
+### ⚠️ Peligro: el hook OpenCode es GLOBAL
+
+A diferencia de `CLAUDE.md` o `GEMINI.md` (que se cargan solo cuando trabajás en el repo que
+los contiene), el plugin JS de OpenCode se ejecuta en **toda sesión** donde esté registrado en
+`opencode.json`. Si inyectás el bootstrap sin guard, contaminás sesiones de proyectos ajenos.
+
+**Solución: sentinel guard.** El plugin debe verificar que la sesión actual corresponde a su
+propio proyecto antes de inyectar:
+
+```js
+// Ej: el template usa .catalog-root como sentinel
+const SENTINEL = join(REPO_ROOT, ".catalog-root");
+
+function isInOwnRepo() {
+  try {
+    return existsSync(SENTINEL) && process.cwd().startsWith(REPO_ROOT);
+  } catch {
+    return false;
+  }
+}
+
+export default async () => {
+  if (!isInOwnRepo()) return {};  // no-op en proyectos ajenos
+  // ... resto del plugin
+};
+```
+
+**Regla:** todo plugin OpenCode con `messages.transform` necesita un sentinel file que
+identifique el proyecto dueño. El sentinel debe ser un archivo committed (no `.gitignore`) —
+un empty marker, un `package.json` con `name` específico, o un archivo `.xxxx-root` único.
+
 ## Cómo se invoca una skill en cada CLI
 
 | CLI | Tool de skill |
@@ -141,6 +172,7 @@ skills/MCP aparecen y que las instrucciones se cargan en ambos.
 
 ## Changelog
 
+- **2.2.0** — documentado el peligro de scoping global del hook OpenCode + patrón sentinel
 - **2.1.0** — agregada la guía "Cuál elegir" (regla de decisión A/B/C y por qué B es el
   mejor default).
 - **2.0.0** — reescritura completa: tres estrategias, matriz de manifiestos por CLI,

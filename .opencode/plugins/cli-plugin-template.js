@@ -1,18 +1,27 @@
 // Plugin de OpenCode para cli-plugin-template.
 //
-// Este plugin NO expone un MCP server: es 100% basado en skills (estrategia B).
-// OpenCode no auto-descubre AGENTS.md ni el skill de entrada, así que inyectamos
-// el bootstrap (la regla de "usar las skills del catálogo" + el path al entry skill
-// y al tool-mapping) en el primer mensaje de cada sesión.
+// GUARD: solo se activa si el CWD está dentro del repo de cli-plugin-template
+// (detectado via sentinel .catalog-root). Si se registra en otro proyecto (ej:
+// ankify), este plugin es no-op — evita inyectar bootstrap en sesiones ajenas.
 //
+// OpenCode no auto-descubre AGENTS.md ni el skill de entrada, así que inyectamos
+// el bootstrap en el primer mensaje de cada sesión.
 // El contenido se lee de AGENTS.md (estándar de facto) para no duplicar la guía.
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Raíz del repo, resuelta relativa a este archivo (.opencode/plugins/ → repo root).
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const SENTINEL = join(REPO_ROOT, ".catalog-root");
+
+function isInOwnRepo() {
+  try {
+    return existsSync(SENTINEL) && process.cwd().startsWith(REPO_ROOT);
+  } catch {
+    return false;
+  }
+}
 
 function loadBootstrap() {
   let agents = "";
@@ -38,6 +47,10 @@ function loadBootstrap() {
 }
 
 export const CliPluginTemplate = async () => {
+  if (!isInOwnRepo()) {
+    return {};
+  }
+
   const bootstrap = loadBootstrap();
   return {
     "experimental.chat.messages.transform": async ({ messages }) => {
