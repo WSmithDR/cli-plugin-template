@@ -58,6 +58,24 @@ update por "misma versión":
 En una sesión activa, aplicá sin reiniciar con `/reload-plugins`. Para verificar la versión
 instalada, corré `/cli-plugin-template-health`.
 
+### OpenCode (alternativa)
+
+Si usás **OpenCode** como CLI, el catálogo se instala como plugin global via script:
+
+```bash
+bash bin/install-opencode.sh
+```
+
+Esto agrega a `~/.config/opencode/opencode.json`:
+- El JS plugin del catálogo (Stop hook para feedbacks pendientes en cualquier proyecto)
+- Las skills del catálogo (disponibles globalmente)
+
+Para removerlo:
+
+```bash
+bash bin/install-opencode.sh --uninstall
+```
+
 ### Capacidades
 
 Una vez instalado en un proyecto de plugin:

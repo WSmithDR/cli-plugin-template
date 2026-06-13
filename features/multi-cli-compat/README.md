@@ -224,6 +224,8 @@ export default async () => ({
 4. Si tus skills nombran tools, copiá y mantené `files/tool-mapping.md`.
 5. Omití `model:` en el frontmatter de agents.
 6. Para CLIs sin marketplace, distribuí con `files/install-skills.sh` (symlinks).
+7. Para **OpenCode** como plugin global, ofrecé un `install-opencode.sh` que registre
+   el JS plugin + skills paths en `~/.config/opencode/opencode.json`.
 
 ## Evolución: fuente única de verdad (cli-config.yaml + generador)
 
@@ -236,9 +238,13 @@ YAML y un generador que produce todos los formatos nativos.
 cli-config.yaml              # fuente única de verdad
   ↓
 generate-cli-configs.py      # generador (Python stdlib + PyYAML)
-  ├── .mcp.json              # Claude Code
-  ├── opencode.json           # OpenCode
-  └── gemini-extension.json   # Gemini CLI
+  ├── .claude-plugin/plugin.json       # Claude Code
+  ├── .claude-plugin/marketplace.json   # Marketplace
+  ├── .codex-plugin/plugin.json         # Codex CLI
+  ├── .copilot-plugin/plugin.json       # GitHub Copilot
+  ├── .cursor-plugin/plugin.json        # Cursor
+  ├── opencode.json                     # OpenCode
+  └── gemini-extension.json             # Gemini CLI
 ```
 
 ### cli-config.yaml
@@ -314,8 +320,10 @@ es fundamentalmente distinto y no se puede unificar en YAML.
 
 ### Referencia real
 
-Ver `cli-config.yaml` + `bin/dev/generate-cli-configs.py` en [ankify](https://github.com/WSmithDR/ankify)
-— implementación con MCP servers de anki, github y obsidian para 3 CLIs.
+- **cli-plugin-template** (este repo): `cli-config.yaml` + `bin/dev/generate-cli-configs.py`
+  — implementación canónica, se come su propio dogfood.
+- [ankify](https://github.com/WSmithDR/ankify): implementación con MCP servers de anki, github
+  y obsidian para 3 CLIs.
 
 ## Tests
 
@@ -326,10 +334,16 @@ skills/MCP aparecen y que las instrucciones se cargan en ambos.
 
 - **`model: inherit`** rompe OpenCode/otros → omitir el campo.
 - **`hooks/hooks.json`** lo honra solo Claude Code; no asumas hooks en otros CLIs.
+- **Stop hook** → Claude Code usa `hooks/hooks.json:Stop`; OpenCode equivalente via
+  `event("global.disposed")` en el JS plugin. Ver `features/multi-cli-compat/files/opencode-plugin.js`.
+- **OpenCode global install** → el catálogo incluye `bin/install-opencode.sh` que registra
+  plugin JS + skills paths en `~/.config/opencode/opencode.json`.
 - Copiar solo `.mcp.json` NO te da multi-CLI si tus skills nombran tools — necesitás el mapping.
 
 ## Changelog
 
+- **2.4.0** — generador expandido a 7 manifests (todos los CLIs + marketplace). Stop hook
+  OpenCode via `event("global.disposed")`. OpenCode global install: `bin/install-opencode.sh`.
 - **2.3.0** — mapa detallado de hooks Claude Code ↔ OpenCode (limitaciones: PreToolUse y Stop
   no existen en OpenCode; soluciones documentadas con `tool.execute.after` + `messages.transform`).
   Documentado que OpenCode plugin debe ser `.js` (no `.ts`) y requiere `"type": "module"` en
