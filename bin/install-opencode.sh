@@ -44,18 +44,25 @@ else:
     else:
         print(f"  - plugin ya registrado")
 
-# Skills paths
-skills = cfg.setdefault("skills", [])
+# Skills paths (OpenCode schema: {"paths": [...]}, no un array plano)
+skills_obj = cfg.setdefault("skills", {"paths": []})
+if not isinstance(skills_obj, dict) or "paths" not in skills_obj:
+    # Migrar de array legacy a objeto
+    old = skills_obj if isinstance(skills_obj, list) else []
+    skills_obj = {"paths": old}
+    cfg["skills"] = skills_obj
+
+paths = skills_obj["paths"]
 if is_uninstall:
-    if skills_abs in skills:
-        cfg["skills"] = [s for s in skills if s != skills_abs]
+    if skills_abs in paths:
+        cfg["skills"]["paths"] = [p for p in paths if p != skills_abs]
         changed = True
         print(f"  ✓ skills removidas: {skills_abs}")
     else:
         print(f"  - skills no estaban registradas")
 else:
-    if skills_abs not in skills:
-        skills.append(skills_abs)
+    if skills_abs not in paths:
+        paths.append(skills_abs)
         changed = True
         print(f"  ✓ skills agregadas: {skills_abs}")
     else:
