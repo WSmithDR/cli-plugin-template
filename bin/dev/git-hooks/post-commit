@@ -44,8 +44,9 @@ python3 bin/bump-version.py "$PART" | grep -E "versión →" || true
 
 # Stagear los manifiestos que el bump pudo tocar (los que existan).
 for f in .claude-plugin/plugin.json .claude-plugin/marketplace.json \
-         gemini-extension.json .codex-plugin/plugin.json \
-         .cursor-plugin/plugin.json .copilot-plugin/plugin.json; do
+         gemini-extension.json opencode.json .codex-plugin/plugin.json \
+         .cursor-plugin/plugin.json .copilot-plugin/plugin.json \
+         cli-config.yaml; do
     [ -f "$f" ] && git add "$f"
 done
 

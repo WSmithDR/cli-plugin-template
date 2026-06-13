@@ -29,10 +29,16 @@ import re
 import sys
 from pathlib import Path
 
+try:
+    import yaml
+except ImportError:
+    yaml = None  # cli-config.yaml update skipped if missing
+
 SEMVER = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 ROOT = Path(__file__).resolve().parent.parent
 PLUGIN_REL = ".claude-plugin/plugin.json"
 MARKETPLACE_REL = ".claude-plugin/marketplace.json"
+CONFIG_YAML = "cli-config.yaml"
 # Manifiestos con `version` top-level (además de plugin.json).
 TOPLEVEL_MANIFESTS = [
     "gemini-extension.json",
@@ -66,6 +72,31 @@ def bump(version: str, part: str) -> str:
     return f"{major}.{minor}.{patch}"
 
 
+def _yaml_version(root: Path) -> str | None:
+    """Lee plugin.version del YAML o devuelve None."""
+    p = root / CONFIG_YAML
+    if not p.exists() or yaml is None:
+        return None
+    cfg = yaml.safe_load(p.read_text(encoding="utf-8"))
+    return (cfg or {}).get("plugin", {}).get("version")
+
+
+def _yaml_set_version(root: Path, new: str) -> bool:
+    """Escribe `new` en plugin.version del YAML. Retorna True si cambió."""
+    p = root / CONFIG_YAML
+    if not p.exists() or yaml is None:
+        return False
+    cfg = yaml.safe_load(p.read_text(encoding="utf-8"))
+    if not cfg:
+        return False
+    current = cfg.setdefault("plugin", {}).get("version")
+    if current == new:
+        return False
+    cfg["plugin"]["version"] = new
+    p.write_text(yaml.dump(cfg, default_flow_style=False, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    return True
+
+
 def collect(root: Path) -> list[tuple[str, str | None]]:
     """Devuelve [(rel, version-actual-o-None)] de todos los manifiestos presentes."""
     out: list[tuple[str, str | None]] = []
@@ -80,6 +111,9 @@ def collect(root: Path) -> list[tuple[str, str | None]]:
         for pl in m.get("plugins") or []:
             if isinstance(pl, dict):
                 out.append((f"{MARKETPLACE_REL} ({pl.get('name')})", pl.get("version")))
+    yv = _yaml_version(root)
+    if yv is not None:
+        out.append((CONFIG_YAML, yv))
     return out
 
 
@@ -112,6 +146,8 @@ def apply_version(root: Path, new: str) -> list[str]:
         if changed:
             dump(mkt, m)
             touched.append(MARKETPLACE_REL)
+    if _yaml_set_version(root, new):
+        touched.append(CONFIG_YAML)
     return touched
 
 

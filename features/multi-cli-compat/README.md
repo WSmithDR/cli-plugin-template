@@ -369,6 +369,53 @@ es fundamentalmente distinto y no se puede unificar en YAML.
 - [ankify](https://github.com/WSmithDR/ankify): implementación con MCP servers de anki, github
   y obsidian para 3 CLIs.
 
+## Pipeline de sincronización (evita version drift)
+
+Los 7 manifiestos + `cli-config.yaml` comparten la misma versión. Si se desincronizan,
+`/plugin install` saltea updates por "misma versión". El pipeline de dos niveles mantiene
+todo sincronizado:
+
+### Nivel 1 — Post-commit hook (local)
+
+El hook `post-commit` (ver feature `versioning`) determina el bump type por conventional
+commit (`feat:` → minor, `fix:` → patch, `BREAKING` → major) y delega en
+`bump-version.py`, que toca **todos** los manifiestos + YAML antes de amendar el commit.
+
+```
+commit "feat: add widget"
+  → post-commit detecta "minor"
+  → bump-version.py minor
+    → plugin.json: 1.0.0 → 1.1.0
+    → marketplace.json: 1.0.0 → 1.1.0
+    → opencode.json: 1.0.0 → 1.1.0
+    → gemini-extension.json: 1.0.0 → 1.1.0
+    → codex/cursor/copilot: 1.0.0 → 1.1.0
+    → cli-config.yaml: 1.0.0 → 1.1.0
+  → amenda el commit (bump incluido en el mismo commit)
+```
+
+### Nivel 2 — GitHub Action `sync-manifests.yml` (remoto)
+
+Al pushear a `main`, la Action regenera los manifiestos desde `cli-config.yaml`
+(garantizando que reflejen el YAML actual) y luego bumpea versión por el mismo
+conventional commit, commitendo todo con `[skip ci]` para evitar loops.
+
+```
+push a main
+  → generate-cli-configs.py  (sincroniza manifests con YAML)
+  → bump-version.py <type>   (avanza versión en todos + YAML)
+  → commit "chore: auto-sync manifests [skip ci]"
+```
+
+### Beneficios
+
+| Problema anterior | Solución |
+|---|---|
+| Post-commit solo tocaba plugin.json + marketplace.json; los otros 5 manifests se atrasaban | `bump-version.py` toca TODOS los manifests + YAML |
+| Editar YAML y commit → la version del YAML se escribía en manifests viejos, post-commit bump re-escribía plugin.json con la nueva, pero el YAML quedaba atrasado | `bump-version.py` escribe el nuevo version también en `cli-config.yaml` |
+| Post-commit y Action podían desincronizarse | Ambos usan `bump-version.py` como única fuente de version sync |
+| Si editás YAML localmente y pusheás, los manifests locales tienen version vieja | La Action regenera desde YAML + bumpea, todo en un commit |
+
 ## Tests
 
 Abrí el proyecto en al menos dos CLIs (ej. Claude Code y OpenCode) y confirmá que las
@@ -386,6 +433,10 @@ skills/MCP aparecen y que las instrucciones se cargan en ambos.
 
 ## Changelog
 
+- **2.6.0** — pipeline de sincronización: `bump-version.py` ahora toca `cli-config.yaml`
+  y todos los 7 manifests (no solo plugin.json + marketplace.json). Post-commit hook
+  delega en `bump-version.py`. Nueva GitHub Action `sync-manifests.yml` que regenera
+  desde YAML + bumpea en cada push a main.
 - **2.5.0** — schema `opencode.json`: skills como objeto `{paths: [...]}`, no array.
   Dos estrategias de integración OpenCode (per-repo vs global). Template corregido en
   `files/opencode.json`. Gotcha: `.ts` → `.js` en plugins OpenCode.

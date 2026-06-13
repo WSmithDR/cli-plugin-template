@@ -1,57 +1,41 @@
-# cli-config.yaml — fuente única de verdad para configs multi-CLI.
-# Regenerar tras editar:
-#   python3 bin/dev/generate-cli-configs.py
-# Genera: .claude-plugin/{plugin,marketplace}.json, .codex-plugin/plugin.json,
-#         .copilot-plugin/plugin.json, .cursor-plugin/plugin.json,
-#         gemini-extension.json, opencode.json
-#
-# Para downstream consumers: copy-paste este archivo a tu repo y personalizá.
-
 plugin:
-  name: "cli-plugin-template"
-  version: "1.9.1"
-  description: >-
-    Meta-plugin de desarrollo de plugins multi-CLI. Cataloga features
-    reusables y los entrega on-demand (auditar, integrar, recomendar,
-    promover) con un aviso proactivo en proyectos de plugin.
+  name: cli-plugin-template
+  version: 1.10.0
+  description: Meta-plugin de desarrollo de plugins multi-CLI. Cataloga features reusables
+    y los entrega on-demand (auditar, integrar, recomendar, promover) con un aviso
+    proactivo en proyectos de plugin.
   author:
-    name: "WSmithDR"
-    url: "https://github.com/WSmithDR"
-  repository: "https://github.com/WSmithDR/cli-plugin-template"
-  license: "MIT"
+    name: WSmithDR
+    url: https://github.com/WSmithDR
+  repository: https://github.com/WSmithDR/cli-plugin-template
+  license: MIT
   keywords:
-    - "plugin-development"
-    - "cli-plugin"
-    - "feature-catalog"
-    - "claude-code"
-    - "multi-cli"
-  skills: "./skills/"
-
+  - plugin-development
+  - cli-plugin
+  - feature-catalog
+  - claude-code
+  - multi-cli
+  skills: ./skills/
 opencode:
   skills:
     paths:
-      - "./skills/"
+    - ./skills/
   plugins:
-    - "./.opencode/plugins/cli-plugin-template.js"
-
+  - ./.opencode/plugins/cli-plugin-template.js
 gemini_extension:
-  name: "cli-plugin-template"
-  description: >-
-    Meta-plugin de desarrollo de plugins multi-CLI. Cataloga features
-    reusables y los entrega on-demand (auditar, integrar, recomendar,
-    promover) vía skills.
-  contextFileName: "GEMINI.md"
-
+  name: cli-plugin-template
+  description: Meta-plugin de desarrollo de plugins multi-CLI. Cataloga features reusables
+    y los entrega on-demand (auditar, integrar, recomendar, promover) vía skills.
+  contextFileName: GEMINI.md
 marketplace:
   owner:
-    name: "WSmithDR"
-    url: "https://github.com/WSmithDR"
+    name: WSmithDR
+    url: https://github.com/WSmithDR
   metadata:
-    description: >-
-      Catálogo vivo de features reusables para plugins multi-CLI,
-      instalable como meta-plugin de desarrollo.
+    description: Catálogo vivo de features reusables para plugins multi-CLI, instalable
+      como meta-plugin de desarrollo.
   plugins:
-    - source: "./"
-      category: "developer-tools"
-      author:
-        name: "WSmithDR"
+  - source: ./
+    category: developer-tools
+    author:
+      name: WSmithDR

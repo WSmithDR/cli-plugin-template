@@ -1,8 +1,9 @@
 #!/bin/bash
-# post-commit: auto-bump version en .claude-plugin/plugin.json y amenda el commit.
+# post-commit: auto-bump version en TODOS los manifiestos y amenda el commit.
 #
-# Corre después del commit → lee el mensaje, calcula el bump, amenda con --no-verify.
-# El --no-verify es seguro porque los tests ya corrieron en pre-commit.
+# Corre después del commit → lee el mensaje, calcula el bump → delega a
+# bump-version.py (que toca plugin.json, marketplace.json, cli-config.yaml,
+# opencode.json, gemini-extension.json, codex/cursor/copilot) → amenda.
 #
 # feat:              → minor
 # fix|chore|docs|... → patch
@@ -12,11 +13,9 @@ set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 PLUGIN_JSON="$REPO_ROOT/.claude-plugin/plugin.json"
-MARKETPLACE_JSON="$REPO_ROOT/.claude-plugin/marketplace.json"
 SENTINEL="$REPO_ROOT/.git/.version-bump-in-progress"
 
 # Recursion guard: el `git commit --amend` de más abajo re-dispara post-commit
-# (--no-verify NO saltea post-commit). El sentinel frena la segunda invocación.
 if [ -f "$SENTINEL" ]; then
     rm -f "$SENTINEL"
     exit 0
@@ -40,71 +39,39 @@ else
     BUMP="patch"
 fi
 
-# Leer y validar versión actual
-CURRENT=$(PLUGIN_JSON="$PLUGIN_JSON" python3 -c '
-import json, os, re, sys
-path = os.environ["PLUGIN_JSON"]
-v = json.load(open(path))["version"]
-if not re.fullmatch(r"\d+\.\d+\.\d+", v):
-    sys.exit("version inválida en plugin.json: " + v)
+# Leer versión actual
+CURRENT=$(python3 -c "
+import json, os, re
+v = json.load(open('$PLUGIN_JSON'))['version']
+if not re.fullmatch(r'\d+\.\d+\.\d+', v):
+    exit('version inválida: ' + v)
 print(v)
-')
+")
 
-# Calcular nueva versión
-NEW=$(CURRENT="$CURRENT" BUMP="$BUMP" python3 -c '
-import os
-major, minor, patch = map(int, os.environ["CURRENT"].split("."))
-bump = os.environ["BUMP"]
-if bump == "major":
-    major += 1; minor = 0; patch = 0
-elif bump == "minor":
-    minor += 1; patch = 0
-else:
-    patch += 1
-print(f"{major}.{minor}.{patch}")
-')
+# Delegar a bump-version.py — toca TODOS los manifiestos + cli-config.yaml
+python3 "$REPO_ROOT/bin/bump-version.py" "$BUMP"
 
-# Escribir versión actualizada en plugin.json
-PLUGIN_JSON="$PLUGIN_JSON" NEW="$NEW" python3 -c '
+# Stagiar todo lo que bump-version.py tocó
+# Comenzar con plugin.json + marketplace.json + cli-config.yaml (lo mínimo conocido)
+# y agregar cualquier archivo adicional que cambiara
+git add "$PLUGIN_JSON" 2>/dev/null || true
+python3 -c "
 import json, os
-path = os.environ["PLUGIN_JSON"]
-new_version = os.environ["NEW"]
-with open(path) as f:
-    d = json.load(f)
-d["version"] = new_version
-with open(path, "w") as f:
-    json.dump(d, f, indent=2)
-    f.write("\n")
-'
+p = '$PLUGIN_JSON'
+if os.path.exists(p):
+    mkt = os.path.join(os.path.dirname(p), 'marketplace.json')
+    if os.path.exists(mkt):
+        print(mkt)
+" | while read -r f; do git add "$f"; done
+git add "$REPO_ROOT/cli-config.yaml" 2>/dev/null || true
 
-git add "$PLUGIN_JSON"
-
-# Sincronizar marketplace.json si existe: la versión NO se debe versionar en dos
-# lugares a mano. Bumpea metadata.version y la entry del plugin que matchee el
-# name de plugin.json (o todas si no hay match). Sin esto, el marketplace queda
-# atrasado y `/plugin install` saltea el update por "misma versión".
-if [ -f "$MARKETPLACE_JSON" ]; then
-    PLUGIN_JSON="$PLUGIN_JSON" MARKETPLACE_JSON="$MARKETPLACE_JSON" NEW="$NEW" python3 -c '
-import json, os
-new = os.environ["NEW"]
-name = json.load(open(os.environ["PLUGIN_JSON"])).get("name")
-path = os.environ["MARKETPLACE_JSON"]
-with open(path) as f:
-    m = json.load(f)
-if isinstance(m.get("metadata"), dict):
-    m["metadata"]["version"] = new
-plugins = m.get("plugins") or []
-matched = [p for p in plugins if isinstance(p, dict) and p.get("name") == name]
-for p in (matched or [p for p in plugins if isinstance(p, dict)]):
-    p["version"] = new
-with open(path, "w") as f:
-    json.dump(m, f, indent=2, ensure_ascii=False)
-    f.write("\n")
-'
-    git add "$MARKETPLACE_JSON"
-fi
+# Detectar otros manifiestos que bump-version.py pudo haber cambiado
+for f in opencode.json gemini-extension.json .codex-plugin/plugin.json \
+         .cursor-plugin/plugin.json .copilot-plugin/plugin.json; do
+    [ -f "$REPO_ROOT/$f" ] && git add "$REPO_ROOT/$f"
+done
 
 touch "$SENTINEL"
 git commit --amend --no-edit --no-verify
 rm -f "$SENTINEL"
-echo "  version: $CURRENT → $NEW ($BUMP)"
+echo "  version: $CURRENT → $(python3 -c "import json; print(json.load(open('$PLUGIN_JSON'))['version'])") ($BUMP)"
