@@ -51,6 +51,7 @@ El registry es la baranda: el meta-plugin solo administra plugins dados de alta.
 - `friccion` — algo fue más difícil de lo que debería, faltó algo
 - `escenario` — caso válido que el plugin no supo manejar
 - `preferencia` — guía de comportamiento sin error explícito
+- `discovery` — aprendizaje positivo sobre compatibilidad multi-CLI descubierto durante desarrollo (ver `capture-learning.sh`)
 
 **`needs_patch`:** `true` si el fix requiere editar un archivo del plugin (SKILL.md,
 config, script); `false` si es preferencia/guía que no cambia código.
@@ -86,7 +87,7 @@ applied: false
 needs_patch: <true|false>
 patch_target: "<ruta relativa al repo del plugin, o vacío si needs_patch=false>"
 source: <source>
-signal: <correccion|friccion|escenario|preferencia>
+signal: <correccion|friccion|escenario|preferencia|discovery>
 ---
 
 <Descripción del gap en 2-4 líneas: qué ocurrió, qué faltaba, contexto mínimo.>

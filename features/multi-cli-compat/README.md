@@ -434,6 +434,7 @@ Los archivos template están en `features/multi-cli-compat/files/`:
 | Archivo | Copiar a | Propósito |
 |---|---|---|---|
 | `bump-version.py` | `bin/bump-version.py` | Sincroniza version en 7 manifests + YAML |
+| `capture-learning.sh` | `bin/capture-learning.sh` | Captura un descubrimiento multi-CLI como feedback `signal: discovery` |
 | `post-commit` | `.githooks/post-commit` | Bumpea local + amenda el commit |
 | `pre-commit` | `.githooks/pre-commit` | **Bloquea** el commit si tocaste configs multi-CLI sin docs. Escape: `[skip-docs]` en el mensaje. |
 | `sync-manifests.yml` | `.github/workflows/sync-manifests.yml` | Regenera + bumpea en push a main |
@@ -444,6 +445,35 @@ Para cambios triviales que no ameritan docs, agregá `[skip-docs]` al mensaje:
 ```
 git commit -m "fix: typo en opencode.json [skip-docs]"
 ```
+
+## Capturar descubrimientos de compatibilidad
+
+Cuando desarrollás un plugin downstream y descubrís que un CLI maneja algo distinto
+(una tool no existe, un hook tiene firma diferente, un schema es incompatible), usá
+`capture-learning.sh` para formalizarlo:
+
+```bash
+bash bin/capture-learning.sh mi-plugin gemini-no-posttooluse <<'EOF'
+## Descubrimiento
+Gemini CLI no expone PostToolUse — solo PreToolUse.
+## CLI(s) involucrado(s)
+gemini
+## Contexto
+Al implementar el hook de logging en mi-plugin, Gemini rechazó
+PostToolUse porque no existe en su schema.
+## Recomendación
+Usar tool.execute.after de OpenCode como alternativa, que sí existe en ambos.
+## ¿Aplica al template?
+true
+EOF
+```
+
+Guarda el descubrimiento en `$DATA_DIR/<plugin>/feedbacks/` con `signal: discovery` y
+`applied: false`. Si aplica al template (`¿Aplica al template? true`), sugiere migrar
+la entrada a `tool-mapping.md` para que futuros plugins la hereden.
+
+El pipeline `plugin-hotpatch` puede procesar estos descubrimientos igual que cualquier
+feedback, parcheando skills o documentación cuando corresponda.
 
 Requisitos: PyYAML (`pip3 install pyyaml`), Python 3.10+, y que tu proyecto tenga
 `cli-config.yaml` + `generate-cli-configs.py` (ver "Integración" arriba).
@@ -465,6 +495,9 @@ skills/MCP aparecen y que las instrucciones se cargan en ambos.
 
 ## Changelog
 
+- **2.7.0** — `capture-learning.sh`: formaliza descubrimientos multi-CLI como feedback con
+  `signal: discovery`. Nuevo signal type en `plugin-feedback-log` y `growth-engine`.
+  Pre-commit bloquea (exit 1) si tocás configs sin docs, escape `[skip-docs]`.
 - **2.6.0** — pipeline de sincronización: `bump-version.py` ahora toca `cli-config.yaml`
   y todos los 7 manifests (no solo plugin.json + marketplace.json). Post-commit hook
   delega en `bump-version.py`. Nueva GitHub Action `sync-manifests.yml` que regenera

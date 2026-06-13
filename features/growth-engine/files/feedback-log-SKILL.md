@@ -11,7 +11,7 @@ fricción, aparece un caso no contemplado o una preferencia nueva.
 ## Proceso
 1. Articulá el feedback en 1–3 líneas.
 2. Guardá en `<datadir>/memory/feedback_<slug>.md` usando `feedback-template.md`:
-   - `signal`: correccion | friccion | escenario | preferencia
+   - `signal`: correccion | friccion | escenario | preferencia | discovery
    - `needs_patch`: true/false
    - `patch_target`: archivo a editar (si aplica)
    - `applied: false`
