@@ -37,7 +37,41 @@ El catálogo vive en `${CLAUDE_PLUGIN_ROOT}/features/`. Cada feature tiene `READ
 (qué/por qué/cómo) + `files/` (esqueletos) + `meta.yml` (version, cli_compat, depends_on).
 El índice es `${CLAUDE_PLUGIN_ROOT}/CATALOG.md`.
 
-**Evolución de plugins (registro + feedback + parcheo).** Además del catálogo, el meta-plugin
+## Reglas de estructura de skills
+
+### Modularización: scripts fuera del SKILL.md
+
+SKILL.md contiene solo **instrucciones**. Scrips, binarios, configs y archivos de referencia
+van en subdirectorios separados para que el agente los cargue solo cuando los necesita:
+
+```
+skills/<name>/
+  SKILL.md            # instrucciones (qué y por qué, no el código)
+  scripts/             # bash, python, node — lógica reusable
+  references/          # tablas de mapeo, schemas, guías complementarias
+  files/               # templates que el plugin copia al proyecto downstream
+```
+
+**Reglas:**
+- No embeber scripts >10 líneas inline en SKILL.md. Ponerlos en `scripts/` y referenciarlos.
+- No embeber tablas de mapeo extensas ni schemas en SKILL.md. Ponerlos en `references/`.
+- Templates que el usuario copia van en `files/`, no en el cuerpo de SKILL.md.
+- El SKILL.md invoca scripts con rutas relativas a `$CLAUDE_PLUGIN_ROOT` o al dir de la skill.
+
+**Ejemplo (plugin-capture-learning):**
+```
+skills/plugin-capture-learning/
+  SKILL.md                # instrucciones de captura
+  scripts/                # (vacío o con helpers si hicieran falta)
+```
+
+En lugar de:
+```
+skills/plugin-capture-learning/
+  SKILL.md                # 200 líneas con scripts embebidos
+```
+
+## Evolución de plugins (registro + feedback + parcheo).** Además del catálogo, el meta-plugin
 administra la evolución de tus plugins propios vía un store externo
 (`~/.local/share/cli-plugin-template/`, override `CLI_PLUGIN_TEMPLATE_DATA_DIR`) operado
 por `${CLAUDE_PLUGIN_ROOT}/bin/cpt`. `registry.json` es el allowlist (qué plugins son
