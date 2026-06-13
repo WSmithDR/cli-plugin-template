@@ -76,25 +76,11 @@ Si existe: sufijo `-2`, `-3`, etc.
 
 ## Step 4: Escribir via cpt feedback save (única vía)
 
+Construí el documento según `references/feedback-template.md` (rellenando los
+placeholders) y guardalo pasándolo por stdin a:
+
 ```bash
-python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" feedback save "$PLUGIN" "<slug>" - << 'FEEDBACK_EOF'
----
-name: feedback-<slug>
-description: "<description — una línea, específica>"
-plugin: <PLUGIN resuelto>
-skill_namespace: <ej. ankify:anki-capture>
-applied: false
-needs_patch: <true|false>
-patch_target: "<ruta relativa al repo del plugin, o vacío si needs_patch=false>"
-source: <source>
-signal: <correccion|friccion|escenario|preferencia|discovery>
----
-
-<Descripción del gap en 2-4 líneas: qué ocurrió, qué faltaba, contexto mínimo.>
-
-**Why:** <por qué importa — consecuencia concreta si no se corrige>
-**How to apply:** <qué debe hacer el plugin en situaciones similares>
-FEEDBACK_EOF
+python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" feedback save "$PLUGIN" "<slug>" -
 ```
 
 Escribe a `<data_dir>/<plugin>/feedbacks/feedback_<slug>.md`. No hay otra vía.

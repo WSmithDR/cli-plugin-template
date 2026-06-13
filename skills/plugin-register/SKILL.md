@@ -20,9 +20,7 @@ plugin y terminar. **No** registrar el propio catálogo (lleva `.catalog-root`).
 ## Step 2: Reunir los datos del repo actual
 
 ```bash
-NAME=$(python3 -c "import json;print(json.load(open('.claude-plugin/plugin.json'))['name'])")
-LOCAL_PATH=$(pwd)
-REMOTE=$(git remote get-url origin 2>/dev/null || echo "")
+source <(bash "$CLAUDE_PLUGIN_ROOT/skills/plugin-register/scripts/gather-plugin-metadata.sh")
 ```
 
 `skill_namespaces` por defecto es `[NAME]`. Si el plugin expone skills bajo un prefijo

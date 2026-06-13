@@ -91,23 +91,11 @@ Si nada resuelve → pedir una pista al usuario en una sola pregunta acotada.
 Leer el archivo target con `Read`. Diseñar el **cambio más pequeño** que cierra el gap (no
 refactorizar). Persistir la propuesta:
 
+Construí la propuesta según `references/proposal-template.md` (rellenando los placeholders) y
+guardala pasándola por stdin a:
+
 ```bash
-python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" proposal save <plugin> <slug> - << 'PROPOSAL_EOF'
----
-status: pending
-plugin: <plugin>
-patch_target: "<ruta relativa al repo del plugin>"
-effect: "inmediato | próxima sesión"
-signal: <correccion|friccion|escenario>
-gap: "<una línea>"
----
-
-ANTES:
-<líneas afectadas con contexto suficiente>
-
-DESPUÉS:
-<líneas modificadas>
-PROPOSAL_EOF
+python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" proposal save <plugin> <slug> -
 ```
 
 `effect`: `config/`, `templates/`, `scripts/` → inmediato; `SKILL.md`, `hooks/`, `bin/`,

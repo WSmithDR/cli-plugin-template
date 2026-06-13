@@ -53,16 +53,34 @@ result=$(run_in_tmpdir '
 ')
 [ "$result" = "OK" ] && _pass ".md extra en raíz → WARNING" || _fail ".md extra en raíz → $result"
 
-# Caso 5: bloque bash >10 líneas → WARNING
+# Caso 5: bloque bash de >2 líneas → ERROR
 result=$(run_in_tmpdir '
     mkdir -p skills/foo
     printf "# Foo\n\n\`\`\`bash\n" > skills/foo/SKILL.md
     for i in $(seq 1 15); do echo "  echo \"linea \$i\""; done >> skills/foo/SKILL.md
     printf "\`\`\`\n" >> skills/foo/SKILL.md
     out=$(python3 '"$AUDIT"' --json 2>&1); rc=$?
-    echo "$out" | grep -q "líneas" && echo OK || echo "rc=$rc out=$out"
+    echo "$out" | grep -q "\"severity\": \"ERROR\"" && echo OK || echo "rc=$rc out=$out"
 ')
-[ "$result" = "OK" ] && _pass "bloque bash >10 → WARNING" || _fail "bloque bash >10 → $result"
+[ "$result" = "OK" ] && _pass "bloque bash >2 líneas → ERROR" || _fail "bloque bash >2 líneas → $result"
+
+# Caso 5b: bloque bash de ≤2 líneas (invocación corta) → tolerado, sin hallazgos
+result=$(run_in_tmpdir '
+    mkdir -p skills/foo
+    printf "# Foo\n\n\`\`\`bash\npython3 bin/cpt feedback list\n\`\`\`\n" > skills/foo/SKILL.md
+    out=$(python3 '"$AUDIT"' --json 2>&1); rc=$?
+    [ "$out" = "[]" ] && echo OK || echo "rc=$rc out=$out"
+')
+[ "$result" = "OK" ] && _pass "bloque bash ≤2 líneas → tolerado" || _fail "bloque bash ≤2 líneas → $result"
+
+# Caso 5c: bloque sin lenguaje (árbol de directorios, ```text) → no se marca
+result=$(run_in_tmpdir '
+    mkdir -p skills/foo
+    printf "# Foo\n\n\`\`\`\nskills/foo/\n  SKILL.md\n\`\`\`\n" > skills/foo/SKILL.md
+    out=$(python3 '"$AUDIT"' --json 2>&1); rc=$?
+    [ "$out" = "[]" ] && echo OK || echo "rc=$rc out=$out"
+')
+[ "$result" = "OK" ] && _pass "bloque sin lenguaje → ignorado" || _fail "bloque sin lenguaje → $result"
 
 # Caso 6: --threshold ERROR → solo ERROR bloquea, WARNING no
 result=$(run_in_tmpdir '

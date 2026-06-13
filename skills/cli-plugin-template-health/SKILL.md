@@ -22,25 +22,7 @@ dá una remediación concreta. No modifiques nada: solo reportás.
 ## 1. Versión instalada (y vs. marketplace)
 
 ```bash
-python3 - "$CLAUDE_PLUGIN_ROOT" <<'PY'
-import json, sys, pathlib
-root = pathlib.Path(sys.argv[1] or ".")
-p = root / ".claude-plugin" / "plugin.json"
-m = root / ".claude-plugin" / "marketplace.json"
-try:
-    pv = json.loads(p.read_text())["version"]
-    print(f"✓ cli-plugin-template v{pv}")
-except Exception as e:
-    print(f"✗ no pude leer plugin.json ({e})")
-    pv = None
-if m.exists() and pv:
-    try:
-        mv = json.loads(m.read_text())["metadata"]["version"]
-        print(f"✓ marketplace v{mv}" if mv == pv
-              else f"✗ desync: plugin v{pv} ≠ marketplace v{mv}")
-    except Exception as e:
-        print(f"✗ no pude leer marketplace.json ({e})")
-PY
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/cli-plugin-template-health/scripts/check-version.py" "$CLAUDE_PLUGIN_ROOT"
 ```
 - ✗ leer `plugin.json` → instalación incompleta o `CLAUDE_PLUGIN_ROOT` mal resuelto (ver gotcha).
 - ✗ desync con marketplace → reinstalá/actualizá: `claude plugin update cli-plugin-template`.
@@ -50,9 +32,7 @@ PY
 Deben existir las 10 skills del catálogo y esta misma:
 
 ```bash
-for s in plugin-dev plugin-audit plugin-feature plugin-recommend plugin-promote plugin-register plugin-feedback-log plugin-hotpatch plugin-growth plugin-capture-learning cli-plugin-template-health; do
-  [ -f "${CLAUDE_PLUGIN_ROOT}/skills/$s/SKILL.md" ] && echo "✓ $s" || echo "✗ falta skill: $s"
-done
+bash "${CLAUDE_PLUGIN_ROOT}/skills/cli-plugin-template-health/scripts/check-skills.sh"
 ```
 - ✗ falta una skill → instalación incompleta; reinstalá. `plugin-dev` es el router de
   entrada: sin él, el ruteo del catálogo no funciona. (No hay comando slash: el router
@@ -64,12 +44,7 @@ El catálogo es el corazón del meta-plugin: `plugin-audit`/`plugin-feature` lo 
 Debe existir `CATALOG.md` y el validador debe pasar.
 
 ```bash
-[ -f "${CLAUDE_PLUGIN_ROOT}/CATALOG.md" ] \
-  && echo "✓ CATALOG.md presente" || echo "✗ falta CATALOG.md"
-[ -d "${CLAUDE_PLUGIN_ROOT}/features" ] \
-  && echo "✓ features/ presente" || echo "✗ falta features/ (catálogo vacío)"
-python3 "${CLAUDE_PLUGIN_ROOT}/bin/validate-catalog.py" \
-  && echo "✓ validate-catalog OK" || echo "✗ validate-catalog falló (ver salida arriba)"
+bash "${CLAUDE_PLUGIN_ROOT}/skills/cli-plugin-template-health/scripts/check-catalog.sh"
 ```
 - ✗ falta `CATALOG.md` o `features/` → instalación incompleta: el catálogo no llegó.
   Reinstalá; si persiste, el paquete está corrupto.
@@ -81,20 +56,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/validate-catalog.py" \
 El hook debe estar registrado en `hooks/hooks.json` y su script debe existir.
 
 ```bash
-python3 - "$CLAUDE_PLUGIN_ROOT" <<'PY'
-import json, sys, pathlib
-root = pathlib.Path(sys.argv[1] or ".")
-hj = root / "hooks" / "hooks.json"
-try:
-    hooks = json.loads(hj.read_text()).get("hooks", {})
-    ss = hooks.get("SessionStart")
-    print("✓ SessionStart registrado en hooks.json" if ss
-          else "✗ SessionStart no está en hooks.json")
-except Exception as e:
-    print(f"✗ no pude leer hooks.json ({e})")
-PY
-[ -f "${CLAUDE_PLUGIN_ROOT}/bin/hooks/session-start.sh" ] \
-  && echo "✓ session-start.sh presente" || echo "✗ falta bin/hooks/session-start.sh"
+bash "${CLAUDE_PLUGIN_ROOT}/skills/cli-plugin-template-health/scripts/check-hook.sh"
 ```
 - ✗ falta el registro o el script → el aviso proactivo en proyectos de plugin no
   dispara. Reinstalá; si editaste a mano, restaurá `hooks/hooks.json` y el script.

@@ -60,35 +60,14 @@ Si existe: sufijo `-2`, `-3`, etc.
 
 ## Step 3: Guardar como feedback (signal: discovery)
 
+Resolvé el plugin y construí el documento según `references/learning-feedback-template.md`
+(rellenando los placeholders `<...>`), y guardalo pasándolo por stdin a `cpt feedback save`.
+
+Si el plugin no está registrado (`$plugin` vacío), abortá e indicá usar `plugin-register` primero.
+
 ```bash
 plugin=$(python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" registry resolve "<namespace>")
-[ -z "$plugin" ] && echo "Plugin no registrado. Usá plugin-register primero." && exit 1
-
-python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" feedback save "$plugin" "<slug>" - << 'LEARNING_EOF'
----
-name: feedback-<slug>
-description: "<discovery — una línea>"
-plugin: <plugin>
-applied: false
-needs_patch: false
-source: plugin-capture-learning
-signal: discovery
-cli: <cli(s) involucrados>
-applies_to_template: <true|false>
----
-
-## Descubrimiento
-<discovery>
-
-## Contexto
-<context — en qué situación apareció>
-
-## Recomendación
-<recommendation — qué hacer en el plugin>
-
-## CLI(s)
-<cli>
-LEARNING_EOF
+python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" feedback save "$plugin" "<slug>" -
 ```
 
 ---
@@ -98,14 +77,7 @@ LEARNING_EOF
 Si `applies_to_template: true`:
 
 ```bash
-TOOL_MAPPING="$CLAUDE_PLUGIN_ROOT/features/multi-cli-compat/files/tool-mapping.md"
-if [ -f "$TOOL_MAPPING" ]; then
-    echo ""
-    echo "→ Este descubrimiento aplica al template cli-plugin-template."
-    echo "  Migración sugerida: agregar entrada a:"
-    echo "    $TOOL_MAPPING"
-    echo "  O crear un PR contra cli-plugin-template para que futuros plugins lo hereden."
-fi
+bash "$CLAUDE_PLUGIN_ROOT/skills/plugin-capture-learning/scripts/suggest-template-migration.sh"
 ```
 
 ---

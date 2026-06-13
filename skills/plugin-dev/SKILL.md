@@ -53,10 +53,16 @@ skills/<name>/
 ```
 
 **Reglas:**
-- No embeber scripts >10 líneas inline en SKILL.md. Ponerlos en `scripts/` y referenciarlos.
+- **Bloques de script embebidos prohibidos.** Ningún fenced code block de lenguaje de script
+  (` ```bash `, ` ```python `, ` ```sh `, `node`, etc.) en SKILL.md puede superar **2 líneas**.
+  Se toleran invocaciones cortas (≤2 líneas); cualquier lógica más larga va a `scripts/` y se
+  invoca por ruta. Un bloque sin lenguaje (árbol de directorios) no cuenta.
+- Las plantillas de datos (frontmatter/heredocs que el agente rellena) van en `references/`,
+  no embebidas en SKILL.md.
 - No embeber tablas de mapeo extensas ni schemas en SKILL.md. Ponerlos en `references/`.
 - Templates que el usuario copia van en `files/`, no en el cuerpo de SKILL.md.
 - El SKILL.md invoca scripts con rutas relativas a `$CLAUDE_PLUGIN_ROOT` o al dir de la skill.
+- `bin/audit-skill-structure.py` hace cumplir esta regla (ERROR, bloquea el pre-commit).
 
 **Ejemplo (plugin-capture-learning):**
 ```
@@ -71,7 +77,9 @@ skills/plugin-capture-learning/
   SKILL.md                # 200 líneas con scripts embebidos
 ```
 
-## Evolución de plugins (registro + feedback + parcheo).** Además del catálogo, el meta-plugin
+## Evolución de plugins (registro + feedback + parcheo)
+
+Además del catálogo, el meta-plugin
 administra la evolución de tus plugins propios vía un store externo
 (`~/.local/share/cli-plugin-template/`, override `CLI_PLUGIN_TEMPLATE_DATA_DIR`) operado
 por `${CLAUDE_PLUGIN_ROOT}/bin/cpt`. `registry.json` es el allowlist (qué plugins son

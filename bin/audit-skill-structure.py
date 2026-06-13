@@ -29,7 +29,10 @@ import sys
 from pathlib import Path
 
 SKILLS_DIR = Path("skills")
-MAX_INLINE_LINES = 10  # fenced code blocks más grandes que esto → sugerir script/
+# Tolerancia: un fenced code block con lenguaje de script puede tener hasta
+# MAX_INLINE_LINES líneas (invocación corta). Más que eso → PROHIBIDO (ERROR):
+# la lógica va en scripts/, las plantillas de datos en references/.
+MAX_INLINE_LINES = 2
 
 
 def iter_skills(root: Path) -> list[Path]:
@@ -91,10 +94,10 @@ def findings_for_skill(skill_path: Path) -> list[dict]:
                 "message": "files/ tiene contenido pero SKILL.md nunca lo menciona",
             })
 
-    # Fenced code blocks en SKILL.md que excedan MAX_INLINE_LINES
+    # Fenced code blocks con lenguaje de script embebidos en SKILL.md (PROHIBIDO)
     md_text = skill_md.read_text(encoding="utf-8", errors="replace")
-    large_blocks = _find_large_blocks(md_text, name)
-    findings.extend(large_blocks)
+    script_blocks = _find_script_blocks(md_text, name)
+    findings.extend(script_blocks)
 
     return findings
 
@@ -102,8 +105,13 @@ def findings_for_skill(skill_path: Path) -> list[dict]:
 LANG_PATTERN = re.compile(r"```(bash|sh|shell|python|py|node|js|javascript|typescript|ts|ruby|rb|go|perl|php)\s*")
 
 
-def _find_large_blocks(md_text: str, skill_name: str) -> list[dict]:
-    """Detecta fenced code blocks con lenguajes de script que excedan el umbral."""
+def _find_script_blocks(md_text: str, skill_name: str) -> list[dict]:
+    """Detecta fenced code blocks de script de más de MAX_INLINE_LINES → ERROR.
+
+    Se toleran invocaciones cortas (hasta MAX_INLINE_LINES líneas). Un bloque
+    ```bash/```python/etc. más largo es lógica/plantilla embebida y debe vivir en
+    scripts/ (lógica) o references/ (plantillas de datos).
+    """
     findings: list[dict] = []
     lines = md_text.split("\n")
     in_block = False
@@ -126,10 +134,11 @@ def _find_large_blocks(md_text: str, skill_name: str) -> list[dict]:
                 if block_lang and len(block_lines) > MAX_INLINE_LINES:
                     findings.append({
                         "skill": skill_name,
-                        "severity": "WARNING",
+                        "severity": "ERROR",
                         "message": (
                             f"Bloque {block_lang} de {len(block_lines)} líneas "
-                            f"(lín. {block_start + 1}) → mover a scripts/ o references/"
+                            f"(lín. {block_start + 1}, máx {MAX_INLINE_LINES}) → "
+                            f"mover a scripts/ o references/"
                         ),
                     })
         elif in_block:
