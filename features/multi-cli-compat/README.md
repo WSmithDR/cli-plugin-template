@@ -341,18 +341,27 @@ Cada target formatea distinto:
 
 ### Integración
 
-1. Creá `cli-config.yaml` con MCP servers + metadatos por CLI.
-2. Copiá `generate-cli-configs.py` a `bin/dev/`.
-3. Ejecutalo manualmente o desde `bin/dev/setup.sh`:
-
-```bash
-# En setup.sh:
-echo "— Generando configs multi-CLI desde cli-config.yaml..."
-python3 "$REPO_ROOT/bin/dev/generate-cli-configs.py"
-```
-
-4. Cada vez que cambiés MCP servers, editás solo `cli-config.yaml` y regenerás.
-5. `.gitignore` puede ignorar los outputs generados si preferís no versionarlos
+1. Copiá `files/cli-config.yaml` a la raíz de tu proyecto y personalizalo.
+2. Copiá `files/generate-cli-configs.py` a `bin/dev/`.
+3. Copiá `files/bump-version.py` a `bin/` (sincroniza versión en todos los
+   manifests + YAML).
+4. Copiá `files/post-commit` a `.githooks/post-commit` e instalalo:
+   ```bash
+   git config core.hooksPath .githooks
+   cp features/multi-cli-compat/files/post-commit .githooks/post-commit
+   chmod +x .githooks/post-commit
+   ```
+5. Copiá `files/sync-manifests.yml` a `.github/workflows/` (GitHub Action que
+   regenera y bumpea en cada push a main).
+6. Ejecutá el generador y verificá que los manifests se creen:
+   ```bash
+   mkdir -p .claude-plugin .codex-plugin .cursor-plugin .copilot-plugin
+   python3 bin/dev/generate-cli-configs.py
+   python3 bin/bump-version.py --check
+   ```
+7. Cada vez que cambiés MCP servers o metadatos, editás solo `cli-config.yaml`
+   y regenerás con el mismo comando. El post-commit + Action se encargan del resto.
+8. `.gitignore` puede ignorar los outputs generados si preferís no versionarlos
    (o versionarlos para que el diff sea visible en PRs).
 
 ### Gotcha: hooks y plugins por CLI
@@ -416,6 +425,19 @@ push a main
 | Post-commit y Action podían desincronizarse | Ambos usan `bump-version.py` como única fuente de version sync |
 | Si editás YAML localmente y pusheás, los manifests locales tienen version vieja | La Action regenera desde YAML + bumpea, todo en un commit |
 
+### Cómo adoptar el pipeline en tu plugin
+
+Los archivos template están en `features/multi-cli-compat/files/`:
+
+| Archivo | Copiar a | Propósito |
+|---|---|---|
+| `bump-version.py` | `bin/bump-version.py` | Sincroniza version en 7 manifests + YAML |
+| `post-commit` | `.githooks/post-commit` | Bumpea local + amenda el commit |
+| `sync-manifests.yml` | `.github/workflows/sync-manifests.yml` | Regenera + bumpea en push a main |
+
+Requisitos: PyYAML (`pip3 install pyyaml`), Python 3.10+, y que tu proyecto tenga
+`cli-config.yaml` + `generate-cli-configs.py` (ver "Integración" arriba).
+
 ## Tests
 
 Abrí el proyecto en al menos dos CLIs (ej. Claude Code y OpenCode) y confirmá que las
@@ -436,7 +458,8 @@ skills/MCP aparecen y que las instrucciones se cargan en ambos.
 - **2.6.0** — pipeline de sincronización: `bump-version.py` ahora toca `cli-config.yaml`
   y todos los 7 manifests (no solo plugin.json + marketplace.json). Post-commit hook
   delega en `bump-version.py`. Nueva GitHub Action `sync-manifests.yml` que regenera
-  desde YAML + bumpea en cada push a main.
+  desde YAML + bumpea en cada push a main. Templates para downstream en `files/`:
+  `bump-version.py`, `post-commit`, `sync-manifests.yml`.
 - **2.5.0** — schema `opencode.json`: skills como objeto `{paths: [...]}`, no array.
   Dos estrategias de integración OpenCode (per-repo vs global). Template corregido en
   `files/opencode.json`. Gotcha: `.ts` → `.js` en plugins OpenCode.

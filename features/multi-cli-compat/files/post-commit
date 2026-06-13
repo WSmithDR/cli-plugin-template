@@ -1,0 +1,51 @@
+#!/bin/bash
+# post-commit: auto-bump version en TODOS los manifiestos + YAML.
+#
+# feat:              → minor
+# fix|chore|docs|... → patch
+# BREAKING (en msg)  → major
+#
+# Copiar de features/multi-cli-compat/files/post-commit a .githooks/post-commit
+# e instalarlo con: git config core.hooksPath .githooks
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+PLUGIN_JSON="$REPO_ROOT/.claude-plugin/plugin.json"
+SENTINEL="$REPO_ROOT/.git/.version-bump-in-progress"
+
+if [ -f "$SENTINEL" ]; then
+    rm -f "$SENTINEL"
+    exit 0
+fi
+
+[ ! -f "$PLUGIN_JSON" ] && exit 0
+
+# Bump manual: plugin.json en el commit → saltar
+if git show --name-only --format="" HEAD | grep -qx "\.claude-plugin/plugin\.json"; then
+    exit 0
+fi
+
+MSG=$(git log -1 --pretty=%B)
+
+if echo "$MSG" | grep -qiE "(BREAKING[ -]CHANGE|^.+!:)"; then
+    BUMP="major"
+elif echo "$MSG" | grep -qiE "^feat(\(.+\))?:"; then
+    BUMP="minor"
+else
+    BUMP="patch"
+fi
+
+python3 "$REPO_ROOT/bin/bump-version.py" "$BUMP"
+
+# Stagear todo lo que bump-version.py tocó
+git add "$PLUGIN_JSON" 2>/dev/null || true
+git add "$REPO_ROOT/cli-config.yaml" 2>/dev/null || true
+for f in opencode.json gemini-extension.json .codex-plugin/plugin.json \
+         .cursor-plugin/plugin.json .copilot-plugin/plugin.json; do
+    [ -f "$REPO_ROOT/$f" ] && git add "$REPO_ROOT/$f"
+done
+
+touch "$SENTINEL"
+git commit --amend --no-edit --no-verify
+rm -f "$SENTINEL"
