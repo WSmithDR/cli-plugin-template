@@ -45,12 +45,12 @@ PY
 - ✗ leer `plugin.json` → instalación incompleta o `CLAUDE_PLUGIN_ROOT` mal resuelto (ver gotcha).
 - ✗ desync con marketplace → reinstalá/actualizá: `claude plugin update cli-plugin-template`.
 
-## 2. Skills del catálogo (9) + la propia health
+## 2. Skills del catálogo (10) + la propia health
 
-Deben existir las 9 skills del catálogo y esta misma:
+Deben existir las 10 skills del catálogo y esta misma:
 
 ```bash
-for s in plugin-dev plugin-audit plugin-feature plugin-recommend plugin-promote plugin-register plugin-feedback-log plugin-hotpatch plugin-growth cli-plugin-template-health; do
+for s in plugin-dev plugin-audit plugin-feature plugin-recommend plugin-promote plugin-register plugin-feedback-log plugin-hotpatch plugin-growth plugin-capture-learning cli-plugin-template-health; do
   [ -f "${CLAUDE_PLUGIN_ROOT}/skills/$s/SKILL.md" ] && echo "✓ $s" || echo "✗ falta skill: $s"
 done
 ```

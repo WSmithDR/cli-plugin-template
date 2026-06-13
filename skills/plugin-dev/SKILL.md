@@ -18,6 +18,7 @@ del usuario; NO invoques las sub-skills directamente como respuesta — pasá po
 | menciona el **catálogo** o "para todos los plugins": "esto sirve para todos", "subí/promové esto al catálogo" | `plugin-promote` |
 | quiere **dar de alta** el plugin para administrar su evolución: "registrá este plugin", "que cli-plugin-template administre su evolución" | `plugin-register` |
 | reporta **fricción/corrección sobre una skill** de un plugin propio: "esto falló", "anotá esta fricción", "guardá este feedback del plugin" | `plugin-feedback-log` |
+| se detecta un **descubrimiento de compatibilidad multi-CLI** durante desarrollo: "esto es distinto en Gemini", "en OpenCode funciona de otra forma", aprendizaje nuevo sobre hooks/tools/schema | `plugin-capture-learning` |
 | quiere **procesar/aplicar** la fricción capturada: "procesá los pendientes", "aplicá el fix", o el hook avisó "PENDING PLUGIN FEEDBACK" | `plugin-hotpatch` |
 | quiere **ver el estado** de evolución: "qué hay pendiente en mis plugins", "mostrame el dashboard", "cómo viene la evolución" | `plugin-growth` |
 
