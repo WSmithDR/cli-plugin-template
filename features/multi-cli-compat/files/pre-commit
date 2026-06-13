@@ -1,9 +1,9 @@
 #!/bin/bash
-# pre-commit: recuerda documentar cambios de compatibilidad multi-CLI.
+# pre-commit: exige documentar cambios de compatibilidad multi-CLI.
 #
 # Si tocaste configs, manifests o scripts de compat multi-CLI pero NO
-# actualizaste la documentación, te avisa antes de dejar pasar el commit.
-# No bloquea — solo advierte. La decisión es tuya.
+# actualizaste la documentación, el commit se rechaza a menos que el
+# mensaje incluya "[skip-docs]" (escape explícito para cambios triviales).
 #
 # Instalar:
 #   cp features/multi-cli-compat/files/pre-commit .githooks/pre-commit
@@ -36,9 +36,13 @@ DOCS=(
 )
 
 staged=$(git diff --cached --name-only)
-
-# Si no hay nada staged, salir
 [ -z "$staged" ] && exit 0
+
+# Escape explícito
+MSG=$(git log -1 --pretty=%B 2>/dev/null || echo "")
+if echo "$MSG" | grep -qi "\[skip-docs\]"; then
+    exit 0
+fi
 
 touched_sensitive=false
 touched_docs=false
@@ -59,17 +63,20 @@ for f in $staged; do
 done
 
 if $touched_sensitive && ! $touched_docs; then
-    echo ""
-    echo "⚠️  Recordatorio: cambiaron archivos de configuración multi-CLI,"
-    echo "   pero no se detectaron cambios en la documentación."
-    echo ""
-    echo "   Si esto es nuevo aprendizaje sobre compatibilidad entre CLIs"
-    echo "   (diferencias de hooks, schemas, tool-mapping, limitaciones),"
-    echo "   considerá documentarlo en README.md o docs/ para que el"
-    echo "   próximo plugin se beneficie."
-    echo ""
-    echo "   Para silenciar este aviso, incluí un archivo de docs en el commit."
-    echo ""
+    cat <<'EOF'
+
+✗ Cambiaste archivos de configuración multi-CLI pero no actualizaste la
+  documentación. Si esto es nuevo aprendizaje sobre compatibilidad entre
+  CLIs (hooks, schemas, tool-mapping, limitaciones), documentalo en
+  README.md o docs/ antes de committear.
+
+  Si el cambio es trivial y no merece docs, incluí [skip-docs] en el
+  mensaje del commit para saltar esta verificación.
+
+  git commit -m "fix: typo en config [skip-docs]"
+
+EOF
+    exit 1
 fi
 
 exit 0

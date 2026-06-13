@@ -435,8 +435,15 @@ Los archivos template están en `features/multi-cli-compat/files/`:
 |---|---|---|---|
 | `bump-version.py` | `bin/bump-version.py` | Sincroniza version en 7 manifests + YAML |
 | `post-commit` | `.githooks/post-commit` | Bumpea local + amenda el commit |
-| `pre-commit` | `.githooks/pre-commit` | Recuerda documentar aprendizajes multi-CLI |
+| `pre-commit` | `.githooks/pre-commit` | **Bloquea** el commit si tocaste configs multi-CLI sin docs. Escape: `[skip-docs]` en el mensaje. |
 | `sync-manifests.yml` | `.github/workflows/sync-manifests.yml` | Regenera + bumpea en push a main |
+
+**Pre-commit strict:** si el staged incluye `cli-config.yaml`, manifests, o la feature
+`multi-cli-compat/` y no incluye ningún archivo de documentación, el commit se rechaza.
+Para cambios triviales que no ameritan docs, agregá `[skip-docs]` al mensaje:
+```
+git commit -m "fix: typo en opencode.json [skip-docs]"
+```
 
 Requisitos: PyYAML (`pip3 install pyyaml`), Python 3.10+, y que tu proyecto tenga
 `cli-config.yaml` + `generate-cli-configs.py` (ver "Integración" arriba).
