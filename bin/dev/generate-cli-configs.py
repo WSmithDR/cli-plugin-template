@@ -183,7 +183,7 @@ def gen_opencode_json(cfg: dict) -> tuple[str, dict] | None:
         return None
     doc = {
         "$schema": "https://opencode.ai/config.json",
-        "skills": oc.get("skills", {}).get("paths", [f"{p.get('skills', './skills/')}"]),
+        "skills": oc.get("skills", {"paths": [f"{p.get('skills', './skills/')}"]}),
     }
     if oc.get("plugins"):
         doc["plugin"] = oc["plugins"]
