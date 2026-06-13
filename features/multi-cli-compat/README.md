@@ -133,6 +133,45 @@ Además, el `package.json` del directorio `.opencode/` debe tener `"type": "modu
 
 Sin esto, Node.js emite un warning en cada importación del plugin.
 
+### ⚠️ Schema de `opencode.json`: `skills` es objeto, no array
+
+OpenCode valida el schema en startup y **falla** si el formato es incorrecto.
+El campo `skills` debe ser un **objeto** con un array `paths`, no un array plano:
+
+```json
+// ✓ CORRECTO
+"skills": { "paths": ["./skills/"] }
+
+// ✗ INCORRECTO — causa "ConfigInvalidError"
+"skills": ["./skills/"]
+```
+
+Esto aplica tanto al `opencode.json` del repo como al global
+`~/.config/opencode/opencode.json`.
+
+Si usás `generate-cli-configs.py`, el generador produce el formato correcto automáticamente
+(ver sección "Fuente única de verdad"). El template de ejemplo en `files/opencode.json` ya
+está en el formato correcto.
+
+### Dos estrategias de integración: per-repo vs global
+
+OpenCode carga configs en cascada: primero el global `~/.config/opencode/opencode.json`,
+y luego el `opencode.json` del proyecto actual (si existe). Los `plugins` y `skills` se
+acumulan, no se reemplazan.
+
+| Estrategia | Cómo | Cuándo usarla |
+|---|---|---|
+| **Per-repo** (como ankify) | Poné `opencode.json` en la raíz del repo con paths relativos | Skills que solo tienen sentido dentro del proyecto. El plugin se activa solo cuando `opencode` corre en ese repo. |
+| **Global** (como meta-plugin) | Registrá en `~/.config/opencode/opencode.json` via `install-opencode.sh` | Skills que querés disponibles en **cualquier proyecto**. El meta-plugin de desarrollo es el caso típico — lo consultás mientras desarrollás otros plugins. |
+
+**Recomendación para plugins de skills:**
+1. Empezá con **per-repo** — es más simple, paths relativos, sin instalador global.
+2. Si el plugin es una herramienta de desarrollo (como este catálogo), ofrecé además
+   el **global** como opción avanzada vía `install-opencode.sh`.
+
+Cuando usás paths relativos en el `opencode.json` del repo, OpenCode los resuelve
+contra el directorio del proyecto. No necesitás `{env:HOME}` ni paths absolutos.
+
 ### ⚠️ Peligro: el hook OpenCode es GLOBAL
 
 A diferencia de `CLAUDE.md` o `GEMINI.md` (que se cargan solo cuando trabajás en el repo que
@@ -224,8 +263,13 @@ export default async () => ({
 4. Si tus skills nombran tools, copiá y mantené `files/tool-mapping.md`.
 5. Omití `model:` en el frontmatter de agents.
 6. Para CLIs sin marketplace, distribuí con `files/install-skills.sh` (symlinks).
-7. Para **OpenCode** como plugin global, ofrecé un `install-opencode.sh` que registre
-   el JS plugin + skills paths en `~/.config/opencode/opencode.json`.
+7. Para **OpenCode**, hay dos caminos:
+   - **Per-repo**: poné `opencode.json` en la raíz con paths relativos (skills + plugin).
+     OpenCode lo descubre automáticamente al abrir el proyecto.
+   - **Global** (opcional): ofrecé un `install-opencode.sh` que agregue el plugin JS y
+     skills paths en `~/.config/opencode/opencode.json`. Usalo solo cuando el plugin
+     sirva como herramienta de desarrollo en cualquier proyecto.
+   Ambos casos usan el mismo schema: `skills: {paths: [...]}`, no `skills: [...]`.
 
 ## Evolución: fuente única de verdad (cli-config.yaml + generador)
 
@@ -315,7 +359,7 @@ python3 "$REPO_ROOT/bin/dev/generate-cli-configs.py"
 
 El generador solo cubre **config de MCP servers + skills paths + metadata de plugin**.
 Los hooks y plugins específicos de cada CLI (ej. `hooks/hooks.json` en Claude Code,
-`.opencode/plugins/<name>.ts` en OpenCode) siguen siendo **por CLI** porque su mecanismo
+`.opencode/plugins/<name>.js` en OpenCode) siguen siendo **por CLI** porque su mecanismo
 es fundamentalmente distinto y no se puede unificar en YAML.
 
 ### Referencia real
@@ -342,6 +386,9 @@ skills/MCP aparecen y que las instrucciones se cargan en ambos.
 
 ## Changelog
 
+- **2.5.0** — schema `opencode.json`: skills como objeto `{paths: [...]}`, no array.
+  Dos estrategias de integración OpenCode (per-repo vs global). Template corregido en
+  `files/opencode.json`. Gotcha: `.ts` → `.js` en plugins OpenCode.
 - **2.4.0** — generador expandido a 7 manifests (todos los CLIs + marketplace). Stop hook
   OpenCode via `event("global.disposed")`. OpenCode global install: `bin/install-opencode.sh`.
 - **2.3.0** — mapa detallado de hooks Claude Code ↔ OpenCode (limitaciones: PreToolUse y Stop
