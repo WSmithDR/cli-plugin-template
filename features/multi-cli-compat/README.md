@@ -345,11 +345,13 @@ Cada target formatea distinto:
 2. Copiá `files/generate-cli-configs.py` a `bin/dev/`.
 3. Copiá `files/bump-version.py` a `bin/` (sincroniza versión en todos los
    manifests + YAML).
-4. Copiá `files/post-commit` a `.githooks/post-commit` e instalalo:
+4. Copiá `files/post-commit` y `files/pre-commit` a `.githooks/` e instalalos:
    ```bash
    git config core.hooksPath .githooks
-   cp features/multi-cli-compat/files/post-commit .githooks/post-commit
-   chmod +x .githooks/post-commit
+   for hook in post-commit pre-commit; do
+     cp "features/multi-cli-compat/files/$hook" ".githooks/$hook"
+     chmod +x ".githooks/$hook"
+   done
    ```
 5. Copiá `files/sync-manifests.yml` a `.github/workflows/` (GitHub Action que
    regenera y bumpea en cada push a main).
@@ -430,9 +432,10 @@ push a main
 Los archivos template están en `features/multi-cli-compat/files/`:
 
 | Archivo | Copiar a | Propósito |
-|---|---|---|
+|---|---|---|---|
 | `bump-version.py` | `bin/bump-version.py` | Sincroniza version en 7 manifests + YAML |
 | `post-commit` | `.githooks/post-commit` | Bumpea local + amenda el commit |
+| `pre-commit` | `.githooks/pre-commit` | Recuerda documentar aprendizajes multi-CLI |
 | `sync-manifests.yml` | `.github/workflows/sync-manifests.yml` | Regenera + bumpea en push a main |
 
 Requisitos: PyYAML (`pip3 install pyyaml`), Python 3.10+, y que tu proyecto tenga
@@ -458,8 +461,9 @@ skills/MCP aparecen y que las instrucciones se cargan en ambos.
 - **2.6.0** — pipeline de sincronización: `bump-version.py` ahora toca `cli-config.yaml`
   y todos los 7 manifests (no solo plugin.json + marketplace.json). Post-commit hook
   delega en `bump-version.py`. Nueva GitHub Action `sync-manifests.yml` que regenera
-  desde YAML + bumpea en cada push a main. Templates para downstream en `files/`:
-  `bump-version.py`, `post-commit`, `sync-manifests.yml`.
+  desde YAML + bumpea en cada push a main. Pre-commit hook que recuerda documentar
+  aprendizajes multi-CLI. Templates para downstream en `files/`:
+  `bump-version.py`, `post-commit`, `pre-commit`, `sync-manifests.yml`.
 - **2.5.0** — schema `opencode.json`: skills como objeto `{paths: [...]}`, no array.
   Dos estrategias de integración OpenCode (per-repo vs global). Template corregido en
   `files/opencode.json`. Gotcha: `.ts` → `.js` en plugins OpenCode.

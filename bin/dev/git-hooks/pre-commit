@@ -31,4 +31,31 @@ echo "→ Auditando portabilidad..."
 python3 features/portability-audit/files/audit-portability.py . --quiet \
     || fail "hay hallazgos CRITICAL de portabilidad (rutas absolutas o secretos)"
 
+# Recordatorio no bloqueante: documentar aprendizajes multi-CLI
+SENSITIVE=(
+    'cli-config.yaml'
+    '.claude-plugin/'
+    '.codex-plugin/'
+    '.cursor-plugin/'
+    '.copilot-plugin/'
+    'opencode.json'
+    'gemini-extension.json'
+    'features/multi-cli-compat/'
+)
+DOCS=('README.md' 'AGENTS.md' 'CLAUDE.md' 'GEMINI.md' 'CHANGELOG.md' 'docs/')
+STAGED=$(git diff --cached --name-only)
+if [ -n "$STAGED" ]; then
+    ts=false; td=false
+    for f in $STAGED; do
+        for p in "${SENSITIVE[@]}"; do [[ "$f" == $p ]] && ts=true; done
+        for p in "${DOCS[@]}"; do [[ "$f" == $p ]] && td=true; done
+    done
+    if $ts && ! $td; then
+        echo ""
+        echo "⚠️  Cambiaste archivos multi-CLI pero no docs."
+        echo "   Si es nuevo aprendizaje, documentalo en README.md o docs/."
+        echo ""
+    fi
+fi
+
 echo "✓ Pre-commit OK"

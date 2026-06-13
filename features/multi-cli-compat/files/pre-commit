@@ -1,0 +1,75 @@
+#!/bin/bash
+# pre-commit: recuerda documentar cambios de compatibilidad multi-CLI.
+#
+# Si tocaste configs, manifests o scripts de compat multi-CLI pero NO
+# actualizaste la documentación, te avisa antes de dejar pasar el commit.
+# No bloquea — solo advierte. La decisión es tuya.
+#
+# Instalar:
+#   cp features/multi-cli-compat/files/pre-commit .githooks/pre-commit
+#   chmod +x .githooks/pre-commit
+#   git config core.hooksPath .githooks
+
+set -euo pipefail
+
+# Archivos que indican "toqué compatibilidad multi-CLI"
+SENSITIVE=(
+  'cli-config.yaml'
+  '.claude-plugin/'
+  '.codex-plugin/'
+  '.cursor-plugin/'
+  '.copilot-plugin/'
+  'opencode.json'
+  'gemini-extension.json'
+  'features/multi-cli-compat/'
+  'files/tool-mapping.md'
+)
+
+# Archivos que cuentan como documentación
+DOCS=(
+  'README.md'
+  'AGENTS.md'
+  'CLAUDE.md'
+  'GEMINI.md'
+  'CHANGELOG.md'
+  'docs/'
+)
+
+staged=$(git diff --cached --name-only)
+
+# Si no hay nada staged, salir
+[ -z "$staged" ] && exit 0
+
+touched_sensitive=false
+touched_docs=false
+
+for f in $staged; do
+    for pattern in "${SENSITIVE[@]}"; do
+        if [[ "$f" == $pattern ]]; then
+            touched_sensitive=true
+            break
+        fi
+    done
+    for pattern in "${DOCS[@]}"; do
+        if [[ "$f" == $pattern ]]; then
+            touched_docs=true
+            break
+        fi
+    done
+done
+
+if $touched_sensitive && ! $touched_docs; then
+    echo ""
+    echo "⚠️  Recordatorio: cambiaron archivos de configuración multi-CLI,"
+    echo "   pero no se detectaron cambios en la documentación."
+    echo ""
+    echo "   Si esto es nuevo aprendizaje sobre compatibilidad entre CLIs"
+    echo "   (diferencias de hooks, schemas, tool-mapping, limitaciones),"
+    echo "   considerá documentarlo en README.md o docs/ para que el"
+    echo "   próximo plugin se beneficie."
+    echo ""
+    echo "   Para silenciar este aviso, incluí un archivo de docs en el commit."
+    echo ""
+fi
+
+exit 0
