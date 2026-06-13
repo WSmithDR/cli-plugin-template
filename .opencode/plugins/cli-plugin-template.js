@@ -1,12 +1,8 @@
 // Plugin de OpenCode para cli-plugin-template.
 //
-// GUARD: solo se activa si el CWD está dentro del repo de cli-plugin-template
-// (detectado via sentinel .catalog-root). Si se registra en otro proyecto (ej:
-// ankify), este plugin es no-op — evita inyectar bootstrap en sesiones ajenas.
-//
-// OpenCode no auto-descubre AGENTS.md ni el skill de entrada, así que inyectamos
-// el bootstrap en el primer mensaje de cada sesión.
-// El contenido se lee de AGENTS.md (estándar de facto) para no duplicar la guía.
+// Modo dual:
+//   Repo propio (CWD dentro del repo): injecta bootstrap + corre Stop hook
+//   Repo ajeno (proyectos de terceros): solo corre Stop hook (pending feedback check)
 //
 // Hook mapping OpenCode ↔ Claude Code:
 //   SessionStart          → experimental.chat.messages.transform
@@ -53,44 +49,45 @@ function loadBootstrap() {
   ].join("\n");
 }
 
-export const CliPluginTemplate = async () => {
-  if (!isInOwnRepo()) {
-    return {};
-  }
+function runPendingFeedbackCheck() {
+  try {
+    const script = join(REPO_ROOT, "bin", "hooks", "detect-pending-feedback.sh");
+    if (!existsSync(script)) return;
+    const output = execSync(`bash "${script}"`, {
+      encoding: "utf8",
+      timeout: 5000,
+    }).trim();
+    if (!output) return;
+    const result = JSON.parse(output);
+    if (result.systemMessage) {
+      process.stdout.write(`\n${result.systemMessage}\n`);
+    }
+  } catch {}
+}
 
-  const bootstrap = loadBootstrap();
-  return {
-    "experimental.chat.messages.transform": async ({ messages }) => {
+export const CliPluginTemplate = async () => {
+  const inOwnRepo = isInOwnRepo();
+  const capabilities = {};
+
+  // SessionStart equivalent: inject bootstrap only in own repo
+  if (inOwnRepo) {
+    const bootstrap = loadBootstrap();
+    capabilities["experimental.chat.messages.transform"] = async ({ messages }) => {
       if (Array.isArray(messages) && messages.length > 0) {
         messages.unshift({ role: "system", content: bootstrap });
       }
       return { messages };
-    },
+    };
+  }
 
-    // OpenCode equivalent of Claude Code's Stop hook.
-    // Fires when the session ends; checks for pending plugin feedbacks.
-    "event": async ({ type }) => {
-      if (type === "global.disposed") {
-        try {
-          const script = join(REPO_ROOT, "bin", "hooks", "detect-pending-feedback.sh");
-          if (existsSync(script)) {
-            const output = execSync(`bash "${script}"`, {
-              encoding: "utf8",
-              timeout: 5000,
-            }).trim();
-            if (output) {
-              try {
-                const result = JSON.parse(output);
-                if (result.systemMessage) {
-                  process.stdout.write(`\n${result.systemMessage}\n`);
-                }
-              } catch {}
-            }
-          }
-        } catch {}
-      }
-    },
+  // Stop equivalent: pending feedback check — runs in ANY repo
+  capabilities["event"] = async ({ type }) => {
+    if (type === "global.disposed") {
+      runPendingFeedbackCheck();
+    }
   };
+
+  return capabilities;
 };
 
 export default CliPluginTemplate;
