@@ -7,7 +7,14 @@
 // OpenCode no auto-descubre AGENTS.md ni el skill de entrada, así que inyectamos
 // el bootstrap en el primer mensaje de cada sesión.
 // El contenido se lee de AGENTS.md (estándar de facto) para no duplicar la guía.
+//
+// Hook mapping OpenCode ↔ Claude Code:
+//   SessionStart          → experimental.chat.messages.transform
+//   Stop                  → event({ type: "global.disposed" })
+//   PreToolUse            → tool.execute.before
+//   PostToolUse           → tool.execute.after
 
+import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -58,6 +65,30 @@ export const CliPluginTemplate = async () => {
         messages.unshift({ role: "system", content: bootstrap });
       }
       return { messages };
+    },
+
+    // OpenCode equivalent of Claude Code's Stop hook.
+    // Fires when the session ends; checks for pending plugin feedbacks.
+    "event": async ({ type }) => {
+      if (type === "global.disposed") {
+        try {
+          const script = join(REPO_ROOT, "bin", "hooks", "detect-pending-feedback.sh");
+          if (existsSync(script)) {
+            const output = execSync(`bash "${script}"`, {
+              encoding: "utf8",
+              timeout: 5000,
+            }).trim();
+            if (output) {
+              try {
+                const result = JSON.parse(output);
+                if (result.systemMessage) {
+                  process.stdout.write(`\n${result.systemMessage}\n`);
+                }
+              } catch {}
+            }
+          }
+        } catch {}
+      }
     },
   };
 };

@@ -6,8 +6,8 @@ multi-CLI del plugin.
 Uso: python3 bin/dev/generate-cli-configs.py
      python3 bin/dev/generate-cli-configs.py --check   # dry-run, solo diff
 
-Fuente única: cli-config.yaml en la raíz. Editar ese archivo, correr este
-script, commitear.
+Fuente única: cli-config.yaml en la raíz.
+Editar ese archivo, correr este script, commitear.
 
 Genera (si existen en el YAML):
   .claude-plugin/plugin.json
@@ -17,11 +17,11 @@ Genera (si existen en el YAML):
   .cursor-plugin/plugin.json
   gemini-extension.json
   opencode.json
-  .mcp.json          (Claude Code MCP, opcional)
 """
 
 import json
 import os
+import subprocess
 import sys
 
 try:
@@ -43,10 +43,12 @@ def _load_cfg() -> dict:
 
 
 def _write(path: str, data: dict, *, check: bool = False) -> bool:
+    """Escribe `data` como JSON en `path`. Retorna True si hubo cambios."""
     content = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
     if check:
         if os.path.exists(path):
-            if open(path).read() == content:
+            existing = open(path).read()
+            if existing == content:
                 return False
             print(f"  ✗ {path} — desactualizado")
             return True
@@ -58,15 +60,15 @@ def _write(path: str, data: dict, *, check: bool = False) -> bool:
     return True
 
 
-def _resolve(p: str) -> str:
+def _resolve_home(p: str) -> str:
     return os.path.expanduser(p) if p.startswith("~/") else p
 
 
-def _env(p: str) -> str:
+def _home_to_env(p: str) -> str:
     return ("{env:HOME}/" + p[2:]) if p.startswith("~/") else p
 
 
-# ── Generadores ──────────────────────────────────────────────────────────
+# ── Generadores por manifest ──────────────────────────────────────────────
 
 
 def gen_claude_plugin_json(cfg: dict) -> tuple[str, dict] | None:
@@ -91,8 +93,9 @@ def gen_marketplace_json(cfg: dict) -> tuple[str, dict] | None:
         return None
     owner = m.get("owner", {})
     metadata = m.get("metadata", {})
+    plugins_in = m.get("plugins", [])
     plugins_out = []
-    for pl in m.get("plugins", []):
+    for pl in plugins_in:
         entry = {
             "name": p["name"],
             "source": pl.get("source", "./"),
@@ -122,35 +125,41 @@ def gen_codex_json(cfg: dict) -> tuple[str, dict] | None:
     p = cfg.get("plugin")
     if not p:
         return None
-    return (
-        ".codex-plugin/plugin.json",
-        {"name": p["name"], "description": p.get("description", "").strip(),
-         "version": p["version"], "skills": p.get("skills", "./skills/")},
-    )
+    doc = {
+        "name": p["name"],
+        "description": p.get("description", "").strip(),
+        "version": p["version"],
+        "skills": p.get("skills", "./skills/"),
+    }
+    return (".codex-plugin/plugin.json", doc)
 
 
 def gen_copilot_json(cfg: dict) -> tuple[str, dict] | None:
     p = cfg.get("plugin")
     if not p:
         return None
-    return (
-        ".copilot-plugin/plugin.json",
-        {"name": p["name"], "displayName": p["name"],
-         "description": p.get("description", "").strip(),
-         "version": p["version"], "skills": p.get("skills", "./skills/")},
-    )
+    doc = {
+        "name": p["name"],
+        "displayName": p["name"],
+        "description": p.get("description", "").strip(),
+        "version": p["version"],
+        "skills": p.get("skills", "./skills/"),
+    }
+    return (".copilot-plugin/plugin.json", doc)
 
 
 def gen_cursor_json(cfg: dict) -> tuple[str, dict] | None:
     p = cfg.get("plugin")
     if not p:
         return None
-    return (
-        ".cursor-plugin/plugin.json",
-        {"name": p["name"], "displayName": p["name"],
-         "description": p.get("description", "").strip(),
-         "version": p["version"], "skills": p.get("skills", "./skills/")},
-    )
+    doc = {
+        "name": p["name"],
+        "displayName": p["name"],
+        "description": p.get("description", "").strip(),
+        "version": p["version"],
+        "skills": p.get("skills", "./skills/"),
+    }
+    return (".cursor-plugin/plugin.json", doc)
 
 
 def gen_gemini_json(cfg: dict) -> tuple[str, dict] | None:
@@ -158,40 +167,27 @@ def gen_gemini_json(cfg: dict) -> tuple[str, dict] | None:
     p = cfg.get("plugin", {})
     if not gem:
         return None
-    return (
-        "gemini-extension.json",
-        {"name": gem.get("name", p.get("name", "unknown")),
-         "version": p.get("version", "0.0.0"),
-         "description": (gem.get("description") or p.get("description", "")).strip(),
-         "contextFileName": gem.get("contextFileName", "GEMINI.md")},
-    )
+    doc = {
+        "name": gem.get("name", p.get("name", "unknown")),
+        "version": p.get("version", "0.0.0"),
+        "description": (gem.get("description") or p.get("description", "")).strip(),
+        "contextFileName": gem.get("contextFileName", "GEMINI.md"),
+    }
+    return ("gemini-extension.json", doc)
 
 
 def gen_opencode_json(cfg: dict) -> tuple[str, dict] | None:
     oc = cfg.get("opencode")
+    p = cfg.get("plugin", {})
     if not oc:
         return None
-    doc = {"$schema": "https://opencode.ai/config.json"}
-    skills_paths = oc.get("skills", {}).get("paths")
-    if skills_paths:
-        doc["skills"] = skills_paths
+    doc = {
+        "$schema": "https://opencode.ai/config.json",
+        "skills": oc.get("skills", {}).get("paths", [f"{p.get('skills', './skills/')}"]),
+    }
     if oc.get("plugins"):
         doc["plugin"] = oc["plugins"]
     return ("opencode.json", doc)
-
-
-def gen_mcp_json(cfg: dict) -> tuple[str, dict] | None:
-    servers = {}
-    for name, srv in cfg.get("mcp_servers", {}).items():
-        servers[name] = {
-            "command": srv["command"],
-            "args": [_resolve(a) for a in srv.get("args", [])],
-        }
-        if srv.get("env"):
-            servers[name]["env"] = srv["env"]
-    if not servers:
-        return None
-    return (".mcp.json", {"mcpServers": servers})
 
 
 GENERATORS = [
@@ -202,7 +198,6 @@ GENERATORS = [
     gen_cursor_json,
     gen_gemini_json,
     gen_opencode_json,
-    gen_mcp_json,
 ]
 
 
@@ -211,9 +206,11 @@ GENERATORS = [
 
 def main():
     check = "--check" in sys.argv
+
     cfg = _load_cfg()
     changed = 0
     total = 0
+
     for gen in GENERATORS:
         result = gen(cfg)
         if result is None:
@@ -222,12 +219,14 @@ def main():
         total += 1
         if _write(os.path.join(ROOT, rel), data, check=check):
             changed += 1
+
     if check:
-        status = 0 if changed == 0 else 1
-        msg = f"\n{'✓' if status == 0 else '✗'} {total} manifiestos — "
-        msg += "actualizados" if status == 0 else f"{changed} desactualizados"
-        print(msg)
-        sys.exit(status)
+        if changed:
+            print(f"\n✗ {changed}/{total} manifiestos desactualizados — corré generate-cli-configs.py")
+            sys.exit(1)
+        print(f"\n✓ {total} manifiestos actualizados")
+        return
+
     print(f"\nListo. {total} manifiestos regenerados.")
 
 

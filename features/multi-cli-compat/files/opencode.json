@@ -1,4 +1,11 @@
 {
+  "$schema": "https://opencode.ai/config.json",
+  "skills": [
+    "./skills/"
+  ],
+  "plugin": [
+    "./.opencode/plugins/my-plugin.js"
+  ],
   "mcp": {
     "<srv>": {
       "type": "local",

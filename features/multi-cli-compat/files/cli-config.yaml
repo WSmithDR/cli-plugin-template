@@ -1,26 +1,46 @@
 # cli-config.yaml — fuente única de verdad para configs multi-CLI.
 # Editar este archivo, luego regenerar:
 #   python3 bin/dev/generate-cli-configs.py
-# Genera: .mcp.json, opencode.json, gemini-extension.json
+# Genera: .claude-plugin/{plugin,marketplace}.json, .codex-plugin/plugin.json,
+#         .copilot-plugin/plugin.json, .cursor-plugin/plugin.json,
+#         gemini-extension.json, opencode.json
 
-mcp_servers:
-  example:
-    command: npx
-    args: ["-y", "@scope/example-mcp"]
-    env:
-      EXAMPLE_KEY: "valor"
+plugin:
+  name: "my-plugin"
+  version: "1.0.0"
+  description: "Descripción de mi plugin"
+  author:
+    name: "Tu Nombre"
+    url: "https://github.com/tunombre"
+  repository: "https://github.com/tunombre/my-plugin"
+  license: "MIT"
+  keywords:
+    - "my-plugin"
+    - "cli-plugin"
+  skills: "./skills/"
 
 opencode:
   skills:
-    paths: [".opencode/skills"]
+    paths:
+      - "./skills/"
   plugins:
-    - "./.opencode/plugins/example.js"
+    - "./.opencode/plugins/my-plugin.js"
 
 gemini_extension:
   name: "my-plugin"
   description: "Descripción de mi plugin"
   contextFileName: "GEMINI.md"
 
-plugin:
-  name: "my-plugin"
-  version: "1.0.0"
+marketplace:
+  owner:
+    name: "Tu Nombre"
+    url: "https://github.com/tunombre"
+  metadata:
+    description: "Descripción corta para el marketplace"
+  plugins:
+    - source: "./"
+      category: "developer-tools"
+      author:
+        name: "Tu Nombre"
+
+mcp_servers: {}
