@@ -20,6 +20,16 @@ que las skills nombran; si tu CLI no aparece, usá el equivalente nativo más ce
 > invocación a la columna correspondiente: en Gemini es `activate_skill`, en OpenCode/Copilot
 > es `skill`, y en Codex las skills se cargan solas leyendo `SKILL.md`.
 
+## Hook mapping (Claude Code → OpenCode)
+
+Estos hooks NO existen en OpenCode; planificá alternativas si tus skills dependen de ellos:
+
+| Claude Code | OpenCode | Qué hacer |
+|---|---|---|
+| `PreToolUse` | No existe | Post-gate informativo en `tool.execute.after` (no bloquea) |
+| `Stop` / `SubagentStop` | No existe | Detectores en `messages.transform` con flag de módulo `_checked` |
+| `PostToolUse` | `tool.execute.after` | Equivalente directo |
+
 ## Cómo cada CLI recibe esta tabla
 
 - **Gemini CLI**: se inyecta vía `@`-include en `GEMINI.md` (`@./skills/plugin-dev/references/tool-mapping.md`).

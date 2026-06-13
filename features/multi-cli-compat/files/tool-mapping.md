@@ -17,8 +17,22 @@ nombre cambia. Esta tabla traduce los más comunes. Incluí el subset que usen t
 | `WebSearch` | — | `web_fetch` | — | — |
 | `WebFetch` | `web_fetch` | `web_fetch` | — | — |
 
-> Las celdas vacías (—) no tienen equivalente directo; documentá una alternativa o evitá
-> esa tool en skills que deban ser multi-CLI.
+> - **OpenCode**: las tools de archivo (`Read`, `Write`, `Edit`, `Bash`) son nativas
+>   (mismos nombres). Los hooks tienen diferencias críticas — ver "Hook mapping" abajo.
+> - Las celdas vacías (—) no tienen equivalente directo; documentá una alternativa o evitá
+>   esa tool en skills que deban ser multi-CLI.
+
+## Hook mapping (Claude Code → OpenCode)
+
+OpenCode no expone todos los hooks de Claude Code. Estos son los equivalentes y sus
+limitaciones:
+
+| Claude Code | OpenCode | Notas |
+|---|---|---|
+| `SessionStart` | `config` + `messages.transform` | `config` solo paths; bootstrap inyectado en el primer mensaje |
+| `PreToolUse` | **NO EXISTE** | No se puede bloquear antes de ejecutar. Post-gate informativo en `tool.execute.after` |
+| `PostToolUse` | `tool.execute.after` | Recibe `(tool, input, output)`. Mismo propósito |
+| `Stop` | **NO EXISTE** | Reemplazar con detectores en `messages.transform` + flag de módulo |
 
 ## Cómo cada CLI recibe esta tabla
 

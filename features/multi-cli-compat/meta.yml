@@ -1,5 +1,5 @@
 name: multi-cli-compat
-version: 2.1.0
+version: 2.3.0
 cli_compat: [claude-code, opencode, gemini-cli, codex, cursor, copilot, lsp]
 depends_on: []
 description: >
@@ -17,3 +17,5 @@ provides:
   - AGENTS.md / CLAUDE.md
   - references/tool-mapping.md
   - install-skills.sh
+  - cli-config.yaml
+  - bin/dev/generate-cli-configs.py

@@ -1,0 +1,26 @@
+# cli-config.yaml — fuente única de verdad para configs multi-CLI.
+# Editar este archivo, luego regenerar:
+#   python3 bin/dev/generate-cli-configs.py
+# Genera: .mcp.json, opencode.json, gemini-extension.json
+
+mcp_servers:
+  example:
+    command: npx
+    args: ["-y", "@scope/example-mcp"]
+    env:
+      EXAMPLE_KEY: "valor"
+
+opencode:
+  skills:
+    paths: [".opencode/skills"]
+  plugins:
+    - "./.opencode/plugins/example.js"
+
+gemini_extension:
+  name: "my-plugin"
+  description: "Descripción de mi plugin"
+  contextFileName: "GEMINI.md"
+
+plugin:
+  name: "my-plugin"
+  version: "1.0.0"
