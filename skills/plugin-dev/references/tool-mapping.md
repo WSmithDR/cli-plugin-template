@@ -22,13 +22,31 @@ que las skills nombran; si tu CLI no aparece, usá el equivalente nativo más ce
 
 ## Hook mapping (Claude Code → OpenCode)
 
-Estos hooks NO existen en OpenCode; planificá alternativas si tus skills dependen de ellos:
+@opencode-ai/plugin v1.4.3+ tiene hooks equivalentes a los de Claude Code, pero con
+firmas diferentes. Todos los hooks reciben `(input, output)` y mutan `output` por referencia.
 
-| Claude Code | OpenCode | Qué hacer |
+| Claude Code | OpenCode | Comportamiento |
 |---|---|---|
-| `PreToolUse` | No existe | Post-gate informativo en `tool.execute.after` (no bloquea) |
-| `Stop` / `SubagentStop` | No existe | Detectores en `messages.transform` con flag de módulo `_checked` |
-| `PostToolUse` | `tool.execute.after` | Equivalente directo |
+| `SessionStart` | `config` + `messages.transform` | `config` solo paths; bootstrap inyectado en el primer mensaje |
+| `PreToolUse` | `tool.execute.before` | `input.tool` = string ID del tool (`"bash"` para shell). Muta `output.args` para bloquear — el objeto args es el MISMO que ejecuta el tool |
+| `PostToolUse` | `tool.execute.after` | `input.args` contiene args originales. `output.(output\|title\|metadata)` mutable. Firma: `(input, output)` — NO `(tool, input, output)` |
+| `Stop` / `SubagentStop` | `event` | Captura `input.event.type === "global.disposed"` |
+| `PreCompact` | `experimental.session.compacting` | Muta `output.context` / `output.prompt` |
+| — (shell env) | `shell.env` | Modifica vars de entorno del shell antes de ejecutar |
+| — (bash command) | `command.execute.before` | Solo para comandos del Task tool interno, NO para Bash directo |
+
+Notas:
+- Throwing en hooks propaga como fallo del tool (bloqueo real).
+- `tool.execute.before` es la herramienta correcta para gates de bash. Ejemplo:
+  ```js
+  'tool.execute.before': async (input, output) => {
+    if (input.tool !== 'bash') return;
+    if (/* debe bloquear */) {
+      output.args.command = 'true'; // hace el tool harmless
+    }
+  }
+  ```
+- Shell tool ID en OpenCode = `"bash"` (source: `packages/opencode/src/tool/shell/id.ts`).
 
 ## Cómo cada CLI recibe esta tabla
 

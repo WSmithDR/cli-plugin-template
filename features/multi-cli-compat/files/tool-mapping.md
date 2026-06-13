@@ -24,15 +24,20 @@ nombre cambia. Esta tabla traduce los más comunes. Incluí el subset que usen t
 
 ## Hook mapping (Claude Code → OpenCode)
 
-OpenCode no expone todos los hooks de Claude Code. Estos son los equivalentes y sus
-limitaciones:
+@opencode-ai/plugin v1.4.3+ expone hooks equivalentes. Todos reciben `(input, output)`
+y mutan `output` por referencia.
 
-| Claude Code | OpenCode | Notas |
+| Claude Code | OpenCode | Comportamiento |
 |---|---|---|
 | `SessionStart` | `config` + `messages.transform` | `config` solo paths; bootstrap inyectado en el primer mensaje |
-| `PreToolUse` | **NO EXISTE** | No se puede bloquear antes de ejecutar. Post-gate informativo en `tool.execute.after` |
-| `PostToolUse` | `tool.execute.after` | Recibe `(tool, input, output)`. Mismo propósito |
-| `Stop` | **NO EXISTE** | Reemplazar con detectores en `messages.transform` + flag de módulo |
+| `PreToolUse` | `tool.execute.before` | `input.tool` = string ID del tool. Muta `output.args` para bloquear — el objeto args es el MISMO que recibe el tool |
+| `PostToolUse` | `tool.execute.after` | `input.args` contiene args originales. `output.(output\|title\|metadata)` mutable. Firma: `(input, output)` |
+| `Stop` / `SubagentStop` | `event` | Captura `input.event.type === "global.disposed"` |
+| `PreCompact` | `experimental.session.compacting` | Muta `output.context` / `output.prompt` |
+
+Notas:
+- Throwing en hooks propaga como fallo del tool (bloqueo real).
+- Shell tool ID = `"bash"` (source: `packages/opencode/src/tool/shell/id.ts`).
 
 ## Cómo cada CLI recibe esta tabla
 
