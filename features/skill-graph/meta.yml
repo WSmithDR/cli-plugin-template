@@ -1,0 +1,10 @@
+name: skill-graph
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: [git-hooks]
+description: >
+  Grafo de delegación entre skills + inventario, generado DETERMINÍSTICAMENTE del código
+  (refs Read/Skill) e inyectado en README.md y docs/ por el git pre-commit. Como sale del
+  código, no se desactualiza. Acompaña a la disciplina de orquestadoras finas → skills privadas.
+provides:
+  - bin/dev/skill-graph.py

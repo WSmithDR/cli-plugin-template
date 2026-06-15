@@ -2,6 +2,6 @@
   "name": "cli-plugin-template",
   "displayName": "cli-plugin-template",
   "description": "Meta-plugin de desarrollo de plugins multi-CLI. Cataloga features reusables y los entrega on-demand (auditar, integrar, recomendar, promover) con un aviso proactivo en proyectos de plugin.",
-  "version": "1.17.0",
+  "version": "1.18.0",
   "skills": "./skills/"
 }

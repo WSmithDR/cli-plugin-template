@@ -10,6 +10,7 @@ Para el flujo de uso completo ver [AGENTS.md](AGENTS.md).
 | [`git-hooks`](features/git-hooks/README.md) | 1.0.0 | todos | Git hooks de desarrollo: instalación via symlink editor-agnóstica, pre-commit que corre tests, y arnés de testing con tmpdir aislado |
 | [`versioning`](features/versioning/README.md) | 1.2.0 | todos | Versionado semántico automático: `post-commit` bumpea según el prefijo del commit (conventional commits), sincroniza `marketplace.json`, y amenda el commit (con guard de recursión via sentinel) |
 | [`docs-conventions`](features/docs-conventions/README.md) | 1.1.1 | todos | Secciones estándar de README: install, update, verificación de versión, tabla de conventional commits |
+| [`skill-graph`](features/skill-graph/README.md) | 1.0.0 | todos | Grafo de delegación entre skills + inventario, generado del código (refs `Read`/`Skill`) e inyectado en README/docs por el pre-commit — no se desactualiza; marca reutilización y orquestadoras gordas |
 
 ## Integración con el CLI
 
