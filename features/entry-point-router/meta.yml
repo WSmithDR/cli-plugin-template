@@ -1,5 +1,5 @@
 name: entry-point-router
-version: 1.0.0
+version: 1.1.0
 cli_compat: [claude-code, opencode, gemini-cli, any]
 depends_on: []
 description: >
@@ -9,3 +9,4 @@ description: >
 provides:
   - skills/<plugin>-context/SKILL.md (patrón)
   - skills/<plugin>-context/scenarios/*.md (patrón)
+  - hooks/pre-tool-use/delegation-guard.py (patrón de enforcement)

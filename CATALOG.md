@@ -8,7 +8,7 @@ Para el flujo de uso completo ver [AGENTS.md](AGENTS.md).
 | Feature | Versión | CLIs | Descripción |
 |---|---|---|---|
 | [`git-hooks`](features/git-hooks/README.md) | 1.0.0 | todos | Git hooks de desarrollo: instalación via symlink editor-agnóstica, pre-commit que corre tests, y arnés de testing con tmpdir aislado |
-| [`versioning`](features/versioning/README.md) | 1.2.0 | todos | Versionado semántico automático: `post-commit` bumpea según el prefijo del commit (conventional commits), sincroniza `marketplace.json`, y amenda el commit (con guard de recursión via sentinel) |
+| [`versioning`](features/versioning/README.md) | 1.3.0 | todos | Versionado semántico automático: `post-commit` bumpea según el prefijo del commit (conventional commits), sincroniza `marketplace.json`, y amenda el commit (con guard de recursión via sentinel en git-dir real, **worktree-safe**) |
 | [`docs-conventions`](features/docs-conventions/README.md) | 1.1.1 | todos | Secciones estándar de README: install, update, verificación de versión, tabla de conventional commits |
 | [`skill-graph`](features/skill-graph/README.md) | 1.0.0 | todos | Grafo de delegación entre skills + inventario, generado del código (refs `Read`/`Skill`) e inyectado en README/docs por el pre-commit — no se desactualiza; marca reutilización y orquestadoras gordas |
 
@@ -37,7 +37,7 @@ Para el flujo de uso completo ver [AGENTS.md](AGENTS.md).
 
 | Feature | Versión | CLIs | Descripción |
 |---|---|---|---|
-| [`entry-point-router`](features/entry-point-router/README.md) | 1.0.0 | todos | Un único skill de entrada que lee contexto y enruta al escenario correcto |
+| [`entry-point-router`](features/entry-point-router/README.md) | 1.1.0 | todos | Un único skill de entrada que lee contexto y enruta al escenario correcto. **Enforcement duro**: token de delegación hook-set (turn-scoped, no-forgeable) + PreToolUse guard; clasifica público/privado por ubicación (no prefijo); 3 pitfalls de seguridad documentados |
 | [`proposal-gate`](features/proposal-gate/README.md) | 1.0.0 | todos | Aprobación humana explícita antes de acciones irreversibles, vía archivo de propuesta revisable |
 | [`vocabulary-guardian`](features/vocabulary-guardian/README.md) | 1.0.0 | todos | Fuente única de verdad para términos/estados de dominio; escáner que detecta valores no registrados |
 | [`growth-engine`](features/growth-engine/README.md) | 1.0.0 | todos | Auto-mejora: captura feedback/fricción y un motor de hotpatch lo procesa, parchea y commitea |

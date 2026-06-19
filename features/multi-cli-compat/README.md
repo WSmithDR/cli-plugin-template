@@ -495,6 +495,10 @@ skills/MCP aparecen y que las instrucciones se cargan en ambos.
 
 ## Changelog
 
+- **2.7.1** — el `post-commit` template ubica su sentinel de recursión en el git-dir
+  real (`git rev-parse --git-dir`), no en `$REPO_ROOT/.git`. Arregla el auto-bump dentro
+  de git worktrees (donde `.git` es un archivo y el `touch` fallaba con `set -e`). Mismo
+  fix que `versioning` 1.3.0; mantené ambas copias del hook en sync.
 - **2.7.0** — `capture-learning.sh`: formaliza descubrimientos multi-CLI como feedback con
   `signal: discovery`. Nuevo signal type en `plugin-feedback-log` y `growth-engine`.
   Pre-commit bloquea (exit 1) si tocás configs sin docs, escape `[skip-docs]`.

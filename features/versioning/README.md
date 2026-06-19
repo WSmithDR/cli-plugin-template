@@ -26,9 +26,18 @@ en `pre-commit`.
 
 **Recursión (importante)**: `--no-verify` **NO** saltea el hook `post-commit`. El
 `git commit --amend` re-dispara post-commit y, sin protección, bumpea dos veces. El
-hook usa un **sentinel file** (`.git/.version-bump-in-progress`): se crea antes del
+hook usa un **sentinel file** (`.version-bump-in-progress` en el git-dir): se crea antes del
 amend; la invocación re-disparada lo detecta y sale, garantizando un único bump. No
 confíes en inspeccionar HEAD para frenar la recursión —resulta poco fiable bajo amend.
+
+**Worktrees (gotcha)**: ubicá el sentinel en el **git-dir real**, resuelto con
+`GIT_DIR="$(git rev-parse --git-dir)"`, NO en `$REPO_ROOT/.git`. En un worktree
+`$REPO_ROOT/.git` es un **archivo** (contiene `gitdir: …/.git/worktrees/<name>`), no un
+directorio, así que `touch "$REPO_ROOT/.git/.version-bump-in-progress"` falla; con
+`set -e` el hook muere ahí —después de stagear los manifiestos pero antes del amend— y
+el bump queda colgando sin commitear. `git rev-parse --git-dir` devuelve la ruta
+correcta tanto en un repo normal como en un worktree. El `post-commit` provisto ya lo
+hace así.
 
 ## Integración
 
@@ -76,6 +85,11 @@ cada tipo de bump — copialos y adaptá el path del manifiesto.
 
 ## Changelog
 
+- **1.3.0** — el sentinel de recursión ahora vive en el git-dir real
+  (`git rev-parse --git-dir`) en vez de `$REPO_ROOT/.git`. Arregla el auto-bump dentro
+  de git worktrees, donde `.git` es un archivo y el `touch` fallaba con `set -e`,
+  dejando el bump staged sin commitear. Descubierto al desarrollar un feature en un
+  worktree de `ankify`.
 - **1.2.0** — el hook sincroniza `marketplace.json` además de `plugin.json` (bumpea
   `metadata.version` y la entry del plugin por `name`). Evita el drift que dejaba el
   marketplace atrasado respecto del manifiesto.

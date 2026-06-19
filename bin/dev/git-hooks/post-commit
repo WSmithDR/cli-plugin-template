@@ -15,7 +15,13 @@ set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
-SENTINEL="$REPO_ROOT/.git/.version-bump-in-progress"
+PLUGIN_JSON="$REPO_ROOT/.claude-plugin/plugin.json"
+# El sentinel vive en el git-dir REAL. En un worktree, $REPO_ROOT/.git es un
+# ARCHIVO (apunta a .../.git/worktrees/<name>), no un directorio, así que
+# touchear adentro falla con `set -e` y el bump nunca amenda. `git rev-parse
+# --git-dir` resuelve la ruta correcta en repo normal y en worktree.
+GIT_DIR="$(git rev-parse --git-dir)"
+SENTINEL="$GIT_DIR/.version-bump-in-progress"
 
 # Recursion guard: el `git commit --amend` de abajo re-dispara post-commit
 # (--no-verify NO saltea post-commit). El sentinel frena la segunda invocación.

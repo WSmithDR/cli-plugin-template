@@ -84,6 +84,37 @@ d=$(setup_repo)
 [ "$(ver "$d/.claude-plugin/plugin.json")" = "1.1.0" ] && _pass "bump manual -> sin doble bump (1.1.0)" || _fail "bump manual" "$(ver "$d/.claude-plugin/plugin.json")"
 rm -rf "$d"
 
+# Caso 5 (regresión worktree): el auto-bump debe funcionar dentro de un git worktree.
+# En un worktree, <root>/.git es un ARCHIVO (no un dir), así que un sentinel en
+# $REPO_ROOT/.git/... falla con `set -e` y el bump quedaba colgando sin amendar.
+# El hook resuelve el git-dir real con `git rev-parse --git-dir`; este caso lo cubre.
+d=$(setup_repo)
+wt=$(mktemp -d)
+(
+    cd "$d"
+    git worktree add -q "$wt" -b wt-branch
+)
+test -f "$wt/.git" && _pass "worktree: .git es un archivo (precondición del bug)" || _fail "worktree precondición" "no es archivo"
+(
+    cd "$wt"
+    echo w > w.md
+    git add w.md && git commit -q -m "feat: cambio en worktree"
+)
+if [ "$(ver "$wt/.claude-plugin/plugin.json")" = "1.1.0" ]; then
+    _pass "worktree: auto-bump amendó (feat: -> 1.1.0)"
+else
+    _fail "worktree: auto-bump" "version=$(ver "$wt/.claude-plugin/plugin.json")"
+fi
+# y el árbol del worktree quedó limpio (bump en el mismo commit, no colgando)
+if [ -z "$(cd "$wt" && git status --porcelain)" ] \
+   && (cd "$wt" && git show --name-only --format="" HEAD | grep -qx ".claude-plugin/plugin.json"); then
+    _pass "worktree: bump en el mismo commit + árbol limpio"
+else
+    _fail "worktree: árbol limpio" "$(cd "$wt" && git status --porcelain | tr '\n' ' ')"
+fi
+(cd "$d" && git worktree remove --force "$wt" 2>/dev/null || true)
+rm -rf "$wt" "$d"
+
 echo ""
 echo "Resultado: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ] && exit 0 || exit 1
