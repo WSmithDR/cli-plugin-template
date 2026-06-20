@@ -40,7 +40,7 @@ Para el flujo de uso completo ver [AGENTS.md](AGENTS.md).
 | [`entry-point-router`](features/entry-point-router/README.md) | 1.1.0 | todos | Un único skill de entrada que lee contexto y enruta al escenario correcto. **Enforcement duro**: token de delegación hook-set (turn-scoped, no-forgeable) + PreToolUse guard; clasifica público/privado por ubicación (no prefijo); 3 pitfalls de seguridad documentados |
 | [`proposal-gate`](features/proposal-gate/README.md) | 1.0.0 | todos | Aprobación humana explícita antes de acciones irreversibles, vía archivo de propuesta revisable |
 | [`vocabulary-guardian`](features/vocabulary-guardian/README.md) | 1.0.0 | todos | Fuente única de verdad para términos/estados de dominio; escáner que detecta valores no registrados |
-| [`growth-engine`](features/growth-engine/README.md) | 1.0.0 | todos | Auto-mejora: captura feedback/fricción y un motor de hotpatch lo procesa, parchea y commitea |
+| [`growth-engine`](features/growth-engine/README.md) | 1.1.0 | todos | Auto-mejora: captura feedback/fricción (manual, proactiva o auto-harvest) y un motor de hotpatch lo procesa, parchea y commitea |
 | [`planning-workflow`](features/planning-workflow/README.md) | 1.0.0 | todos | Planear tareas multi-paso con tasks de criterios concretos, self-review y ejecución con checkpoints |
 
 ## Autoría de skills y agents

@@ -52,6 +52,9 @@ El registry es la baranda: el meta-plugin solo administra plugins dados de alta.
 - `escenario` — caso válido que el plugin no supo manejar
 - `preferencia` — guía de comportamiento sin error explícito
 - `discovery` — aprendizaje positivo sobre compatibilidad multi-CLI descubierto durante desarrollo (ver `capture-learning.sh`)
+- `capability-gap` — el usuario pidió algo que el plugin **no tiene código para hacer** (se improvisa una solución manual que debería ser automática)
+
+**Detectar `capability-gap`** — se dispara cuando: el agente dice "no hay skill/código para esto", el flujo se desvía del pipeline del plugin por falta de una pieza, o una función que debería ser automática se hace a mano.
 
 **`needs_patch`:** `true` si el fix requiere editar un archivo del plugin (SKILL.md,
 config, script); `false` si es preferencia/guía que no cambia código.
@@ -99,3 +102,46 @@ Feedback guardado ✓
 
 Si `needs_patch: true`: agregar *"→ plugin-hotpatch lo aplicará al repo del plugin cuando
 sea conveniente (con tu aprobación)."*
+
+---
+
+## Step 6: Detección proactiva mid-session (opcional)
+
+Mientras usás un plugin registrado, auto-detectá fricción **en el momento**, sin esperar a
+que el usuario invoque la skill.
+
+**Señales de capability-gap** (el plugin no tiene código para lo pedido):
+- vas a implementar algo a mano porque no hay skill para eso
+- el flujo se desvía del pipeline normal del plugin por falta de una pieza
+
+→ Preguntá: *"Esto que pedís el plugin no lo cubre con código. ¿Lo registro como
+`capability-gap` para desarrollarlo después?"*
+
+**Señales de fricción / desacuerdo del usuario:**
+- "no me gusta" / "prefiero" → `preferencia`
+- "está mal" / "no funciona" → `correccion`
+- "no sirve" / "incompleto" / "falta algo" → `friccion`
+
+→ Preguntá: *"Veo que esto no te convenció. ¿Lo registro como feedback del plugin?"*
+
+Si confirma → Step 1→4 (resolvé el plugin por la skill namespace activa). Si no, seguí el flujo.
+
+---
+
+## Step 7: Auto-harvest post-sesión (opcional)
+
+Al cierre de sesión (o on-demand), mineá eventos no cubiertos y proponé feedbacks. Es
+**agnóstico de plugin**: la fuente de eventos es externa (context-mode / engram), no un log
+propio del meta-plugin.
+
+1. **Leer eventos** recientes vía la fuente disponible (ej. `ctx_search(sort:"timeline")` de
+   context-mode, o memoria de engram): `error` / `blocker` / `decision` / `rejected-approach` /
+   `user-prompt` que pidió algo sin cobertura.
+2. **Atribuir plugin**: por cada evento, identificá la skill namespace involucrada → resolvé el
+   plugin (Step 1). Descartá eventos cuyo plugin no esté registrado.
+3. **Contrastar** contra lo ya logueado: `cpt feedback list --plugin "$PLUGIN"` — si ya hay un
+   feedback equivalente (por keyword/descripción), skip.
+4. **Clasificar** el candidato: `error`→`correccion`, `blocker`→`friccion`,
+   `decision`→`preferencia`/`correccion`, gap sin skill→`capability-gap`.
+5. **Presentar** la lista al usuario (opciones: `todos` / índices `1 2` / `ninguno` / `editar N`).
+6. **Guardar** los confirmados con Step 1→4, agregando `auto_detected: true` al frontmatter.

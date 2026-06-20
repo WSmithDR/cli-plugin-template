@@ -25,13 +25,20 @@ Captura sin interrumpir el flujo actual. Guarda en el datadir
 (`<datadir>/memory/feedback_<slug>.md`) con frontmatter:
 ```markdown
 ---
-signal: correccion | friccion | escenario | preferencia
+signal: correccion | friccion | escenario | preferencia | discovery | capability-gap
 needs_patch: true | false
 patch_target: <archivo a editar, si aplica>
 applied: false
 ---
 <descripción del feedback>
 ```
+
+**Captura proactiva (opcional).** El logger no solo espera a ser invocado: detecta fricción
+mid-session (frases de desacuerdo del usuario, o un `capability-gap` cuando el plugin no tiene
+código para lo pedido) y ofrece registrarla. Además, al cierre de sesión puede hacer
+**auto-harvest**: minea eventos externos (context-mode / engram) — `error`/`blocker`/`decision` —
+los atribuye al plugin por skill namespace, contrasta contra lo ya logueado y propone los
+faltantes (`auto_detected: true`). Ver `plugin-feedback-log` Steps 6–7.
 
 ### 2. Motor — `skills/<plugin>-hotpatch/SKILL.md`
 
@@ -64,4 +71,6 @@ su Step 0 y lo marca `applied: true` tras parchear.
 
 ## Changelog
 
+- **1.1.0** — captura proactiva mid-session + auto-harvest post-sesión y signal `capability-gap`
+  (portado de `ankify` al desmantelar su capa de mejora-de-plugins; ahora vive en el meta-plugin).
 - **1.0.0** — patrón extraído de `ankify` (anki-feedback-log + anki-hotpatch).

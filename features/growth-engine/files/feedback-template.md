@@ -1,5 +1,5 @@
 ---
-# signal: correccion | friccion | escenario | preferencia | discovery
+# signal: correccion | friccion | escenario | preferencia | discovery | capability-gap
 signal: friccion
 needs_patch: true
 patch_target: <archivo a editar, o vacío>

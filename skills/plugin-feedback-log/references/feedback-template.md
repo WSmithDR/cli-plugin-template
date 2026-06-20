@@ -7,7 +7,8 @@ applied: false
 needs_patch: <true|false>
 patch_target: "<ruta relativa al repo del plugin, o vacío si needs_patch=false>"
 source: <source>
-signal: <correccion|friccion|escenario|preferencia|discovery>
+signal: <correccion|friccion|escenario|preferencia|discovery|capability-gap>
+auto_detected: <true si vino de auto-harvest (Step 7), false/omitido si fue manual>
 ---
 
 <Descripción del gap en 2-4 líneas: qué ocurrió, qué faltaba, contexto mínimo.>
