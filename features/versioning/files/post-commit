@@ -72,7 +72,7 @@ git add "$REPO_ROOT/cli-config.yaml" 2>/dev/null || true
 
 # Detectar otros manifiestos que bump-version.py pudo haber cambiado
 for f in opencode.json gemini-extension.json .codex-plugin/plugin.json \
-         .cursor-plugin/plugin.json .copilot-plugin/plugin.json; do
+         .cursor-plugin/plugin.json .copilot-plugin/plugin.json package.json; do
     [ -f "$REPO_ROOT/$f" ] && git add "$REPO_ROOT/$f"
 done
 

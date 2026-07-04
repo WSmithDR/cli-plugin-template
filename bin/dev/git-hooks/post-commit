@@ -52,7 +52,7 @@ python3 bin/bump-version.py "$PART" | grep -E "versión →" || true
 for f in .claude-plugin/plugin.json .claude-plugin/marketplace.json \
          gemini-extension.json opencode.json .codex-plugin/plugin.json \
          .cursor-plugin/plugin.json .copilot-plugin/plugin.json \
-         cli-config.yaml; do
+         cli-config.yaml package.json; do
     [ -f "$f" ] && git add "$f"
 done
 

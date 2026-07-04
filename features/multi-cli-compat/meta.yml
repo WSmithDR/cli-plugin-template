@@ -1,5 +1,5 @@
 name: multi-cli-compat
-version: 2.7.1
+version: 2.8.0
 cli_compat: [claude-code, opencode, gemini-cli, codex, cursor, copilot, lsp]
 depends_on: []
 description: >
@@ -19,3 +19,5 @@ provides:
   - install-skills.sh
   - cli-config.yaml
   - bin/dev/generate-cli-configs.py
+  - package.json (instalación nativa OpenCode)
+  - .opencode/INSTALL.md (guía de instalación OpenCode)

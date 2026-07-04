@@ -1,0 +1,12 @@
+{
+  "name": "<plugin>",
+  "version": "0.1.0",
+  "description": "<una línea: qué hace el plugin>",
+  "type": "module",
+  "main": ".opencode/plugins/<plugin>.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/<owner>/<plugin>.git"
+  },
+  "license": "MIT"
+}

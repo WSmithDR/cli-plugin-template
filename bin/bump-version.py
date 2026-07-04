@@ -45,6 +45,7 @@ TOPLEVEL_MANIFESTS = [
     ".codex-plugin/plugin.json",
     ".cursor-plugin/plugin.json",
     ".copilot-plugin/plugin.json",
+    "package.json",
 ]
 
 

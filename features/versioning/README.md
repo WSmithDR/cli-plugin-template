@@ -85,6 +85,8 @@ cada tipo de bump — copialos y adaptá el path del manifiesto.
 
 ## Changelog
 
+- **1.3.1** — el `post-commit` template stagea también `package.json` (manifiesto de la
+  instalación nativa OpenCode, ver `multi-cli-compat` 2.8.0) si existe.
 - **1.3.0** — el sentinel de recursión ahora vive en el git-dir real
   (`git rev-parse --git-dir`) en vez de `$REPO_ROOT/.git`. Arregla el auto-bump dentro
   de git worktrees, donde `.git` es un archivo y el `touch` fallaba con `set -e`,

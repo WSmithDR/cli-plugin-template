@@ -163,14 +163,55 @@ acumulan, no se reemplazan.
 |---|---|---|
 | **Per-repo** (como ankify) | Poné `opencode.json` en la raíz del repo con paths relativos | Skills que solo tienen sentido dentro del proyecto. El plugin se activa solo cuando `opencode` corre en ese repo. |
 | **Global** (como meta-plugin) | Registrá en `~/.config/opencode/opencode.json` via `install-opencode.sh` | Skills que querés disponibles en **cualquier proyecto**. El meta-plugin de desarrollo es el caso típico — lo consultás mientras desarrollás otros plugins. |
+| **Nativa** (patrón superpowers) | `package.json` con `main` → el JS plugin; el usuario agrega `<name>@git+<repo>` al array `plugin` de su `opencode.json` | Distribución a terceros sin clonar el repo. OpenCode instala y actualiza por su plugin manager. |
 
 **Recomendación para plugins de skills:**
 1. Empezá con **per-repo** — es más simple, paths relativos, sin instalador global.
 2. Si el plugin es una herramienta de desarrollo (como este catálogo), ofrecé además
    el **global** como opción avanzada vía `install-opencode.sh`.
+3. Para distribuirlo a usuarios que no clonan el repo, sumá la **nativa** (siguiente sección).
 
 Cuando usás paths relativos en el `opencode.json` del repo, OpenCode los resuelve
 contra el directorio del proyecto. No necesitás `{env:HOME}` ni paths absolutos.
+
+### Instalación nativa por plugin manager (patrón superpowers)
+
+OpenCode puede instalar plugins como paquetes git (`plugin: ["<name>@git+<url>"]`),
+igual que hace [superpowers](https://github.com/obra/superpowers). Requiere dos piezas:
+
+1. **`package.json`** en la raíz del repo, con `main` apuntando al JS plugin
+   (adaptá `files/package.json` de este feature):
+
+   ```json
+   {
+     "name": "<plugin>",
+     "version": "<sincronizada con los demás manifiestos>",
+     "type": "module",
+     "main": ".opencode/plugins/<plugin>.js"
+   }
+   ```
+
+   Sumá `"package.json"` a la lista de manifiestos de tu `bump-version.py` para que la
+   versión no driftee (ver feature `versioning`).
+
+2. **Skills auto-registradas desde el JS plugin** — el hook `config` pushea el dir de
+   skills **resuelto desde la ubicación del plugin** (no del CWD), así funcionan aunque
+   el paquete esté instalado en `node_modules` de otro proyecto:
+
+   ```js
+   config: async (config) => {
+     config.skills = config.skills || {};
+     config.skills.paths = config.skills.paths || [];
+     if (!config.skills.paths.includes(SKILLS_DIR)) config.skills.paths.push(SKILLS_DIR);
+   },
+   ```
+
+   `SKILLS_DIR` se resuelve con `fileURLToPath(import.meta.url)` — nunca con `process.cwd()`.
+
+**Documentalo en tres lugares** (adaptá `files/opencode-INSTALL.md`):
+- `README.md` del plugin: el snippet `plugin: ["<name>@git+<url>"]` + link a la guía.
+- `.opencode/INSTALL.md`: guía completa (instalación, pineo `#vX.Y.Z`, update, troubleshooting).
+- `AGENTS.md`/`CLAUDE.md`: una nota en el modo plugin para que los agentes sepan que existe.
 
 ### ⚠️ Peligro: el hook OpenCode es GLOBAL
 
@@ -495,6 +536,11 @@ skills/MCP aparecen y que las instrucciones se cargan en ambos.
 
 ## Changelog
 
+- **2.8.0** — instalación nativa OpenCode (patrón superpowers): `files/package.json`
+  (`main` → JS plugin, habilita `plugin: ["<name>@git+<url>"]`) y
+  `files/opencode-INSTALL.md` (guía para el usuario final). Skills auto-registradas
+  desde el hook `config` con el dir resuelto vía `import.meta.url`. Documentar en
+  README + `.opencode/INSTALL.md` + AGENTS.md/CLAUDE.md.
 - **2.7.1** — el `post-commit` template ubica su sentinel de recursión en el git-dir
   real (`git rev-parse --git-dir`), no en `$REPO_ROOT/.git`. Arregla el auto-bump dentro
   de git worktrees (donde `.git` es un archivo y el `touch` fallaba con `set -e`). Mismo

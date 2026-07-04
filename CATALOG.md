@@ -8,7 +8,7 @@ Para el flujo de uso completo ver [AGENTS.md](AGENTS.md).
 | Feature | Versión | CLIs | Descripción |
 |---|---|---|---|
 | [`git-hooks`](features/git-hooks/README.md) | 1.0.0 | todos | Git hooks de desarrollo: instalación via symlink editor-agnóstica, pre-commit que corre tests, y arnés de testing con tmpdir aislado |
-| [`versioning`](features/versioning/README.md) | 1.3.0 | todos | Versionado semántico automático: `post-commit` bumpea según el prefijo del commit (conventional commits), sincroniza `marketplace.json`, y amenda el commit (con guard de recursión via sentinel en git-dir real, **worktree-safe**) |
+| [`versioning`](features/versioning/README.md) | 1.3.1 | todos | Versionado semántico automático: `post-commit` bumpea según el prefijo del commit (conventional commits), sincroniza `marketplace.json`, y amenda el commit (con guard de recursión via sentinel en git-dir real, **worktree-safe**) |
 | [`docs-conventions`](features/docs-conventions/README.md) | 1.1.1 | todos | Secciones estándar de README: install, update, verificación de versión, tabla de conventional commits |
 | [`skill-graph`](features/skill-graph/README.md) | 1.0.0 | todos | Grafo de delegación entre skills + inventario, generado del código (refs `Read`/`Skill`) e inyectado en README/docs por el pre-commit — no se desactualiza; marca reutilización y orquestadoras gordas |
 
@@ -16,7 +16,7 @@ Para el flujo de uso completo ver [AGENTS.md](AGENTS.md).
 
 | Feature | Versión | CLIs | Descripción |
 |---|---|---|---|
-| [`multi-cli-compat`](features/multi-cli-compat/README.md) | 2.1.0 | todos | Compatibilidad real con Claude Code / Gemini / OpenCode / Codex / Cursor / Copilot: 3 estrategias + guía de cuál elegir, manifiestos por CLI, AGENTS.md/GEMINI.md, y **traducción de nombres de tools** entre CLIs |
+| [`multi-cli-compat`](features/multi-cli-compat/README.md) | 2.8.0 | todos | Compatibilidad real con Claude Code / Gemini / OpenCode / Codex / Cursor / Copilot: 3 estrategias + guía de cuál elegir, manifiestos por CLI, AGENTS.md/GEMINI.md, y **traducción de nombres de tools** entre CLIs |
 | [`mcp-npx-wrapper`](features/mcp-npx-wrapper/README.md) | 1.0.0 | claude-code | Plugin fino que envuelve un MCP externo de npm (`npx -y <paquete>`), sin código local |
 | [`mcp-server-types`](features/mcp-server-types/README.md) | 1.0.0 | todos | Todos los transportes MCP: stdio (npx/bun/docker/uvx/php), HTTP, HTTP+auth Bearer, SSE; auth sin hardcodear secrets |
 | [`claude-code-hooks`](features/claude-code-hooks/README.md) | 1.0.0 | claude-code | Patrones de hooks: SessionStart auto-setup, PostToolUse reacción a fallos, convención exit 2/stderr, gotcha CLAUDE_PLUGIN_ROOT |

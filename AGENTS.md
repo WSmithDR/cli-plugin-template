@@ -41,6 +41,10 @@ Regla de decisión rápida:
 
 Este repo también es un plugin instalable (`.claude-plugin/plugin.json`), con manifiestos
 para Gemini CLI, OpenCode, Codex, Cursor y Copilot (dogfooding de `multi-cli-compat`).
+En OpenCode se instala con su plugin manager nativo: `package.json` (`main` →
+`.opencode/plugins/cli-plugin-template.js`) permite el spec
+`cli-plugin-template@git+<repo>` en `opencode.json`, y el hook `config` registra las
+skills solo con eso — instrucciones completas en `.opencode/INSTALL.md`.
 Instalado en otro proyecto, expone las skills `plugin-dev` (router), `plugin-audit`,
 `plugin-feature`, `plugin-recommend`, `plugin-promote`, `plugin-register`,
 `plugin-feedback-log`, `plugin-hotpatch`, `plugin-growth` y `cli-plugin-template-health` (diagnóstico), que leen el catálogo de

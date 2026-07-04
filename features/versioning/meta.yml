@@ -1,5 +1,5 @@
 name: versioning
-version: 1.3.0
+version: 1.3.1
 cli_compat: [claude-code, opencode, gemini-cli, any]
 depends_on: [git-hooks]
 description: >
