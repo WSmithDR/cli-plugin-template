@@ -180,6 +180,21 @@ def feedback_mark_applied(plugin: str, slug: str, applied_at: Optional[str] = No
     return str(path)
 
 
+# ── harvest offsets (detección idempotente de fricción) ──────
+
+def harvest_offset_get(key: str) -> int:
+    """Offset ya escaneado del transcript `key` (0 si nunca se escaneó)."""
+    offsets = _read_json(paths.harvest_offsets_file(), {}) or {}
+    value = offsets.get(key, 0)
+    return value if isinstance(value, int) and value >= 0 else 0
+
+
+def harvest_offset_set(key: str, value: int) -> None:
+    offsets = _read_json(paths.harvest_offsets_file(), {}) or {}
+    offsets[key] = value
+    _write_json(paths.harvest_offsets_file(), offsets)
+
+
 # ── proposals (gate de aprobación, baranda 2) ────────────────
 
 def proposal_save(plugin: str, slug: str, content: str) -> str:

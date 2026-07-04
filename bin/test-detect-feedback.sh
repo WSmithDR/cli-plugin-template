@@ -35,6 +35,19 @@ echo "$out" | python3 -c "import json,sys; d=json.load(sys.stdin); assert 'syste
 out=$(echo 'no-json' | bash "$HOOK" 2>&1); rc=$?
 [ $rc -eq 0 ] && _pass "input no-JSON no rompe el hook" || _fail "no-JSON: rc=$rc out=$out"
 
+# fricción en transcript con plugin registrado → sugiere feedback-harvester
+python3 "$CPT" registry register ankify /tmp/x >/dev/null
+TRANSCRIPT="$DATA/t.jsonl"
+printf '{"type":"user","message":{"content":"la skill ankify:anki-capture no funciona"}}\n' > "$TRANSCRIPT"
+out=$(echo "{\"transcript_path\":\"$TRANSCRIPT\"}" | bash "$HOOK" 2>&1)
+echo "$out" | python3 -c "import json,sys; d=json.load(sys.stdin); assert 'POSSIBLE PLUGIN FRICTION' in d['systemMessage']; assert 'feedback-harvester' in d['systemMessage']" \
+    && _pass "fricción → sugiere feedback-harvester" || _fail "fricción: $out"
+
+# segundo Stop sin contenido nuevo → no repite la sugerencia (idempotente por offset)
+out=$(echo "{\"transcript_path\":\"$TRANSCRIPT\"}" | bash "$HOOK" 2>&1)
+echo "$out" | grep -q "POSSIBLE PLUGIN FRICTION" \
+    && _fail "idempotencia: repitió la sugerencia" || _pass "sin contenido nuevo → no repite"
+
 echo ""
 echo "Resultado: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ] && exit 0 || exit 1

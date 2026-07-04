@@ -12,3 +12,6 @@ docs/**
 
 # Esta skill documenta el propio audit, con ejemplos de rutas "malas".
 skills/plugin-audit/SKILL.md
+
+# Overrides personales que Claude Code auto-edita con rutas absolutas (gitignoreado).
+.claude/settings.local.json

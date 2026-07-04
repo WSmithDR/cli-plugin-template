@@ -50,6 +50,11 @@ def session_id_file() -> Path:
     return data_dir() / "current-session.id"
 
 
+def harvest_offsets_file() -> Path:
+    """Offsets por transcript para la detección idempotente de fricción (Stop hook)."""
+    return data_dir() / "harvest-offsets.json"
+
+
 def slugify(text: str) -> str:
     """Slug estable y filesystem-safe: lowercase, no-alnum→'-', colapsa, trunc 40."""
     s = re.sub(r"[^a-z0-9]+", "-", text.strip().lower())
