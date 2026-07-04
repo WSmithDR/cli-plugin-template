@@ -251,14 +251,16 @@ OpenCode expone un subset de hooks. Algunos no tienen equivalente directo:
 | Claude Code Hook | OpenCode Hook | Limitaciones |
 |---|---|---|
 | `SessionStart` | `config` + `messages.transform` | `config` solo registra paths; el bootstrap va en el **primer mensaje** vía `messages.transform` |
-| `PreToolUse` | **NO EXISTE** | No hay bloqueo preventivo. El comando se ejecuta antes de que el plugin se entere. Solución: gate informativo post-ejecución en `tool.execute.after` |
+| `PreToolUse` | `tool.execute.before` | Bloqueo preventivo REAL: recibe `(input, output)` antes de ejecutar; `throw new Error(...)` cancela la tool call. Verificado en producción (ankify firewall, todo-plugin guard). En versiones viejas de OpenCode no existía — si tu instalación no lo dispara, fallback: gate informativo en `tool.execute.after` |
 | `PostToolUse` | `tool.execute.after` | Idéntico en propósito. Recibe `(tool, input, output)`. Solo se dispara para `bash`/`Bash` |
 | `Stop` / `SubagentStop` / `PreCompact` | **NO EXISTEN** | No hay notificación de fin de sesión. Solución: detectores periódicos en `messages.transform` con flag de módulo (`_checked`) para ejecutarlos una vez |
 
 **Implicaciones prácticas:**
 
-- **PreToolUse**: si dependés de bloquear comandos peligrosos antes de que se ejecuten,
-  OpenCode no lo permite. El gate post-ejecución puede informar pero no prevenir.
+- **PreToolUse**: `tool.execute.before` permite bloquear ANTES de ejecutar tirando una
+  excepción — el patrón es delegar la decisión al mismo script del hook de Claude Code
+  (payload JSON por stdin) y hacer `throw` si sale != 0, así ambas plataformas comparten
+  una sola implementación del gate (ver ankify `lib/hooks/before.js`).
 - **Stop**: no podés hacer cleanup al final de sesión. En ankify se resolvió moviendo los
   detectores "de fin de sesión" (hotpatch, feedback) a `messages.transform` en el **primer
   mensaje de la sesión**, con flag de módulo para que corran una sola vez.
@@ -536,6 +538,9 @@ skills/MCP aparecen y que las instrucciones se cargan en ambos.
 
 ## Changelog
 
+- **2.8.1** — corrección (discovery de todo-plugin): OpenCode SÍ tiene PreToolUse
+  bloqueante — `tool.execute.before` + throw cancela la tool call. La tabla decía
+  "NO EXISTE" y desalentaba gates preventivos que sí son posibles.
 - **2.8.0** — instalación nativa OpenCode (patrón superpowers): `files/package.json`
   (`main` → JS plugin, habilita `plugin: ["<name>@git+<url>"]`) y
   `files/opencode-INSTALL.md` (guía para el usuario final). Skills auto-registradas
@@ -560,7 +565,8 @@ skills/MCP aparecen y que las instrucciones se cargan en ambos.
 - **2.4.0** — generador expandido a 7 manifests (todos los CLIs + marketplace). Stop hook
   OpenCode via `event("global.disposed")`. OpenCode global install: `bin/install-opencode.sh`.
 - **2.3.0** — mapa detallado de hooks Claude Code ↔ OpenCode (limitaciones: PreToolUse y Stop
-  no existen en OpenCode; soluciones documentadas con `tool.execute.after` + `messages.transform`).
+  no existen en OpenCode; soluciones documentadas con `tool.execute.after` + `messages.transform`)
+  *(fila PreToolUse corregida en 2.8.1)*.
   Documentado que OpenCode plugin debe ser `.js` (no `.ts`) y requiere `"type": "module"` en
   `package.json` para evitar warnings de Node.js.
 - **2.2.0** — nueva estrategia multi-CLI: fuente única de verdad vía `cli-config.yaml` + generador `generate-cli-configs.py` (reduce N manifiestos a 1 archivo YAML)
