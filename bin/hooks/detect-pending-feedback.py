@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Stop hook: (1) detecta feedbacks de plugins sin aplicar y sugiere plugin-hotpatch;
-(2) escanea el tramo NUEVO del transcript buscando fricción con plugins registrados
-y sugiere delegar la cosecha al subagente feedback-harvester, fuera del hilo principal.
+"""Stop hook (entrypoint directo, sin wrapper .sh): (1) detecta feedbacks de plugins sin
+aplicar y sugiere plugin-hotpatch; (2) escanea el tramo NUEVO del transcript buscando
+fricción con plugins registrados y sugiere delegar la cosecha al subagente
+feedback-harvester, fuera del hilo principal.
 
-Emite JSON con `systemMessage` (misma convención que el Stop hook de ankify) si hay
-algo que reportar; nada si no.
+Lee el input del hook (JSON con transcript_path) por stdin. Emite JSON con
+`systemMessage` (misma convención que el Stop hook de ankify) si hay algo que
+reportar; nada si no.
 """
 import json
 import sys
@@ -76,7 +78,10 @@ def _friction_message(transcript_path: str) -> str:
 
 
 def main() -> int:
-    transcript_path = sys.argv[1] if len(sys.argv) > 1 else ""
+    try:
+        transcript_path = str(json.load(sys.stdin).get("transcript_path", ""))
+    except Exception:
+        transcript_path = ""
     msgs = []
 
     try:
