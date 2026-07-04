@@ -55,6 +55,23 @@ Notas:
 - **Copilot / Codex**: `AGENTS.md` referencia el catálogo; consultá esta tabla al traducir tools.
 - **Claude Code**: no la necesita (usa los nombres nativos).
 
+## Contrato universal de hooks (cualquier CLI)
+
+La lógica de los hooks NO vive en el adaptador de cada CLI: vive en scripts Python
+(`bin/hooks/*.py`) con un contrato mínimo, agnóstico del host:
+
+- **stdin**: JSON con el contexto que el CLI tenga (ej. `{"transcript_path": "..."}`;
+  campos ausentes degradan en silencio, nunca rompen).
+- **stdout**: JSON con `{"systemMessage": "..."}` si hay algo que reportar; vacío si no.
+- **estado**: todo en el store externo vía `bin/lib/gateway.py` (nunca en el adaptador).
+
+Un adaptador por CLI es solo: *mapear su evento de ciclo de vida → ejecutar el script
+con ese JSON → mostrar `systemMessage`*. Claude Code lo hace nativo (`hooks/hooks.json`);
+OpenCode con ~15 líneas de JS (`.opencode/plugins/cli-plugin-template.js`), que además
+acepta `CPT_TRANSCRIPT_PATH` como knob para hosts que puedan proveer un transcript.
+CLIs sin hooks de ciclo de vida (Gemini, Codex, Cursor, Copilot) quedan con manifiestos +
+skills; el hook simplemente no corre ahí.
+
 ## Nota sobre el path del catálogo
 
 Las skills referencian el catálogo con `${CLAUDE_PLUGIN_ROOT}/features/`. Esa variable la
