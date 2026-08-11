@@ -128,15 +128,24 @@ def _strip_prefix(stem: str) -> str:
     return stem[len("feedback_"):] if stem.startswith("feedback_") else stem
 
 
-def _is_pending(path: Path) -> bool:
+def _feedback_state(path: Path) -> str:
+    """'applied' | 'discarded' | 'pending' según el frontmatter."""
     content = path.read_text(encoding="utf-8")
+    if re.search(r"^discarded:\s*true", content, re.MULTILINE):
+        return "discarded"
     m = re.search(r"^applied:\s*(\S+)", content, re.MULTILINE)
-    return m is None or m.group(1) == "false"
+    return "pending" if (m is None or m.group(1) == "false") else "applied"
 
 
-def feedback_list(plugin: Optional[str] = None, pending_only: bool = False) -> list[str]:
+def _is_pending(path: Path) -> bool:
+    return _feedback_state(path) == "pending"
+
+
+def feedback_list(plugin: Optional[str] = None, pending_only: bool = False,
+                  state: Optional[str] = None) -> list[str]:
     """Lista feedbacks como '<plugin>/<slug>'. plugin=None → todos los registrados
-    + cualquier subdir con feedbacks. pending_only filtra applied:false."""
+    + cualquier subdir con feedbacks. pending_only deja solo los pendientes;
+    state filtra por 'pending'|'applied'|'discarded'."""
     if plugin is not None:
         plugins = [paths.slugify(plugin)]
     else:
@@ -155,29 +164,45 @@ def feedback_list(plugin: Optional[str] = None, pending_only: bool = False) -> l
         if not d.exists():
             continue
         for f in sorted(d.glob("feedback_*.md")):
-            if pending_only and not _is_pending(f):
+            st = _feedback_state(f)
+            if pending_only and st != "pending":
+                continue
+            if state is not None and st != state:
                 continue
             result.append(f"{p}/{_strip_prefix(f.stem)}")
     return result
 
 
-def feedback_mark_applied(plugin: str, slug: str, applied_at: Optional[str] = None) -> str:
-    """Marca un feedback como aplicado: applied:false→true y agrega/actualiza applied_at.
-    Devuelve la ruta. Idempotente."""
+def _feedback_mark(plugin: str, slug: str, field: str, at: Optional[str]) -> str:
+    """Pone `<field>: true` + `<field>_at: <fecha>` en el frontmatter. Idempotente."""
     path = paths.feedbacks_dir(plugin) / f"feedback_{paths.slugify(slug)}.md"
     content = _read(path)
     if not content:
         raise FileNotFoundError(f"feedback no existe: {plugin}/{slug}")
-    stamp = applied_at or _today()
-    if re.search(r"^applied:", content, re.MULTILINE):
-        content = re.sub(r"^applied:.*$", "applied: true", content, count=1, flags=re.MULTILINE)
-    if re.search(r"^applied_at:", content, re.MULTILINE):
-        content = re.sub(r"^applied_at:.*$", f"applied_at: {stamp}", content, count=1, flags=re.MULTILINE)
+    stamp = at or _today()
+    both = f"{field}: true\n{field}_at: {stamp}"
+    if re.search(rf"^{field}:", content, re.MULTILINE):
+        content = re.sub(rf"^{field}:.*$", f"{field}: true", content, count=1, flags=re.MULTILINE)
+        if re.search(rf"^{field}_at:", content, re.MULTILINE):
+            content = re.sub(rf"^{field}_at:.*$", f"{field}_at: {stamp}",
+                             content, count=1, flags=re.MULTILINE)
+        else:
+            content = re.sub(rf"^{field}: true$", both, content, count=1, flags=re.MULTILINE)
     else:
-        content = re.sub(r"^applied: true$", f"applied: true\napplied_at: {stamp}",
-                         content, count=1, flags=re.MULTILINE)
+        # No estaba en el frontmatter (caso discarded): insertar tras el `---` de apertura.
+        content = re.sub(r"^---\s*$", f"---\n{both}", content, count=1, flags=re.MULTILINE)
     _write(path, content)
     return str(path)
+
+
+def feedback_mark_applied(plugin: str, slug: str, applied_at: Optional[str] = None) -> str:
+    """Marca un feedback como aplicado (applied:true + applied_at). Devuelve la ruta."""
+    return _feedback_mark(plugin, slug, "applied", applied_at)
+
+
+def feedback_mark_discarded(plugin: str, slug: str, discarded_at: Optional[str] = None) -> str:
+    """Marca un feedback como descartado: sale de pendientes sin haber sido aplicado."""
+    return _feedback_mark(plugin, slug, "discarded", discarded_at)
 
 
 # ── harvest offsets (detección idempotente de fricción) ──────
@@ -278,12 +303,14 @@ def growth_summary(plugin: Optional[str] = None) -> dict:
     for p in plugins:
         fb_total = len(feedback_list(plugin=p))
         fb_pending = len(feedback_list(plugin=p, pending_only=True))
+        fb_discarded = len(feedback_list(plugin=p, state="discarded"))
         props = {s: len(proposal_list(plugin=p, status=s)) for s in PROPOSAL_STATUSES}
         rows.append({
             "name": p,
             "registered": p in registered,
             "local_path": registered.get(p, {}).get("local_path", ""),
-            "feedbacks": {"pending": fb_pending, "applied": fb_total - fb_pending, "total": fb_total},
+            "feedbacks": {"pending": fb_pending, "applied": fb_total - fb_pending - fb_discarded,
+                          "discarded": fb_discarded, "total": fb_total},
             "proposals": {**props, "total": sum(props.values())},
         })
 
@@ -291,6 +318,7 @@ def growth_summary(plugin: Optional[str] = None) -> dict:
         "plugins": len(rows),
         "feedbacks_pending": sum(r["feedbacks"]["pending"] for r in rows),
         "feedbacks_applied": sum(r["feedbacks"]["applied"] for r in rows),
+        "feedbacks_discarded": sum(r["feedbacks"]["discarded"] for r in rows),
         "proposals_pending": sum(r["proposals"]["pending"] for r in rows),
         "proposals_approved": sum(r["proposals"]["approved"] for r in rows),
     }

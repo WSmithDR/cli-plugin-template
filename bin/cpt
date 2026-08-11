@@ -59,6 +59,8 @@ def main() -> int:
     f_list = fb_sub.add_parser("list", help="listar feedbacks")
     f_list.add_argument("--plugin", default=None)
     f_list.add_argument("--pending", action="store_true")
+    f_list.add_argument("--state", default=None,
+                        choices=("pending", "applied", "discarded"))
 
     f_show = fb_sub.add_parser("show", help="imprimir el contenido de un feedback")
     f_show.add_argument("plugin")
@@ -68,6 +70,11 @@ def main() -> int:
     f_apply.add_argument("plugin")
     f_apply.add_argument("slug")
     f_apply.add_argument("--at", default=None, help="fecha applied_at (default: hoy UTC)")
+
+    f_disc = fb_sub.add_parser("discard", help="marcar un feedback como descartado")
+    f_disc.add_argument("plugin")
+    f_disc.add_argument("slug")
+    f_disc.add_argument("--at", default=None, help="fecha discarded_at (default: hoy UTC)")
 
     # proposal ─────────────────────────────────────────────────
     pr = sub.add_parser("proposal", help="gate de aprobación de patches")
@@ -116,11 +123,14 @@ def main() -> int:
         if ns.op == "save":
             print(gateway.feedback_save(ns.plugin, ns.slug, _read_content(ns.content)))
         elif ns.op == "list":
-            print("\n".join(gateway.feedback_list(plugin=ns.plugin, pending_only=ns.pending)))
+            print("\n".join(gateway.feedback_list(plugin=ns.plugin, pending_only=ns.pending,
+                                                  state=ns.state)))
         elif ns.op == "show":
             print(gateway.feedback_load(ns.plugin, ns.slug), end="")
         elif ns.op == "apply":
             print(gateway.feedback_mark_applied(ns.plugin, ns.slug, applied_at=ns.at))
+        elif ns.op == "discard":
+            print(gateway.feedback_mark_discarded(ns.plugin, ns.slug, discarded_at=ns.at))
 
     elif ns.group == "proposal":
         if ns.op == "save":
@@ -158,6 +168,7 @@ def _print_status(summary: dict) -> None:
         fb, pr = r["feedbacks"], r["proposals"]
         flag = "" if r["registered"] else " (no registrado)"
         print(f"{r['name']:<{width}}  ▸ feedbacks: {fb['pending']} pend / {fb['applied']} aplicados"
+              f" / {fb['discarded']} descartados"
               f"   propuestas: {pr['pending']} pending · {pr['approved']} approved · "
               f"{pr['discarded']} discarded{flag}")
         if r["local_path"]:

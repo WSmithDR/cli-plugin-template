@@ -109,8 +109,9 @@ Mostrar el mismo preview en el chat y llamar `AskUserQuestion`:
 Según la respuesta:
 - **Sí** → `proposal set-status <plugin> <slug> approved` y seguir a Step 5.
 - **Editar** → reescribir la propuesta (`proposal save` de nuevo) y volver a mostrar el gate.
-- **Descartar** → `proposal set-status <plugin> <slug> discarded` y terminar ("Hotpatch descartado;
-  la propuesta queda como registro").
+- **Descartar** → `proposal set-status <plugin> <slug> discarded` **y** `feedback discard <plugin>
+  <slug>` (pone `discarded: true` + `discarded_at`: sale de pendientes sin haber sido aplicado, así
+  el hook Stop deja de reportarlo). Terminar: "Hotpatch descartado; queda el registro".
 
 ---
 

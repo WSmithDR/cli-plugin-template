@@ -56,6 +56,21 @@ out=$(python3 "$CPT" feedback list --pending)
 echo "$out" | grep -qx "cli-plugin-template/self-friction" \
     && _pass "cross-plugin → '<plugin>/<slug>'" || _fail "cross-plugin: '$out'"
 
+# discard: sale de --pending, aparece en --state discarded, no cuenta como aplicado
+python3 "$CPT" feedback discard ankify "namespace-issue" >/dev/null
+grep -q "^discarded: true" "$f" && grep -q "^discarded_at: " "$f" \
+    && _pass "discard → discarded:true + discarded_at" || _fail "discard: frontmatter '$(cat "$f")'"
+pend=$(python3 "$CPT" feedback list --pending --plugin ankify)
+disc=$(python3 "$CPT" feedback list --plugin ankify --state discarded)
+echo "$pend" | grep -q "namespace-issue" && _fail "descartado sigue en --pending" \
+    || { echo "$disc" | grep -qx "ankify/namespace-issue" \
+         && _pass "descartado: fuera de --pending, dentro de --state discarded" \
+         || _fail "--state discarded: '$disc'"; }
+counts=$(python3 "$CPT" status --plugin ankify --json)
+echo "$counts" | python3 -c 'import json,sys; fb=json.load(sys.stdin)["plugins"][0]["feedbacks"]; \
+    assert fb=={"pending":0,"applied":1,"discarded":1,"total":2}, fb' \
+    && _pass "status: descartado no cuenta como aplicado" || _fail "status: $counts"
+
 echo ""
 echo "Resultado: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ] && exit 0 || exit 1

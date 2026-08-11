@@ -14,7 +14,8 @@ Procesa el feedback capturado y mejora el plugin.
   archivos de control (`owner`, `consumers`) para ubicarlo.
 - **Step 3** — proponé el fix.
 - **Step 4** — aplicá el parche.
-- **Step 5** — marcá `applied: true` y commiteá.
+- **Step 5** — marcá `applied: true` y commiteá. Si el feedback se descarta (no se va a
+  parchear), marcá `discarded: true` + `discarded_at` para que salga de pendientes.
 
 ## Metadata `_hotpatch`
 Cada archivo de control lleva:
