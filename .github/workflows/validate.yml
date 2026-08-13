@@ -16,6 +16,10 @@ jobs:
           python-version: "3.12"
       - name: Validate catalog integrity
         run: python3 bin/validate-catalog.py
+      # El bump lo hace el hook post-commit local; acá solo se detecta drift
+      # (ej. un commit hecho desde la web de GitHub, sin hooks).
+      - name: Validate manifest version sync
+        run: python3 bin/bump-version.py --check
       - name: Validate skill evals schema
         run: python3 bin/validate-evals.py
       - name: Validate shell scripts parse
