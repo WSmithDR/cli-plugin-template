@@ -9,18 +9,39 @@ set -euo pipefail
 # Solo en proyectos de plugin
 [ -d ".claude-plugin" ] || exit 0
 
-# Marcador "ya avisado" en .git (no se commitea); fallback si no hay git
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+
+# Marcador "ya avisado" en .git (no se commitea); fallback si no hay git. Guarda la
+# versión del catálogo auditada: si el catálogo avanzó, este plugin quedó atrás y
+# vuelve a avisar. Antes era un touch vacío → avisaba una sola vez para siempre.
 GIT_DIR=$(git rev-parse --git-dir 2>/dev/null || echo "")
 if [ -n "$GIT_DIR" ]; then
     MARKER="$GIT_DIR/cli-plugin-template.seen"
 else
     MARKER=".claude-plugin/.cli-template-seen"
 fi
-[ -f "$MARKER" ] && exit 0
-touch "$MARKER"
+CATALOG_VERSION=$(python3 -c "import json;print(json.load(open('$ROOT/.claude-plugin/plugin.json')).get('version',''))" 2>/dev/null || echo "")
+SEEN=$(cat "$MARKER" 2>/dev/null || echo "")
+[ -n "$CATALOG_VERSION" ] && [ "$SEEN" = "$CATALOG_VERSION" ] && exit 0
+echo "$CATALOG_VERSION" > "$MARKER"
 
-MSG="CLI-PLUGIN-TEMPLATE: Esto parece un proyecto de plugin.
+if [ -z "$SEEN" ]; then
+    MSG="CLI-PLUGIN-TEMPLATE: Esto parece un proyecto de plugin.
 El catálogo cli-plugin-template está instalado — corré /plugin-audit para ver qué features te faltan, o /plugin para el menú de capacidades."
+else
+    MSG="CLI-PLUGIN-TEMPLATE: el catálogo avanzó ($SEEN → $CATALOG_VERSION) desde la última auditoría de este plugin.
+Corré /plugin-audit para ver qué features nuevas o actualizadas te faltan."
+fi
+
+# Sin ningún manifiesto de otro CLI, el plugin es Claude-Code-only: ofrecer multi-cli-compat.
+OTHER_CLI=""
+for f in .opencode opencode.json GEMINI.md gemini-extension.json AGENTS.md .codex-plugin .cursor-plugin; do
+    [ -e "$f" ] && OTHER_CLI=1 && break
+done
+if [ -z "$OTHER_CLI" ]; then
+    MSG="$MSG
+Este plugin solo tiene manifiesto de Claude Code — decí 'integrá multi-cli-compat' (skill plugin-feature) para portarlo a OpenCode/Gemini/Codex."
+fi
 
 # Si el plugin no está en el registry de evolución, ofrecer el alta. El registry
 # es el allowlist: el meta-plugin solo administra/parchea plugins dados de alta.

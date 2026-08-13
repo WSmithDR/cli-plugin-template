@@ -48,6 +48,41 @@ out=$(echo "{\"transcript_path\":\"$TRANSCRIPT\"}" | python3 "$HOOK" 2>&1)
 echo "$out" | grep -q "POSSIBLE PLUGIN FRICTION" \
     && _fail "idempotencia: repitió la sugerencia" || _pass "sin contenido nuevo → no repite"
 
+# fallo del plugin SIN queja del usuario → igual dispara la cosecha
+printf '{"type":"tool_result","is_error":true,"content":"Traceback: /tmp/x/ankify/bin/cpt: command not found"}\n' >> "$TRANSCRIPT"
+out=$(echo "{\"transcript_path\":\"$TRANSCRIPT\"}" | python3 "$HOOK" 2>&1)
+echo "$out" | python3 -c "import json,sys; d=json.load(sys.stdin); assert 'POSSIBLE PLUGIN FRICTION' in d['systemMessage']; assert 'observed failures' in d['systemMessage']" \
+    && _pass "error sin queja → dispara cosecha" || _fail "error: $out"
+
+# error que no nombra un plugin registrado → no dispara (código del usuario)
+printf '{"type":"tool_result","is_error":true,"content":"Traceback: src/app.py line 3"}\n' >> "$TRANSCRIPT"
+out=$(echo "{\"transcript_path\":\"$TRANSCRIPT\"}" | python3 "$HOOK" 2>&1)
+echo "$out" | grep -q "POSSIBLE PLUGIN FRICTION" \
+    && _fail "error ajeno: disparó igual" || _pass "error ajeno al plugin → no dispara"
+
+# promote: repo registrado con cambios sin commitear en infra → sugiere plugin-promote
+REPO="$DATA/repo"
+mkdir -p "$REPO/hooks"
+git -C "$REPO" init -q 2>/dev/null
+git -C "$REPO" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
+python3 "$CPT" registry register promo-plugin "$REPO" >/dev/null
+echo "x" > "$REPO/hooks/thing.sh"; git -C "$REPO" add -A
+out=$(cd "$REPO" && echo '{"transcript_path":""}' | python3 "$HOOK" 2>&1)
+echo "$out" | grep -q "POSSIBLE CATALOG PROMOTION" \
+    && _pass "infra sin commitear → sugiere promote" || _fail "promote: $out"
+
+# mismo set de archivos → no repite
+out=$(cd "$REPO" && echo '{"transcript_path":""}' | python3 "$HOOK" 2>&1)
+echo "$out" | grep -q "POSSIBLE CATALOG PROMOTION" \
+    && _fail "promote: repitió con el mismo set" || _pass "mismo set → no repite"
+
+# cambio de dominio (no infra) → no sugiere promote
+git -C "$REPO" -c user.email=t@t -c user.name=t commit -q -m infra
+mkdir -p "$REPO/src"; echo "y" > "$REPO/src/domain.py"; git -C "$REPO" add -A
+out=$(cd "$REPO" && echo '{"transcript_path":""}' | python3 "$HOOK" 2>&1)
+echo "$out" | grep -q "POSSIBLE CATALOG PROMOTION" \
+    && _fail "promote: disparó con cambio de dominio" || _pass "cambio de dominio → no sugiere"
+
 echo ""
 echo "Resultado: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ] && exit 0 || exit 1

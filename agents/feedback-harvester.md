@@ -22,6 +22,12 @@ store y **una sola línea** de resumen como respuesta — nunca vuelques el aná
    - preferencia: "prefiero", "no me gusta", guía de comportamiento
    - escenario: caso válido que la skill no supo manejar
    - capability-gap: se improvisó a mano algo que el plugin debería hacer con código
+
+   Y en los resultados de tool buscá **fallos del plugin** (aunque el usuario no se haya
+   quejado): traceback, `is_error`, exit≠0, "command not found" en un script/hook/comando
+   del plugin. Se atribuye solo si el path o el nombre del plugin está en el error — un
+   error del código del usuario no es fricción del plugin. `signal: friccion`,
+   `needs_patch: true`, y en **Why** citá el error textual (1-2 líneas).
 3. **Atribuir** cada hallazgo al plugin dueño de la skill involucrada (namespace →
    `python3 "$CPT" registry resolve "<namespace>"`). Descartá lo que no resuelva.
 4. **Dedup** — `python3 "$CPT" feedback list --plugin <plugin>`: si ya existe un feedback

@@ -73,6 +73,27 @@ result=$(run_in_tmpdir '
 ')
 [ "$result" = "OK" ] && _pass "plugin registrado → sin oferta de registro" || _fail "registrado → $result"
 
+# Caso 7: el catálogo avanzó desde la última auditoría → vuelve a avisar (drift)
+result=$(run_in_tmpdir '
+    git init -q; mkdir -p .claude-plugin
+    echo "0.0.1" > "$(git rev-parse --git-dir)/cli-plugin-template.seen"
+    out=$(bash '"$HOOK"' 2>&1); rc=$?
+    [ $rc -eq 0 ] && echo "$out" | grep -q "el catálogo avanzó" && echo OK || echo "rc=$rc out=$out"
+')
+[ "$result" = "OK" ] && _pass "catálogo avanzó → re-sugiere auditoría" || _fail "drift → $result"
+
+# Caso 8: plugin solo-Claude-Code → ofrece multi-cli-compat; con manifiesto ajeno, no
+result=$(run_in_tmpdir '
+    git init -q; mkdir -p .claude-plugin
+    out=$(bash '"$HOOK"' 2>&1)
+    echo "$out" | grep -q "multi-cli-compat" || { echo "falta oferta: $out"; exit 0; }
+    rm -f "$(git rev-parse --git-dir)/cli-plugin-template.seen"
+    touch AGENTS.md
+    out=$(bash '"$HOOK"' 2>&1)
+    echo "$out" | grep -q "multi-cli-compat" && echo "ofreció igual: $out" || echo OK
+')
+[ "$result" = "OK" ] && _pass "solo Claude Code → ofrece multi-cli-compat" || _fail "multi-cli → $result"
+
 echo ""
 echo "Resultado: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ] && exit 0 || exit 1
