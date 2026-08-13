@@ -28,7 +28,7 @@ store y **una sola línea** de resumen como respuesta — nunca vuelques el aná
    equivalente (por slug/keywords), skip.
 5. **Guardar** cada hallazgo nuevo. Formato: el de
    `skills/plugin-feedback-log/references/feedback-template.md` del plugin (frontmatter:
-   `name`, `description`, `plugin`, `skill_namespace`, `applied: false`, `signal`,
+   `name`, `description`, `plugin`, `skill_namespace`, `status: pending`, `signal`,
    `needs_patch`, `patch_target` si lo inferís, `source: auto-harvest`,
    `auto_detected: true`; cuerpo con **Why** y **How to apply**). Slug: description →
    lowercase → no-alfanuméricos a `-` → truncar a 40. Por stdin a:

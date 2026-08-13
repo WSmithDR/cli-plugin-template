@@ -112,10 +112,47 @@ def registry_resolve_namespace(skill_namespace: str) -> Optional[str]:
 
 # ── feedback (captura de fricción por plugin) ────────────────
 
+def _fm_get(content: str, field: str) -> Optional[str]:
+    m = re.search(rf"^{field}:\s*(\S+)", content, re.MULTILINE)
+    return m.group(1) if m else None
+
+
+def _fm_set(content: str, fields: dict) -> str:
+    """Escribe campos en el frontmatter (reemplaza o inserta tras el `---` de apertura),
+    y de paso normaliza el formato viejo: borra los booleanos `applied:`/`discarded:` y
+    renombra `created_at:` → `created:`. Si no hay frontmatter, lo crea."""
+    if not content.startswith("---"):
+        content = "---\n---\n" + content
+    m = re.match(r"---\n(.*?\n)---", content, re.DOTALL)
+    if m:  # limpieza acotada al frontmatter: el body puede citar 'applied:' en un snippet
+        fm = re.sub(r"^(applied|discarded)(_at)?:.*\n", "", m.group(1), flags=re.MULTILINE)
+        content = "---\n" + fm + "---" + content[m.end():]
+    content = re.sub(r"^created_at:", "created:", content, count=1, flags=re.MULTILINE)
+    for field, value in reversed(list(fields.items())):
+        if re.search(rf"^{field}:", content, re.MULTILINE):
+            content = re.sub(rf"^{field}:.*$", f"{field}: {value}",
+                             content, count=1, flags=re.MULTILINE)
+        else:
+            content = re.sub(r"^---\s*$", f"---\n{field}: {value}",
+                             content, count=1, flags=re.MULTILINE)
+    return content
+
+
 def feedback_save(plugin: str, slug: str, content: str) -> str:
-    """Guarda un feedback bajo el plugin. Devuelve la ruta escrita."""
+    """Guarda un feedback bajo el plugin con el frontmatter normalizado:
+    `status` + `created` + `last_updated`. Devuelve la ruta escrita.
+
+    Reparto de responsabilidades: el contenido manda sobre el cuerpo, `feedback_set_status`
+    manda sobre el estado (por eso al sobrescribir gana el status ya guardado, no el que
+    traiga el contenido nuevo), y el store manda sobre las fechas — `created` se preserva
+    del archivo previo (o de su `created_at` viejo) y `last_updated` es siempre hoy."""
     path = paths.feedbacks_dir(plugin) / f"feedback_{paths.slugify(slug)}.md"
-    _write(path, content)
+    prev = _read(path)
+    today = _today()
+    created = (_fm_get(prev, "created") or _fm_get(prev, "created_at")
+               or _fm_get(content, "created") or _fm_get(content, "created_at") or today)
+    _write(path, _fm_set(content, {"status": _state_of(prev or content),
+                                   "created": created, "last_updated": today}))
     return str(path)
 
 
@@ -128,13 +165,24 @@ def _strip_prefix(stem: str) -> str:
     return stem[len("feedback_"):] if stem.startswith("feedback_") else stem
 
 
-def _feedback_state(path: Path) -> str:
-    """'applied' | 'discarded' | 'pending' según el frontmatter."""
-    content = path.read_text(encoding="utf-8")
+FEEDBACK_STATUSES = ("pending", "applied", "discarded")
+
+
+def _state_of(content: str) -> str:
+    """'pending' | 'applied' | 'discarded' según el frontmatter.
+    Lee `status:`; si no está, cae al formato viejo (booleanos `applied:`/`discarded:`),
+    así los feedbacks escritos antes de la unificación siguen valiendo sin migración."""
+    m = re.search(r"^status:\s*(\S+)", content, re.MULTILINE)
+    if m and m.group(1) in FEEDBACK_STATUSES:
+        return m.group(1)
     if re.search(r"^discarded:\s*true", content, re.MULTILINE):
         return "discarded"
     m = re.search(r"^applied:\s*(\S+)", content, re.MULTILINE)
     return "pending" if (m is None or m.group(1) == "false") else "applied"
+
+
+def _feedback_state(path: Path) -> str:
+    return _state_of(path.read_text(encoding="utf-8"))
 
 
 def _is_pending(path: Path) -> bool:
@@ -173,36 +221,18 @@ def feedback_list(plugin: Optional[str] = None, pending_only: bool = False,
     return result
 
 
-def _feedback_mark(plugin: str, slug: str, field: str, at: Optional[str]) -> str:
-    """Pone `<field>: true` + `<field>_at: <fecha>` en el frontmatter. Idempotente."""
+def feedback_set_status(plugin: str, slug: str, status: str, at: Optional[str] = None) -> str:
+    """Pone `status: <status>` + `last_updated: <fecha>` en el frontmatter. Idempotente.
+    Si el feedback venía del formato viejo, `_fm_set` lo normaliza: `status` queda como
+    única fuente de verdad y `created` se preserva."""
+    if status not in FEEDBACK_STATUSES:
+        raise ValueError(f"status inválido: {status} (esperado: {'|'.join(FEEDBACK_STATUSES)})")
     path = paths.feedbacks_dir(plugin) / f"feedback_{paths.slugify(slug)}.md"
     content = _read(path)
     if not content:
         raise FileNotFoundError(f"feedback no existe: {plugin}/{slug}")
-    stamp = at or _today()
-    both = f"{field}: true\n{field}_at: {stamp}"
-    if re.search(rf"^{field}:", content, re.MULTILINE):
-        content = re.sub(rf"^{field}:.*$", f"{field}: true", content, count=1, flags=re.MULTILINE)
-        if re.search(rf"^{field}_at:", content, re.MULTILINE):
-            content = re.sub(rf"^{field}_at:.*$", f"{field}_at: {stamp}",
-                             content, count=1, flags=re.MULTILINE)
-        else:
-            content = re.sub(rf"^{field}: true$", both, content, count=1, flags=re.MULTILINE)
-    else:
-        # No estaba en el frontmatter (caso discarded): insertar tras el `---` de apertura.
-        content = re.sub(r"^---\s*$", f"---\n{both}", content, count=1, flags=re.MULTILINE)
-    _write(path, content)
+    _write(path, _fm_set(content, {"status": status, "last_updated": at or _today()}))
     return str(path)
-
-
-def feedback_mark_applied(plugin: str, slug: str, applied_at: Optional[str] = None) -> str:
-    """Marca un feedback como aplicado (applied:true + applied_at). Devuelve la ruta."""
-    return _feedback_mark(plugin, slug, "applied", applied_at)
-
-
-def feedback_mark_discarded(plugin: str, slug: str, discarded_at: Optional[str] = None) -> str:
-    """Marca un feedback como descartado: sale de pendientes sin haber sido aplicado."""
-    return _feedback_mark(plugin, slug, "discarded", discarded_at)
 
 
 # ── harvest offsets (detección idempotente de fricción) ──────

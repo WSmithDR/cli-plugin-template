@@ -8,13 +8,13 @@ description: "Motor de crecimiento del plugin: procesa feedback pendiente, artic
 Procesa el feedback capturado y mejora el plugin.
 
 ## Proceso
-- **Step 0** — detectá feedbacks pendientes (`applied: false`) en `<datadir>/memory/`.
+- **Step 0** — detectá feedbacks pendientes (`status: pending`) en `<datadir>/memory/`.
 - **Step 1** — articulá el gap concreto.
 - **Step 2** — mapeá el archivo correcto a tocar. Usá la metadata `_hotpatch` de los
   archivos de control (`owner`, `consumers`) para ubicarlo.
 - **Step 3** — proponé el fix.
 - **Step 4** — aplicá el parche.
-- **Step 5** — marcá `applied: true` y commiteá. Si el feedback se descarta (no se va a
+- **Step 5** — marcá `status: applied` y commiteá. Si el feedback se descarta (no se va a
   parchear), marcá `discarded: true` + `discarded_at` para que salga de pendientes.
 
 ## Metadata `_hotpatch`

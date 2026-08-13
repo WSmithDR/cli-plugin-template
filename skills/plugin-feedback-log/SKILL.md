@@ -8,7 +8,7 @@ when_to_use: "Invocar cuando, usando un plugin propio (ankify, este, otro regist
 
 Una sola vía: `bin/cpt feedback save <plugin> <slug> -`.
 
-**No parchea.** Solo loguea con `applied: false`. `plugin-hotpatch` (P2) aplica el
+**No parchea.** Solo loguea con `status: pending`. `plugin-hotpatch` (P2) aplica el
 patch cuando `needs_patch: true`, contra el repo del plugin (`local_path` del registry).
 
 La fricción se atribuye al **plugin dueño de la skill que falló**, identificado por su

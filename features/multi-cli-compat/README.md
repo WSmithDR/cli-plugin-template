@@ -512,7 +512,7 @@ EOF
 ```
 
 Guarda el descubrimiento en `$DATA_DIR/<plugin>/feedbacks/` con `signal: discovery` y
-`applied: false`. Si aplica al template (`¿Aplica al template? true`), sugiere migrar
+`status: pending`. Si aplica al template (`¿Aplica al template? true`), sugiere migrar
 la entrada a `tool-mapping.md` para que futuros plugins la hereden.
 
 El pipeline `plugin-hotpatch` puede procesar estos descubrimientos igual que cualquier

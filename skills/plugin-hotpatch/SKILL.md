@@ -110,7 +110,7 @@ Según la respuesta:
 - **Sí** → `proposal set-status <plugin> <slug> approved` y seguir a Step 5.
 - **Editar** → reescribir la propuesta (`proposal save` de nuevo) y volver a mostrar el gate.
 - **Descartar** → `proposal set-status <plugin> <slug> discarded` **y** `feedback discard <plugin>
-  <slug>` (pone `discarded: true` + `discarded_at`: sale de pendientes sin haber sido aplicado, así
+  <slug>` (pone `status: discarded` + `last_updated`: sale de pendientes sin haber sido aplicado, así
   el hook Stop deja de reportarlo). Terminar: "Hotpatch descartado; queda el registro".
 
 ---
@@ -125,7 +125,7 @@ Es un repo distinto al cwd: usar la ruta absoluta `$TARGET/...`.
 ```bash
 python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" feedback apply <plugin> <slug>
 ```
-(Pone `applied: true` + `applied_at` en el store. El hook Stop deja de reportarlo.)
+(Pone `status: applied` + `last_updated` en el store. El hook Stop deja de reportarlo.)
 
 ### 5c. Commit acotado (preguntar)
 `AskUserQuestion`: "¿Commiteamos el hotpatch en el repo de `<plugin>`?" → "Sí" / "No".

@@ -28,10 +28,15 @@ Captura sin interrumpir el flujo actual. Guarda en el datadir
 signal: correccion | friccion | escenario | preferencia | discovery | capability-gap
 needs_patch: true | false
 patch_target: <archivo a editar, si aplica>
-applied: false
+status: pending
 ---
 <descripción del feedback>
 ```
+
+`status` es el único campo de estado (`pending | applied | discarded`) — no booleanos
+sueltos. `created` y `last_updated` los sella el store al guardar, no el que escribe el
+feedback: `created` se preserva entre reescrituras, `last_updated` se refresca en cada
+`save` y en cada cambio de estado.
 
 **Captura proactiva (opcional).** El logger no solo espera a ser invocado: detecta fricción
 mid-session (frases de desacuerdo del usuario, o un `capability-gap` cuando el plugin no tiene
@@ -42,9 +47,9 @@ faltantes (`auto_detected: true`). Ver `plugin-feedback-log` Steps 6–7.
 
 ### 2. Motor — `skills/<plugin>-hotpatch/SKILL.md`
 
-- **Step 0**: detecta feedbacks pendientes (`applied: false`).
+- **Step 0**: detecta feedbacks pendientes (`status: pending`).
 - **Steps 1–4**: articula el gap, mapea el archivo correcto, propone el fix.
-- **Step 5**: aplica el parche, marca `applied: true`, commitea.
+- **Step 5**: aplica el parche, marca `status: applied`, commitea.
 
 ### 3. Auto-descubrimiento — metadata `_hotpatch`
 
@@ -66,8 +71,8 @@ cuando convenga procesar lo acumulado.
 
 ## Tests
 
-Logueá un feedback de prueba con `applied: false` y verificá que el motor lo detecta en
-su Step 0 y lo marca `applied: true` tras parchear.
+Logueá un feedback de prueba con `status: pending` y verificá que el motor lo detecta en
+su Step 0 y lo marca `status: applied` tras parchear.
 
 ## Changelog
 

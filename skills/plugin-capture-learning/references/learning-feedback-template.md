@@ -2,7 +2,7 @@
 name: feedback-<slug>
 description: "<discovery — una línea>"
 plugin: <plugin>
-applied: false
+status: pending
 needs_patch: false
 source: plugin-capture-learning
 signal: discovery

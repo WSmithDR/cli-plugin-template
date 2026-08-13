@@ -84,6 +84,6 @@ administra la evolución de tus plugins propios vía un store externo
 (`~/.local/share/cli-plugin-template/`, override `CLI_PLUGIN_TEMPLATE_DATA_DIR`) operado
 por `${CLAUDE_PLUGIN_ROOT}/bin/cpt`. `registry.json` es el allowlist (qué plugins son
 tuyos y dónde viven); cada plugin tiene su subdir con `feedbacks/` y `proposals/`. El ciclo:
-`plugin-register` (alta) → `plugin-feedback-log` (captura fricción, `applied:false`) →
+`plugin-register` (alta) → `plugin-feedback-log` (captura fricción, `status: pending`) →
 `plugin-hotpatch` (propone y aplica el fix en el repo del plugin, con gate de aprobación).
 Solo se administran plugins dados de alta.

@@ -3,7 +3,8 @@ name: feedback-<slug>
 description: "<description — una línea, específica>"
 plugin: <PLUGIN resuelto>
 skill_namespace: <ej. ankify:anki-capture>
-applied: false
+status: pending  # pending | applied | discarded
+# created / last_updated los sella el store al guardar — no los escribas a mano
 needs_patch: <true|false>
 patch_target: "<ruta relativa al repo del plugin, o vacío si needs_patch=false>"
 source: <source>

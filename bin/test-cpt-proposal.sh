@@ -52,7 +52,7 @@ python3 "$CPT" proposal set-status ankify gap-y discarded >/dev/null
 d=$(python3 "$CPT" proposal list --status discarded)
 echo "$d" | grep -qx "ankify/gap-y" && _pass "set-status discarded queda como registro" || _fail "discarded: '$d'"
 
-# feedback apply: applied:false → true + applied_at, sale de --pending
+# feedback apply: pending → status: applied + last_updated, sale de --pending
 python3 "$CPT" feedback save ankify gap-x - >/dev/null <<'EOF'
 ---
 applied: false
@@ -63,9 +63,9 @@ EOF
 python3 "$CPT" feedback apply ankify gap-x >/dev/null
 body=$(python3 "$CPT" feedback show ankify gap-x)
 pend=$(python3 "$CPT" feedback list --pending)
-{ echo "$body" | grep -qx "applied: true" && echo "$body" | grep -q "^applied_at:" && [ -z "$pend" ]; } \
-    && _pass "feedback apply: applied true + applied_at, fuera de --pending" \
-    || _fail "apply: body=$(echo "$body" | grep applied) pend='$pend'"
+{ echo "$body" | grep -qx "status: applied" && echo "$body" | grep -q "^last_updated:" && [ -z "$pend" ]; } \
+    && _pass "feedback apply: status applied + status_at, fuera de --pending" \
+    || _fail "apply: body=$(echo "$body" | grep status) pend='$pend'"
 
 # apply de un feedback inexistente → error (rc≠0)
 rc=0; python3 "$CPT" feedback apply ankify no-existe >/dev/null 2>&1 || rc=$?

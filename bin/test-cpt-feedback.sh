@@ -27,9 +27,37 @@ EOF
 f="$DATA/ankify/feedbacks/feedback_namespace-issue.md"
 [ -f "$f" ] && _pass "save heredoc → archivo en <plugin>/feedbacks/" || _fail "save: no existe $f"
 
-# list --pending lo incluye (applied:false)
+# el store sella status + created + last_updated, y convierte el booleano viejo
+TODAY=$(python3 -c 'import datetime; print(datetime.datetime.now(datetime.timezone.utc).date())')
+grep -q "^status: pending" "$f" && grep -qx "created: $TODAY" "$f" && grep -qx "last_updated: $TODAY" "$f" \
+    && ! grep -qE "^applied:" "$f" \
+    && _pass "save → status + created + last_updated, sin booleanos viejos" \
+    || _fail "save frontmatter: '$(cat "$f")'"
+
+# re-guardar preserva created y el status ya marcado; el cuerpo sí se actualiza
+python3 "$CPT" feedback save nuevo "fechas" - >/dev/null <<'EOF'
+---
+created: 2020-01-01
+status: applied
+---
+primera versión
+EOF
+python3 "$CPT" feedback save nuevo "fechas" - >/dev/null <<'EOF'
+---
+created: 1999-12-31
+status: pending
+---
+descripción corregida
+EOF
+g="$DATA/nuevo/feedbacks/feedback_fechas.md"
+grep -qx "created: 2020-01-01" "$g" && grep -qx "status: applied" "$g" \
+    && grep -qx "last_updated: $TODAY" "$g" && grep -q "descripción corregida" "$g" \
+    && _pass "re-save: preserva created y status, refresca last_updated y el cuerpo" \
+    || _fail "re-save: '$(cat "$g")'"
+
+# list --pending lo incluye (formato viejo applied:false → retro-compat)
 out=$(python3 "$CPT" feedback list --pending)
-echo "$out" | grep -qx "ankify/namespace-issue" && _pass "list --pending incluye applied:false" \
+echo "$out" | grep -qx "ankify/namespace-issue" && _pass "retro-compat: list --pending incluye applied:false" \
     || _fail "pending: '$out'"
 
 # un feedback applied:true NO aparece en --pending pero sí en list normal
@@ -56,10 +84,39 @@ out=$(python3 "$CPT" feedback list --pending)
 echo "$out" | grep -qx "cli-plugin-template/self-friction" \
     && _pass "cross-plugin → '<plugin>/<slug>'" || _fail "cross-plugin: '$out'"
 
+# status: <estado> (formato actual) manda sobre los booleanos viejos
+python3 "$CPT" feedback save nuevo "con-status" - >/dev/null <<'EOF'
+---
+status: applied
+applied: false
+---
+el status manda
+EOF
+pend=$(python3 "$CPT" feedback list --pending --plugin nuevo)
+appl=$(python3 "$CPT" feedback list --plugin nuevo --state applied)
+[ -z "$pend" ] && echo "$appl" | grep -qx "nuevo/con-status" \
+    && _pass "status: applied gana sobre applied:false (formato viejo)" \
+    || _fail "status manda: pend='$pend' appl='$appl'"
+
 # discard: sale de --pending, aparece en --state discarded, no cuenta como aplicado
 python3 "$CPT" feedback discard ankify "namespace-issue" >/dev/null
-grep -q "^discarded: true" "$f" && grep -q "^discarded_at: " "$f" \
-    && _pass "discard → discarded:true + discarded_at" || _fail "discard: frontmatter '$(cat "$f")'"
+grep -q "^status: discarded" "$f" && grep -q "^last_updated: " "$f" \
+    && _pass "discard → status: discarded + last_updated" || _fail "discard: frontmatter '$(cat "$f")'"
+grep -qE "^(applied|discarded)(_at)?:" "$f" \
+    && _fail "quedaron booleanos viejos: '$(cat "$f")'" \
+    || _pass "marcar limpia los booleanos viejos del frontmatter"
+
+# el body no se toca aunque cite 'applied:' en un snippet
+python3 "$CPT" feedback save nuevo "body-intacto" - >/dev/null <<'EOF'
+---
+applied: false
+---
+el usuario escribió `applied: true` en su config
+EOF
+python3 "$CPT" feedback apply nuevo "body-intacto" >/dev/null
+b="$DATA/nuevo/feedbacks/feedback_body-intacto.md"
+grep -q 'su config' "$b" && grep -q '`applied: true`' "$b" \
+    && _pass "el body queda intacto (solo se limpia el frontmatter)" || _fail "body: '$(cat "$b")'"
 pend=$(python3 "$CPT" feedback list --pending --plugin ankify)
 disc=$(python3 "$CPT" feedback list --plugin ankify --state discarded)
 echo "$pend" | grep -q "namespace-issue" && _fail "descartado sigue en --pending" \

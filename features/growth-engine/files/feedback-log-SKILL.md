@@ -14,7 +14,7 @@ fricción, aparece un caso no contemplado o una preferencia nueva.
    - `signal`: correccion | friccion | escenario | preferencia | discovery | capability-gap
    - `needs_patch`: true/false
    - `patch_target`: archivo a editar (si aplica)
-   - `applied: false`
+   - `status: pending`
 3. Confirmá brevemente y seguí con el flujo actual.
 
 **Proactivo + auto-harvest (opcional):** además de la invocación manual, detectá fricción
