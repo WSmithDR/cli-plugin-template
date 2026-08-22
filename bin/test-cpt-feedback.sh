@@ -166,7 +166,33 @@ grep -q 'plugin_version: "1.88.8"' "$v" \
     && ! grep -q "plugin_version" "$DATA/versionado/feedbacks/feedback_sin-sello.md" \
     && _pass "plugin_version: se preserva al re-guardar y no se inventa para los viejos" \
     || _fail "plugin_version re-save: '$(cat "$v")' / '$(cat "$DATA/versionado/feedbacks/feedback_sin-sello.md")'"
-rm -rf "$REPO"
+# plugin_path: solo sobrevive si difiere de local_path; nunca se infiere
+OTRO=$(mktemp -d)
+python3 "$CPT" feedback save versionado "otro-arbol" - <<EOF >/dev/null
+---
+plugin_path: "$OTRO"
+---
+la friccion se vio corriendo con --plugin-dir, en otro arbol
+EOF
+python3 "$CPT" feedback save versionado "mismo-arbol" - <<EOF >/dev/null
+---
+plugin_path: "$REPO"
+---
+el --plugin-dir apuntaba al mismo repo del registry
+EOF
+o="$DATA/versionado/feedbacks/feedback_otro-arbol.md"
+s="$DATA/versionado/feedbacks/feedback_mismo-arbol.md"
+grep -q "plugin_path: \"$OTRO\"" "$o" && ! grep -q "plugin_path" "$s" \
+    && _pass "plugin_path: se sella el arbol ajeno y se borra el redundante" \
+    || _fail "plugin_path: otro='$(cat "$o")' mismo='$(cat "$s")'"
+python3 "$CPT" feedback save versionado "otro-arbol" - <<'EOF' >/dev/null
+---
+---
+re-guardado sin declarar la ruta
+EOF
+grep -q "plugin_path: \"$OTRO\"" "$o" \
+    && _pass "plugin_path: se preserva al re-guardar" || _fail "plugin_path re-save: '$(cat "$o")'"
+rm -rf "$REPO" "$OTRO"
 
 echo ""
 echo "Resultado: $PASS passed, $FAIL failed"

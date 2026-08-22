@@ -6,6 +6,7 @@ skill_namespace: <ej. ankify:anki-capture>
 status: pending  # pending | applied | discarded
 # created / last_updated los sella el store al guardar — no los escribas a mano
 plugin_version: "<la versión que estabas USANDO cuando apareció la fricción>"
+plugin_path: "<la raíz desde donde CORRIÓ el plugin; omitir si es el repo del registry>"
 needs_patch: <true|false>
 patch_target: "<ruta relativa al repo del plugin, o vacío si needs_patch=false>"
 source: <source>

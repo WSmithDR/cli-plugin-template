@@ -43,6 +43,7 @@ El registry es la baranda: el meta-plugin solo administra plugins dados de alta.
 | `skill_namespace` | skill que causó la fricción (Step 1) | sí |
 | `signal` | clasificar según tipo | sí |
 | `plugin_version` | la versión que **estabas usando** cuando apareció la fricción | sí, si la sabés |
+| `plugin_path` | la raíz desde donde **corrió** el plugin | solo si NO es el repo del registry |
 | `needs_patch` | ¿requiere cambio en un archivo del plugin? | sí (default: false) |
 | `patch_target` | ruta **relativa al repo del plugin** a parchear | solo si needs_patch=true |
 | `source` | skill o contexto que invoca | opcional |
@@ -63,11 +64,20 @@ config, script); `false` si es preferencia/guía que no cambia código.
 `patch_target` es **relativo a la raíz del repo del plugin** (no al cwd): el patch de P2
 es cross-repo contra `local_path` del registry.
 
-**`plugin_version` es la versión que corrías, no la del repo.** Sale de la ruta del plugin
-instalado (`.../plugins/cache/<plugin>/<plugin>/<VERSIÓN>/...`) o de su manifiesto. Declarala
-siempre que la sepas: el clon local puede estar atrasado respecto de lo instalado, y un
-`patch_target` puede dejar de existir entre la captura y el patch. Si no la declarás, el store
-la completa desde el manifiesto del repo — que es una aproximación, no lo que observaste.
+**`plugin_version` es la versión que corrías, no la del repo.** Sale del `Base directory for
+this skill:` que encabeza la invocación, o del `CLAUDE_PLUGIN_ROOT` del hook que corre — esa
+ruta ya trae la versión instalada. **Nunca** de listar `plugins/cache/<plugin>/<plugin>/` y
+quedarse con el semver más alto: ahí se acumulan versiones viejas y prototipos abandonados, y
+el mayor no es el activo. Declarala siempre que la sepas: el clon local puede estar atrasado
+respecto de lo instalado, y un `patch_target` puede dejar de existir entre la captura y el
+patch. Si no la declarás, el store la completa desde el manifiesto del repo — una aproximación,
+no lo que observaste.
+
+**`plugin_path` cubre el caso `--plugin-dir`.** Si el plugin corrió desde un árbol que no es
+el `local_path` del registry (un `claude --plugin-dir <ruta>`, un worktree, otro clon),
+declaralo: es la misma base directory de arriba. El store lo descarta solo si coincide con
+`local_path`. Importa porque `plugin-hotpatch` parchea `local_path`: sin este campo, el fix
+aterriza en un árbol distinto del que produjo la fricción, y nada lo avisa.
 
 ---
 

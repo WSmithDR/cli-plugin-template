@@ -153,9 +153,34 @@ def _plugin_version(plugin: str) -> Optional[str]:
     return _read_json(Path(local) / manifest, {}).get("version") or None
 
 
+def _foreign_path(plugin: str, declared: Optional[str]) -> Optional[str]:
+    """La raíz desde donde CORRIÓ el plugin, y solo si no es la del registry.
+
+    Nunca se infiere: `cpt` no tiene cómo saberlo —su propio `CLAUDE_PLUGIN_ROOT`
+    apunta al meta-plugin, no al plugin bajo prueba—. El único que ve la ruta real es
+    quien captura, que la tiene en el `Base directory for this skill:` de la
+    invocación (con `--plugin-dir`, esa ruta es la local).
+
+    Si coincide con `local_path` se descarta: sellar lo que ya dice el registry es
+    ruido. Cuando difiere, en cambio, es la advertencia que `plugin-hotpatch` necesita
+    — va a parchear `local_path`, que NO es el árbol donde se vio la fricción."""
+    if not declared:
+        return None
+    local = (registry_get(plugin) or {}).get("local_path", "")
+    if not local:
+        return declared
+    try:
+        if Path(declared.strip("\"'")).resolve() == Path(local).resolve():
+            return None
+    except OSError:
+        pass  # ruta irresoluble (borrada, permisos): se conserva tal cual se declaró
+    return declared
+
+
 def feedback_save(plugin: str, slug: str, content: str) -> str:
     """Guarda un feedback bajo el plugin con el frontmatter normalizado:
-    `status` + `created` + `last_updated` + `plugin_version`. Devuelve la ruta escrita.
+    `status` + `created` + `last_updated` + `plugin_version` + `plugin_path`.
+    Devuelve la ruta escrita.
 
     Reparto de responsabilidades: el contenido manda sobre el cuerpo, `feedback_set_status`
     manda sobre el estado (por eso al sobrescribir gana el status ya guardado, no el que
@@ -166,7 +191,11 @@ def feedback_save(plugin: str, slug: str, content: str) -> str:
     sin versión parece hablar del código de hoy: un `patch_target` puede haber dejado de
     existir entre la captura y el patch. Se preserva como `created` — describe el momento
     de la observación, no el de la última escritura— y solo se completa desde el manifiesto
-    cuando el archivo es nuevo: a un feedback viejo sin sello no se le inventa uno."""
+    cuando el archivo es nuevo: a un feedback viejo sin sello no se le inventa uno.
+
+    `plugin_path` es su complemento para cuando el plugin corrió desde otro árbol que el
+    del registry (`claude --plugin-dir <ruta>`, un worktree, otro clon). Solo lo declara
+    quien captura, y solo sobrevive si difiere de `local_path` — ver `_foreign_path`."""
     path = paths.feedbacks_dir(plugin) / f"feedback_{paths.slugify(slug)}.md"
     prev = _read(path)
     today = _today()
@@ -178,6 +207,12 @@ def feedback_save(plugin: str, slug: str, content: str) -> str:
                or (_plugin_version(plugin) if not prev else None))
     if version:
         stamped["plugin_version"] = version
+    foreign = _foreign_path(plugin, _fm_get(content, "plugin_path") or _fm_get(prev, "plugin_path"))
+    if foreign:
+        stamped["plugin_path"] = foreign
+    else:
+        # Declarada pero redundante: se borra en vez de dejarla repitiendo el registry.
+        content = re.sub(r"^plugin_path:.*\n", "", content, count=1, flags=re.MULTILINE)
     _write(path, _fm_set(content, stamped))
     return str(path)
 
