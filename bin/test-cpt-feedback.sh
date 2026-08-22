@@ -128,6 +128,46 @@ echo "$counts" | python3 -c 'import json,sys; fb=json.load(sys.stdin)["plugins"]
     assert fb=={"pending":0,"applied":1,"discarded":1,"total":2}, fb' \
     && _pass "status: descartado no cuenta como aplicado" || _fail "status: $counts"
 
+# plugin_version: gana el que declara quien captura, se preserva como created, y a un
+# feedback viejo sin sello no se le inventa uno aunque el manifiesto diga otra cosa
+REPO=$(mktemp -d); mkdir -p "$REPO/.claude-plugin"
+echo '{"version": "2.0.0"}' > "$REPO/.claude-plugin/plugin.json"
+python3 "$CPT" registry register versionado "$REPO" >/dev/null
+python3 "$CPT" feedback save versionado "observado" - >/dev/null <<'EOF'
+---
+plugin_version: "1.88.8"
+---
+la fricción se vio corriendo 1.88.8, no la del repo
+EOF
+python3 "$CPT" feedback save versionado "del-manifiesto" - >/dev/null <<'EOF'
+---
+status: pending
+---
+sin declarar versión: la completa el store
+EOF
+v="$DATA/versionado/feedbacks/feedback_observado.md"
+m="$DATA/versionado/feedbacks/feedback_del-manifiesto.md"
+grep -q 'plugin_version: "1.88.8"' "$v" && grep -q 'plugin_version: 2.0.0' "$m" \
+    && _pass "plugin_version: gana el declarado; si falta, sale del manifiesto" \
+    || _fail "plugin_version: observado='$(cat "$v")' manifiesto='$(cat "$m")'"
+python3 "$CPT" feedback save versionado "observado" - >/dev/null <<'EOF'
+---
+---
+re-guardado sin declarar versión
+EOF
+printf -- '---\n---\nviejo, capturado antes de que existiera el sello\n' \
+    > "$DATA/versionado/feedbacks/feedback_sin-sello.md"
+python3 "$CPT" feedback save versionado "sin-sello" - >/dev/null <<'EOF'
+---
+---
+re-guardado: sigue sin saberse con qué versión se observó
+EOF
+grep -q 'plugin_version: "1.88.8"' "$v" \
+    && ! grep -q "plugin_version" "$DATA/versionado/feedbacks/feedback_sin-sello.md" \
+    && _pass "plugin_version: se preserva al re-guardar y no se inventa para los viejos" \
+    || _fail "plugin_version re-save: '$(cat "$v")' / '$(cat "$DATA/versionado/feedbacks/feedback_sin-sello.md")'"
+rm -rf "$REPO"
+
 echo ""
 echo "Resultado: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ] && exit 0 || exit 1

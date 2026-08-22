@@ -1,0 +1,5 @@
+# Completados — cli-plugin-template
+
+_Última actualización: 2026-08-22_
+
+- [x] **Los feedbacks no dicen a qué versión del plugin se refieren** — un feedback guardado parece hablar del código de hoy: nada en el frontmatter ata la observación a la versión en la que se hizo, así que un `patch_target` puede haber dejado de existir entre la captura y el patch sin que nada lo señale _(creado por: SmithDR · 2026-08-22)_ ✓ _resuelto: el store sella `plugin_version` como sella `created` — gana el que declara quien captura, después el del archivo previo, y solo si el archivo es nuevo sale del manifiesto en `local_path`; a un feedback viejo sin sello no se le inventa uno. Detectado en vivo: ankify pasó de 1.88.8 a 2.0.0 (una reescritura) entre la captura y el patch, y 9 de 10 `patch_target` quedaron apuntando a archivos muertos. Tocó `bin/lib/gateway.py`, `bin/test-cpt-feedback.sh` (2 casos nuevos, 14/14 pasan), `skills/plugin-feedback-log/SKILL.md` y su `references/feedback-template.md` — responsable: SmithDR · 2026-08-22T18:21-05:00_

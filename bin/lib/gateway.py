@@ -138,21 +138,47 @@ def _fm_set(content: str, fields: dict) -> str:
     return content
 
 
+def _plugin_version(plugin: str) -> Optional[str]:
+    """La versión que declara el manifiesto del plugin en su repo local, o None.
+
+    Ojo con lo que significa: es la versión del árbol que `plugin-hotpatch` va a
+    parchear, que no siempre es la que se estaba usando cuando apareció la fricción
+    (el clon local puede estar atrasado respecto de la versión instalada). Por eso
+    quien captura puede declarar `plugin_version` en el frontmatter y gana sobre esto.
+    Sin manifiesto no se inventa nada: mejor sin campo que con una versión falsa."""
+    local = (registry_get(plugin) or {}).get("local_path", "")
+    if not local:
+        return None
+    manifest = (registry_get(plugin) or {}).get("manifest") or ".claude-plugin/plugin.json"
+    return _read_json(Path(local) / manifest, {}).get("version") or None
+
+
 def feedback_save(plugin: str, slug: str, content: str) -> str:
     """Guarda un feedback bajo el plugin con el frontmatter normalizado:
-    `status` + `created` + `last_updated`. Devuelve la ruta escrita.
+    `status` + `created` + `last_updated` + `plugin_version`. Devuelve la ruta escrita.
 
     Reparto de responsabilidades: el contenido manda sobre el cuerpo, `feedback_set_status`
     manda sobre el estado (por eso al sobrescribir gana el status ya guardado, no el que
     traiga el contenido nuevo), y el store manda sobre las fechas — `created` se preserva
-    del archivo previo (o de su `created_at` viejo) y `last_updated` es siempre hoy."""
+    del archivo previo (o de su `created_at` viejo) y `last_updated` es siempre hoy.
+
+    `plugin_version` sella contra QUÉ versión se observó la fricción, porque un feedback
+    sin versión parece hablar del código de hoy: un `patch_target` puede haber dejado de
+    existir entre la captura y el patch. Se preserva como `created` — describe el momento
+    de la observación, no el de la última escritura— y solo se completa desde el manifiesto
+    cuando el archivo es nuevo: a un feedback viejo sin sello no se le inventa uno."""
     path = paths.feedbacks_dir(plugin) / f"feedback_{paths.slugify(slug)}.md"
     prev = _read(path)
     today = _today()
     created = (_fm_get(prev, "created") or _fm_get(prev, "created_at")
                or _fm_get(content, "created") or _fm_get(content, "created_at") or today)
-    _write(path, _fm_set(content, {"status": _state_of(prev or content),
-                                   "created": created, "last_updated": today}))
+    stamped = {"status": _state_of(prev or content),
+               "created": created, "last_updated": today}
+    version = (_fm_get(content, "plugin_version") or _fm_get(prev, "plugin_version")
+               or (_plugin_version(plugin) if not prev else None))
+    if version:
+        stamped["plugin_version"] = version
+    _write(path, _fm_set(content, stamped))
     return str(path)
 
 
