@@ -62,6 +62,9 @@ if [ -z "$out" ]; then echo "  PASS: repo propio (sentinel) → silencio"; pass=
 out=$(cd /tmp/proj-ankify && printf '%s' '{"prompt":"qué hora es"}' | python3 "$INTENT")
 if [ -z "$out" ]; then echo "  PASS: prompt sin intención → silencio"; pass=$((pass+1)); else echo "  FAIL: falso positivo"; fail=$((fail+1)); fi
 
+out=$(cd /tmp && printf '%s' '{"prompt":"integrá versionado al plugin"}' | python3 "$INTENT")
+if [ -z "$out" ]; then echo "  PASS: intención en dir no registrado → silencio"; pass=$((pass+1)); else echo "  FAIL: nudge fuera de un plugin registrado"; fail=$((fail+1)); fi
+
 echo ""
 echo "Resultado: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]
