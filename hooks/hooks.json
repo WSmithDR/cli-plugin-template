@@ -26,6 +26,13 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3 ${CLAUDE_PLUGIN_ROOT}/bin/hooks/intent-nudge.py" }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [

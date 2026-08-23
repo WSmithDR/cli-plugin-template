@@ -47,6 +47,21 @@ if [ -z "$out" ]; then echo "  PASS: comando ajeno → silencio"; pass=$((pass+1
 out=$(run_nudge '{"tool_name":"Bash","tool_input":{"command":"bash bin/test-catalog-hooks.sh"},"error":"python3: can'\''t open file: no such file"}')
 if [ -z "$out" ]; then echo "  PASS: error sin línea de exit code → silencio"; pass=$((pass+1)); else echo "  FAIL: error sin Exit code N no debe hablar"; fail=$((fail+1)); fi
 
+INTENT="$REPO_ROOT/bin/hooks/intent-nudge.py"
+echo ""
+echo "=== intent-nudge.py (UserPromptSubmit) ==="
+mkdir -p /tmp/proj-ankify
+printf '[{"name":"ankify","local_path":"/tmp/proj-ankify","skill_namespaces":["ankify"]}]' > "$DATA/registry.json"
+
+out=$(cd /tmp/proj-ankify && printf '%s' '{"prompt":"integrá versionado al plugin"}' | python3 "$INTENT")
+if echo "$out" | grep -q "plugin-dev"; then echo "  PASS: intención en plugin registrado → sugiere router"; pass=$((pass+1)); else echo "  FAIL: intención sin sugerencia"; fail=$((fail+1)); fi
+
+out=$(cd "$REPO_ROOT" && printf '%s' '{"prompt":"integrá versionado al plugin"}' | python3 "$INTENT")
+if [ -z "$out" ]; then echo "  PASS: repo propio (sentinel) → silencio"; pass=$((pass+1)); else echo "  FAIL: en el catálogo sobra el nudge"; fail=$((fail+1)); fi
+
+out=$(cd /tmp/proj-ankify && printf '%s' '{"prompt":"qué hora es"}' | python3 "$INTENT")
+if [ -z "$out" ]; then echo "  PASS: prompt sin intención → silencio"; pass=$((pass+1)); else echo "  FAIL: falso positivo"; fail=$((fail+1)); fi
+
 echo ""
 echo "Resultado: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]
