@@ -64,11 +64,49 @@ await caps["experimental.chat.messages.transform"]({}, output);
 assert(output.messages[0].parts.length === partes);
 console.log("  PASS: session-start externo inyectado una sola vez"); pass++;
 
+// tool.execute.before: feature sin meta.yml → throw; README suelto → pasa
+let threw = false;
+try {
+  await caps["tool.execute.before"](
+    { tool: "write", sessionID: "s", callID: "c" },
+    { args: { filePath: process.cwd() + "/features/fanta/files/a.md", content: "x" } },
+  );
+} catch { threw = true; }
+assert(threw, "guard bloquea feature sin meta.yml");
+await caps["tool.execute.before"](
+  { tool: "write", sessionID: "s", callID: "c" },
+  { args: { filePath: process.cwd() + "/README.md", content: "x" } },
+);
+console.log("  PASS: tool.execute.before homologa el guard"); pass++;
+
+// tool.execute.after: bash con suite fallida agrega hint al output
+const after = { title: "t", output: "FAIL: algo", metadata: {} };
+await caps["tool.execute.after"](
+  { tool: "bash", sessionID: "s", callID: "c", args: { command: "bash bin/test-x.sh" } },
+  after,
+);
+assert(after.output.includes("cpt feedback save"), "hint de fricción presente");
+console.log("  PASS: tool.execute.after sugiere feedback en fallo"); pass++;
+
+// nudge de intención en el transform (proyecto externo registrado)
+const fsmod = await import("node:fs");
+fsmod.writeFileSync(
+  process.env.CLI_PLUGIN_TEMPLATE_DATA_DIR + "/registry.json",
+  JSON.stringify([{ name: "fantasma", local_path: process.cwd(), skill_namespaces: [] }]),
+);
+const out2 = { messages: [{ info: { role: "user" }, parts: [{ type: "text", text: "integrá health-check acá" }] }] };
+await caps["experimental.chat.messages.transform"]({}, out2);
+assert(out2.messages[0].parts.some((p) => p.text?.includes("plugin-dev")), "nudge de intención inyectado");
+console.log("  PASS: transform agrega nudge de intención"); pass++;
+
 console.log(`\nResultado externo: ${pass} passed, 0 failed`);
 '
 )
 
 echo "=== .opencode plugin (repo propio: bootstrap + Stop) ==="
+
+# restaurar registry original (la fase externa lo sobrescribió con su proyecto)
+printf '[{"name":"ankify","local_path":"/x","skill_namespaces":["ankify"]}]' > "$DATA/registry.json"
 
 # Proceso 2: cwd en el repo propio — bootstrap AGENTS.md + Stop hook universal.
 cd "$REPO_ROOT"

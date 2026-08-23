@@ -8,6 +8,7 @@
 import { isInOwnRepo } from "../../lib/paths.ts";
 import { BOOTSTRAP_MARKER, getBootstrap } from "../../lib/bootstrap.ts";
 import { getSessionStartMessage } from "./session-start.ts";
+import { intentNudge } from "./intent.ts";
 
 type TextPart = { type: string; text?: string };
 type UserMessage = { info?: { role?: string }; parts?: TextPart[] };
@@ -25,6 +26,10 @@ export async function injectBootstrap(
   if (isInOwnRepo()) injections.push(getBootstrap());
   const sessionStart = getSessionStartMessage();
   if (sessionStart && !injections.includes(sessionStart)) injections.push(sessionStart);
+  const texto = firstUser.parts.map((p) => p.text ?? "").join("\n");
+  const nudge = intentNudge(texto);
+  // guard propio: el transform es stateless y el marcador de bootstrap puede no estar
+  if (nudge && !firstUser.parts.some((p) => p.text?.includes(nudge))) injections.push(nudge);
   if (!injections.length) return;
   if (firstUser.parts.some((p) => p.type === "text" && p.text?.includes(BOOTSTRAP_MARKER))) {
     return;

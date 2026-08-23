@@ -10,11 +10,14 @@ import type { Plugin } from "@opencode-ai/plugin";
 import { injectConfig } from "../hooks/config-inject";
 import { injectBootstrap } from "../hooks/bootstrap-inject";
 import { onStop } from "../hooks/stop-event";
+import { afterHook, beforeHook } from "../hooks/tool-guard/index.ts";
 
 export default (async () => {
   return {
     config: injectConfig,
     "experimental.chat.messages.transform": injectBootstrap,
     event: onStop,
+    "tool.execute.before": beforeHook,
+    "tool.execute.after": afterHook,
   };
 }) satisfies Plugin;
