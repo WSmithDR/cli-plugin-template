@@ -39,15 +39,15 @@ jobs:
                      -name '*.json' 2>/dev/null; \
                    ls gemini-extension.json opencode.json 2>/dev/null)
           exit $fail
-      - name: Run meta-plugin hook tests
-        run: bash bin/test-hooks.sh
-      - name: Run catalog-gap audit tests
-        run: bash bin/test-catalog-gaps.sh
-      - name: Run skill-evals validator tests
-        run: bash bin/test-evals.sh
-      - name: Run version-bump tests
-        run: bash bin/test-bump-version.sh
-      - name: Run post-commit auto-bump tests
-        run: bash bin/test-post-commit.sh
+      # Loop sobre TODAS las suites: una suite nueva en bin/ entra al CI sola,
+      # sin recordar editar este workflow (raíz del TODO "suites fuera del CI").
+      - name: Run test suites
+        run: |
+          fail=0
+          for t in bin/test-*.sh; do
+            echo "== $t"
+            bash "$t" || fail=1
+          done
+          exit $fail
       - name: Portability audit (block on CRITICAL)
         run: python3 features/portability-audit/files/audit-portability.py . --quiet
