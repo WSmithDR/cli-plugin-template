@@ -1,6 +1,6 @@
 {
   "name": "cli-plugin-template",
-  "version": "1.26.1",
+  "version": "1.27.0",
   "description": "Meta-plugin de desarrollo de plugins multi-CLI: catálogo vivo de features reusables (auditar, integrar, recomendar, promover, evolucionar).",
   "type": "module",
   "main": ".opencode/plugins/cli-plugin-template.ts",

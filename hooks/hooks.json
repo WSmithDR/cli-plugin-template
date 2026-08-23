@@ -10,6 +10,14 @@
         ]
       }
     ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "python3 ${CLAUDE_PLUGIN_ROOT}/bin/hooks/catalog-guard.py" }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
