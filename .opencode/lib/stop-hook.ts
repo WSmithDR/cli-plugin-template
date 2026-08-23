@@ -4,9 +4,9 @@
 
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { STOP_HOOK } from "./paths.js";
+import { STOP_HOOK } from "./paths.ts";
 
-export function runStopHook() {
+export function runStopHook(): void {
   try {
     if (!existsSync(STOP_HOOK)) return;
     // ponytail: OpenCode no expone un transcript .jsonl como Claude Code; si el
@@ -21,7 +21,7 @@ export function runStopHook() {
       input,
     }).trim();
     if (!output) return;
-    const result = JSON.parse(output);
+    const result: { systemMessage?: string } = JSON.parse(output);
     if (result.systemMessage) {
       process.stdout.write(`\n${result.systemMessage}\n`);
     }

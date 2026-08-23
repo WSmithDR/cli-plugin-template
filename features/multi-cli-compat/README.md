@@ -79,7 +79,7 @@ distinto (ver "Inyección" abajo).
 | GitHub Copilot | `.copilot-plugin/plugin.json` | Sí | `AGENTS.md` |
 | Codex | `.codex-plugin/plugin.json` | Sí (`skills`) | `AGENTS.md` |
 | Gemini CLI | `gemini-extension.json` (`contextFileName`) | vía context file | `GEMINI.md` |
-| OpenCode | `opencode.json` + `.opencode/plugins/<x>.js` | vía hook JS | `AGENTS.md` |
+| OpenCode | `.opencode/plugins/<x>.ts` (registro global en `~/.config/opencode/opencode.json`) | vía hook TS | `AGENTS.md` |
 | Cualquiera (MCP) | `.mcp.json` | n/a | — |
 
 ## Patrón de archivos de instrucciones
@@ -104,34 +104,31 @@ Cómo llega el contenido inicial (regla de "usar skills", tabla de tools) a cada
 
 - **Gemini CLI**: `contextFileName` en `gemini-extension.json` → carga `GEMINI.md` (y sus
   `@`-includes) en cada sesión, automático.
-- **OpenCode**: un plugin JS en `.opencode/plugins/<x>.js` con el hook
+- **OpenCode**: un plugin en `.opencode/plugins/<x>.ts` con el hook
   `experimental.chat.messages.transform` prepende el bootstrap al primer mensaje.
 - **Codex**: un script de sync copia `skills/` + `.codex-plugin/` al fork de plugins de Codex.
 - **Claude Code / Cursor / Copilot**: leen `CLAUDE.md`/`AGENTS.md` y auto-descubren skills.
 
-### ⚠️ OpenCode plugin = `.js` (no `.ts`)
+### ✅ OpenCode plugin = TypeScript directo
 
-OpenCode carga plugins con `import()` de Node.js. No tiene TypeScript nativo y no siempre
-hay `tsc` disponible. **El plugin debe ser `.js`** (ES module con `export default`).
+OpenCode corre sobre Bun, que carga `.ts` nativamente — no hace falta build ni `tsc`.
+El entry puede ser `.opencode/plugins/<x>.ts` con `export default`. Si el usuario
+corre OpenCode sobre Node (raro), `node --experimental-strip-types` (>= 22.6)
+también carga `.ts` sin transpilar, siempre que los imports entre módulos usen
+extensión explícita (`./lib/paths.ts`) y no usen enums/namespaces.
 
-Si preferís escribir en TypeScript, agregá un paso de build al `setup.sh`:
-
-```bash
-npx tsc .opencode/plugins/example.ts --outDir .opencode/plugins/ --module esnext
-```
-
-Pero el default recomendado es `.js` directo — menos herramientas, menos fricción.
-
-Además, el `package.json` del directorio `.opencode/` debe tener `"type": "module"`:
+El `package.json` del directorio `.opencode/` declara deps y formato de módulo:
 
 ```json
 {
   "type": "module",
-  "dependencies": { "@opencode-ai/plugin": "^1.4.3" }
+  "dependencies": { "@opencode-ai/plugin": "^1.17.0" },
+  "devDependencies": { "@types/node": "^24" }
 }
 ```
 
-Sin esto, Node.js emite un warning en cada importación del plugin.
+Para typecheck CI-friendly: `bun x tsc --noEmit` con un `tsconfig.json` raíz que
+apunte `typeRoots` a `.opencode/node_modules/@types`.
 
 ### ⚠️ Schema de `opencode.json`: `skills` es objeto, no array
 

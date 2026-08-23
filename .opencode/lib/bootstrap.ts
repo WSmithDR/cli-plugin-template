@@ -4,14 +4,14 @@
 // (mismo patrón que superpowers, ver su issue #1202).
 
 import { readFileSync } from "node:fs";
-import { AGENTS_MD } from "./paths.js";
+import { AGENTS_MD } from "./paths.ts";
 
 // Marcador estable para el guard anti doble inyección del transform.
 export const BOOTSTRAP_MARKER = "## cli-plugin-template — bootstrap (OpenCode)";
 
-let cache; // undefined = no cargado todavía
+let cache: string | undefined; // undefined = no cargado todavía
 
-export function getBootstrap() {
+export function getBootstrap(): string {
   if (cache !== undefined) return cache;
   let agents = "";
   try {

@@ -51,7 +51,7 @@ Notas:
 ## Cómo cada CLI recibe esta tabla
 
 - **Gemini CLI**: se inyecta vía `@`-include en `GEMINI.md` (`@./skills/plugin-dev/references/tool-mapping.md`).
-- **OpenCode**: el plugin JS (`.opencode/plugins/cli-plugin-template.js`) apunta a este archivo en el bootstrap.
+- **OpenCode**: el plugin TS (`.opencode/plugins/cli-plugin-template.ts`) apunta a este archivo en el bootstrap.
 - **Copilot / Codex**: `AGENTS.md` referencia el catálogo; consultá esta tabla al traducir tools.
 - **Claude Code**: no la necesita (usa los nombres nativos).
 
@@ -67,7 +67,7 @@ La lógica de los hooks NO vive en el adaptador de cada CLI: vive en scripts Pyt
 
 Un adaptador por CLI es solo: *mapear su evento de ciclo de vida → ejecutar el script
 con ese JSON → mostrar `systemMessage`*. Claude Code lo hace nativo (`hooks/hooks.json`);
-OpenCode con ~15 líneas de JS (`.opencode/plugins/cli-plugin-template.js`), que además
+OpenCode con ~15 líneas de TS (`.opencode/plugins/cli-plugin-template.ts`), que además
 acepta `CPT_TRANSCRIPT_PATH` como knob para hosts que puedan proveer un transcript.
 CLIs sin hooks de ciclo de vida (Gemini, Codex, Cursor, Copilot) quedan con manifiestos +
 skills; el hook simplemente no corre ahí.
