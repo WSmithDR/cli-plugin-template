@@ -38,4 +38,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        pass  # ponytail: PreCompact no puede romper la compactación; snapshot es best-effort

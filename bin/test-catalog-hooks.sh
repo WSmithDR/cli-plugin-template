@@ -70,7 +70,10 @@ echo ""
 echo "=== wip-snapshot.py (PreCompact) ==="
 out=$(cd "$REPO_ROOT" && printf '{}' | python3 "$WIP")
 snap=$(ls -t "$DATA"/wip/*.txt 2>/dev/null | head -1)
-if [ -n "$snap" ] && grep -q "^## Branch" "$snap"; then echo "  PASS: snapshot creado con branch"; pass=$((pass+1)); else echo "  FAIL: sin snapshot utilizable"; fail=$((fail+1)); fi
+if [ -n "$snap" ] && grep -A1 "^## Branch" "$snap" | sed -n 2p | grep -q "main"; then echo "  PASS: snapshot creado con branch"; pass=$((pass+1)); else echo "  FAIL: sin snapshot utilizable"; fail=$((fail+1)); fi
+
+out=$(printf 'basura no-JSON' | python3 "$WIP" 2>/dev/null); rc=$?
+if [ "$rc" -eq 0 ]; then echo "  PASS: payload basura → exit 0 igual"; pass=$((pass+1)); else echo "  FAIL: hook debe salir siempre 0"; fail=$((fail+1)); fi
 
 echo ""
 echo "Resultado: $pass passed, $fail failed"
