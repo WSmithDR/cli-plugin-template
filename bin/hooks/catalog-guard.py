@@ -45,7 +45,7 @@ def main() -> None:
     path = tool_input.get("file_path") or ""
     if not path:
         sys.exit(0)
-    found = violations(path, tool_input.get("content") or "")
+    found = violations(path, tool_input.get("content") or tool_input.get("new_string") or "")
     if not found:
         sys.exit(0)
     print("CATALOG-GUARD: " + "; ".join(found), file=sys.stderr)

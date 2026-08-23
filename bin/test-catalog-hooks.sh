@@ -17,17 +17,18 @@ expect_allow() {
 
 echo ""
 echo "=== catalog-guard.py (PreToolUse) ==="
-mkdir -p "$REPO_ROOT/features/nuevo-feature"
-expect_block '{"tool_name":"Write","tool_input":{"file_path":"'$REPO_ROOT'/features/nuevo-feature/files/x.md","content":"hola"}}' "feature sin meta.yml → block"
-printf '{"version":"1.0.0","name":"nuevo-feature"}' > "$REPO_ROOT/features/nuevo-feature/meta.yml"
-expect_allow '{"tool_name":"Write","tool_input":{"file_path":"'$REPO_ROOT'/features/nuevo-feature/files/x.md","content":"hola"}}' "feature con meta.yml → allow"
-rm -rf "$REPO_ROOT/features/nuevo-feature"
+expect_block '{"tool_name":"Write","tool_input":{"file_path":"'$DATA'/features/nuevo-feature/files/x.md","content":"hola"}}' "feature sin meta.yml → block"
+mkdir -p "$DATA/features/nuevo-feature"
+printf '{"version":"1.0.0","name":"nuevo-feature"}' > "$DATA/features/nuevo-feature/meta.yml"
+expect_allow '{"tool_name":"Write","tool_input":{"file_path":"'$DATA'/features/nuevo-feature/files/x.md","content":"hola"}}' "feature con meta.yml → allow"
 expect_allow '{"tool_name":"Write","tool_input":{"file_path":"'$REPO_ROOT'/README.md","content":"x"}}' "archivo fuera del catálogo → allow"
 
 BLOCK_MD='---\ndescription: x\n---\n# T\n```bash\nlinea1\nlinea2\nlinea3\n```\n'
 ALLOW_MD='---\ndescription: x\n---\n# T\n```bash\nlinea1\n```\n'
-expect_block '{"tool_name":"Edit","tool_input":{"file_path":"'$REPO_ROOT'/skills/plugin-dev/SKILL.md","content":"'"$BLOCK_MD"'"}}' "SKILL.md con bloque >2 líneas → block"
-expect_allow '{"tool_name":"Edit","tool_input":{"file_path":"'$REPO_ROOT'/skills/plugin-dev/SKILL.md","content":"'"$ALLOW_MD"'"}}' "SKILL.md con bloque ≤2 líneas → allow"
+SKILL_PATH="$REPO_ROOT/skills/plugin-dev/SKILL.md"
+expect_block '{"tool_name":"Edit","tool_input":{"file_path":"'$SKILL_PATH'","content":"'"$BLOCK_MD"'"}}' "SKILL.md con bloque >2 líneas en content → block"
+expect_allow '{"tool_name":"Edit","tool_input":{"file_path":"'$SKILL_PATH'","content":"'"$ALLOW_MD"'"}}' "SKILL.md con bloque ≤2 líneas → allow"
+expect_block '{"tool_name":"Edit","tool_input":{"file_path":"'$SKILL_PATH'","new_string":"```bash\nl1\nl2\nl3\n```"}}' "SKILL.md con bloque >2 líneas en new_string → block"
 
 echo ""
 echo "Resultado: $pass passed, $fail failed"
