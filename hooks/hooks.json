@@ -42,6 +42,14 @@
           }
         ]
       }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "manual|auto",
+        "hooks": [
+          { "type": "command", "command": "python3 ${CLAUDE_PLUGIN_ROOT}/bin/hooks/wip-snapshot.py" }
+        ]
+      }
     ]
   }
 }

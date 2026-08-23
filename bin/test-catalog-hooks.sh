@@ -65,6 +65,13 @@ if [ -z "$out" ]; then echo "  PASS: prompt sin intención → silencio"; pass=$
 out=$(cd /tmp && printf '%s' '{"prompt":"integrá versionado al plugin"}' | python3 "$INTENT")
 if [ -z "$out" ]; then echo "  PASS: intención en dir no registrado → silencio"; pass=$((pass+1)); else echo "  FAIL: nudge fuera de un plugin registrado"; fail=$((fail+1)); fi
 
+WIP="$REPO_ROOT/bin/hooks/wip-snapshot.py"
+echo ""
+echo "=== wip-snapshot.py (PreCompact) ==="
+out=$(cd "$REPO_ROOT" && printf '{}' | python3 "$WIP")
+snap=$(ls -t "$DATA"/wip/*.txt 2>/dev/null | head -1)
+if [ -n "$snap" ] && grep -q "^## Branch" "$snap"; then echo "  PASS: snapshot creado con branch"; pass=$((pass+1)); else echo "  FAIL: sin snapshot utilizable"; fail=$((fail+1)); fi
+
 echo ""
 echo "Resultado: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]
