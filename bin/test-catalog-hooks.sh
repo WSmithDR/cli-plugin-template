@@ -30,6 +30,20 @@ expect_block '{"tool_name":"Edit","tool_input":{"file_path":"'$SKILL_PATH'","con
 expect_allow '{"tool_name":"Edit","tool_input":{"file_path":"'$SKILL_PATH'","content":"'"$ALLOW_MD"'"}}' "SKILL.md con bloque ≤2 líneas → allow"
 expect_block '{"tool_name":"Edit","tool_input":{"file_path":"'$SKILL_PATH'","new_string":"```bash\nl1\nl2\nl3\n```"}}' "SKILL.md con bloque >2 líneas en new_string → block"
 
+NUDGE="$REPO_ROOT/bin/hooks/test-failure-nudge.py"
+echo ""
+echo "=== test-failure-nudge.py (PostToolUse) ==="
+run_nudge() { printf '%s' "$1" | python3 "$NUDGE" 2>/dev/null; }
+
+out=$(run_nudge '{"tool_input":{"command":"bash bin/test-catalog-hooks.sh"},"tool_response":{"success":false}}')
+if echo "$out" | grep -q "cpt feedback save"; then echo "  PASS: suite fallida → sugiere feedback"; pass=$((pass+1)); else echo "  FAIL: suite fallida sin sugerencia"; fail=$((fail+1)); fi
+
+out=$(run_nudge '{"tool_input":{"command":"bash bin/test-catalog-hooks.sh"},"tool_response":{"success":true}}')
+if [ -z "$out" ]; then echo "  PASS: suite ok → silencio"; pass=$((pass+1)); else echo "  FAIL: suite ok no debe hablar"; fail=$((fail+1)); fi
+
+out=$(run_nudge '{"tool_input":{"command":"ls -la"},"tool_response":{"success":false}}')
+if [ -z "$out" ]; then echo "  PASS: comando ajeno → silencio"; pass=$((pass+1)); else echo "  FAIL: ls no es suite"; fail=$((fail+1)); fi
+
 echo ""
 echo "Resultado: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]
