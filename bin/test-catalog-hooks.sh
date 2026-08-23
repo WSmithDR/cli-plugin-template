@@ -32,17 +32,20 @@ expect_block '{"tool_name":"Edit","tool_input":{"file_path":"'$SKILL_PATH'","new
 
 NUDGE="$REPO_ROOT/bin/hooks/test-failure-nudge.py"
 echo ""
-echo "=== test-failure-nudge.py (PostToolUse) ==="
+echo "=== test-failure-nudge.py (PostToolUseFailure) ==="
 run_nudge() { printf '%s' "$1" | python3 "$NUDGE" 2>/dev/null; }
 
-out=$(run_nudge '{"tool_input":{"command":"bash bin/test-catalog-hooks.sh"},"tool_response":{"success":false}}')
-if echo "$out" | grep -q "cpt feedback save"; then echo "  PASS: suite fallida → sugiere feedback"; pass=$((pass+1)); else echo "  FAIL: suite fallida sin sugerencia"; fail=$((fail+1)); fi
+out=$(run_nudge '{"tool_name":"Bash","tool_input":{"command":"bash bin/test-catalog-hooks.sh"},"error":"Exit code 1\nFAILED (tests=3, failures=2)\nAssertionError: esperaba allow"}')
+if echo "$out" | grep -q "cpt feedback save"; then echo "  PASS: suite fallida (Exit code 1) → sugiere feedback"; pass=$((pass+1)); else echo "  FAIL: suite fallida Exit code 1 sin sugerencia"; fail=$((fail+1)); fi
 
-out=$(run_nudge '{"tool_input":{"command":"bash bin/test-catalog-hooks.sh"},"tool_response":{"success":true}}')
-if [ -z "$out" ]; then echo "  PASS: suite ok → silencio"; pass=$((pass+1)); else echo "  FAIL: suite ok no debe hablar"; fail=$((fail+1)); fi
+out=$(run_nudge '{"tool_name":"Bash","tool_input":{"command":"bash bin/test-catalog-hooks.sh"},"error":"Exit code 0"}')
+if [ -z "$out" ]; then echo "  PASS: error Exit code 0 → silencio"; pass=$((pass+1)); else echo "  FAIL: Exit code 0 no debe hablar"; fail=$((fail+1)); fi
 
-out=$(run_nudge '{"tool_input":{"command":"ls -la"},"tool_response":{"success":false}}')
+out=$(run_nudge '{"tool_name":"Bash","tool_input":{"command":"ls -la"},"error":"Exit code 1"}')
 if [ -z "$out" ]; then echo "  PASS: comando ajeno → silencio"; pass=$((pass+1)); else echo "  FAIL: ls no es suite"; fail=$((fail+1)); fi
+
+out=$(run_nudge '{"tool_name":"Bash","tool_input":{"command":"bash bin/test-catalog-hooks.sh"},"error":"python3: can'\''t open file: no such file"}')
+if [ -z "$out" ]; then echo "  PASS: error sin línea de exit code → silencio"; pass=$((pass+1)); else echo "  FAIL: error sin Exit code N no debe hablar"; fail=$((fail+1)); fi
 
 echo ""
 echo "Resultado: $pass passed, $fail failed"
