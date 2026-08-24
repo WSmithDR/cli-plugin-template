@@ -1,6 +1,8 @@
 #!/bin/bash
 # Instala las skills del plugin en el directorio de cada CLI vía symlink.
-# Para CLIs que no tienen marketplace propio. Correr una vez tras clonar.
+# Para CLIs que no tienen marketplace propio y que consumen skills desde un
+# directorio local. Correr una vez tras clonar.
+# Codex no entra en este flujo: usa plugin nativo con `.codex-plugin/plugin.json`.
 #
 # Dos estilos:
 #   per-skill : un symlink por skill dentro del dir del CLI
@@ -17,7 +19,6 @@ PLUGIN="<plugin>"
 # plataforma | dir destino | estilo
 PLATFORMS="
 gemini    $HOME/.agents/skills       per-skill
-codex     $HOME/.agents/skills       per-skill
 opencode  $HOME/.agents/skills       per-skill
 cline     $HOME/.cline/skills        folder
 "

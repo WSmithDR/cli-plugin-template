@@ -74,6 +74,18 @@ Reiniciá OpenCode y listo: el plugin registra las skills del catálogo automát
 cualquier proyecto. Guía completa — alternativa local con `bin/install-opencode.sh`,
 pineo de versión y troubleshooting — en **[.opencode/INSTALL.md](.opencode/INSTALL.md)**.
 
+### Codex
+
+Codex consume este repo como **plugin nativo de skills**. Para este proyecto:
+
+- no usamos symlinks
+- no usamos MCPs, apps ni app templates
+- no usamos hooks de Codex
+
+La guía específica está en **[.codex/INSTALL.md](.codex/INSTALL.md)**. Ahí se explica
+cómo instalar el plugin desde el directorio de plugins de Codex y cómo verificar que
+cargó la skill correcta.
+
 ### Capacidades
 
 Una vez instalado en un proyecto de plugin:

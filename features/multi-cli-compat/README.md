@@ -59,7 +59,9 @@ Si las skills están escritas en **lenguaje neutral** (instruyen vía `bash`, `p
 `node` — no "usá el tool Read"), no necesitás traducir tools. Cada CLI las descubre por
 su cuenta. Requiere:
 - Manifiestos por CLI (ver matriz abajo).
-- Un instalador que symlinkea las skills al dir de cada CLI (ver `install-skills.sh`).
+- Un instalador que symlinkea las skills al dir de cada CLI solo para los CLIs que
+  todavía dependen de un directorio local; Codex queda fuera porque consume el plugin
+  nativamente (ver `install-skills.sh`).
 - **Omitir el campo `model:`** en el frontmatter de agents — `inherit` es exclusivo de
   Claude Code y rompe OpenCode (`ProviderModelNotFoundError`). Sin `model:`, cada CLI usa
   su default.
@@ -106,7 +108,8 @@ Cómo llega el contenido inicial (regla de "usar skills", tabla de tools) a cada
   `@`-includes) en cada sesión, automático.
 - **OpenCode**: un plugin en `.opencode/plugins/<x>.ts` con el hook
   `experimental.chat.messages.transform` prepende el bootstrap al primer mensaje.
-- **Codex**: un script de sync copia `skills/` + `.codex-plugin/` al fork de plugins de Codex.
+- **Codex**: consume el plugin nativamente vía `.codex-plugin/plugin.json`; las skills
+  se cargan desde `skills/` sin symlinks ni script de sync.
 - **Claude Code / Cursor / Copilot**: leen `CLAUDE.md`/`AGENTS.md` y auto-descubren skills.
 
 ### ✅ OpenCode plugin = TypeScript directo

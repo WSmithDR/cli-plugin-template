@@ -54,6 +54,9 @@ hook `SessionStart` sugiere una auditoría la primera vez en un proyecto de plug
 propio repo se excluye con el sentinel `.catalog-root`.
 Hooks activos: `SessionStart` (sugiere auditoría la primera vez), `Stop` (cosecha fricción pendiente), `PreToolUse` en Edit/Write (guard del contrato del catálogo: meta.yml y modularización de skills), `PostToolUseFailure` en Bash (sugiere `cpt feedback save` ante fallos de suite), `UserPromptSubmit` (nudge del router plugin-dev en plugins registrados) y `PreCompact` (snapshot WIP al store; en OpenCode vía `event` `session.compacted`).
 
+Codex usa `.codex-plugin/plugin.json` y consume `skills/` de forma nativa; en este repo
+no hay hooks, apps ni symlinks para Codex.
+
 **Self-dogfooding (a propósito):** este repo habilita su propio plugin vía
 `.claude/settings.json` (`enabledPlugins`), para que al desarrollar el catálogo las skills
 estén activas y se apliquen sobre sí mismo. Ese archivo está committeado adrede — no lo

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Instala las skills de cli-plugin-template en el directorio de cada CLI vía symlink.
-# Para CLIs que NO tienen marketplace propio (Gemini, Codex, OpenCode, Cline…).
+# Para CLIs que NO tienen marketplace propio y que sí consumen skills desde un
+# directorio local (Gemini, OpenCode, Cline…).
+# Codex NO usa este flujo: consume el plugin nativamente vía .codex-plugin/plugin.json.
 # Correr una vez tras clonar. Es idempotente: re-correrlo sólo refresca los symlinks.
 #
 # Estilos:
@@ -34,7 +36,6 @@ fi
 # plataforma | dir destino | estilo
 PLATFORMS="
 gemini    $HOME/.gemini/skills     per-skill
-codex     $HOME/.codex/skills      per-skill
 opencode  $HOME/.config/opencode/skills  per-skill
 cline     $HOME/.cline/skills      folder
 "

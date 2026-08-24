@@ -1,5 +1,5 @@
 {
-  "//": "Va en .codex-plugin/plugin.json — Codex requiere el skills path explícito",
+  "//": "Va en .codex-plugin/plugin.json — Codex carga skills nativamente desde skills/",
   "name": "<plugin>",
   "description": "<descripción>",
   "version": "1.0.0",
