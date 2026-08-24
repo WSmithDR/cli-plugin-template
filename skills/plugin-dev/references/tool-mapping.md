@@ -28,10 +28,11 @@ firmas diferentes. Todos los hooks reciben `(input, output)` y mutan `output` po
 | Claude Code | OpenCode | Comportamiento |
 |---|---|---|
 | `SessionStart` | `config` + `messages.transform` | `config` solo paths; bootstrap inyectado en el primer mensaje |
-| `PreToolUse` | `tool.execute.before` | `input.tool` = string ID del tool (`"bash"` para shell). Muta `output.args` para bloquear — el objeto args es el MISMO que ejecuta el tool |
-| `PostToolUse` | `tool.execute.after` | `input.args` contiene args originales. `output.(output\|title\|metadata)` mutable. Firma: `(input, output)` — NO `(tool, input, output)` |
+| `PreToolUse` | `tool.execute.before` | `input.tool` = string ID del tool (`"bash"` para shell). Muta `output.args` para bloquear — el objeto args es el MISMO que ejecuta el tool. Bloqueo: OC lanza `Error`; CC usa exit 2 + stderr |
+| `PostToolUse` | `tool.execute.after` | `input.args` contiene args originales. `output.(output\|title\|metadata)` mutable. Firma: `(input, output)` — NO `(tool, input, output)`. CC inyecta stdout; OC muta `output.output` |
+| `UserPromptSubmit` | `experimental.chat.messages.transform` | OC: parte extra en el primer mensaje user |
 | `Stop` / `SubagentStop` | `event` | Captura `input.event.type === "global.disposed"` |
-| `PreCompact` | `experimental.session.compacting` | Muta `output.context` / `output.prompt` |
+| `PreCompact` | *(sin equivalente)* | knob: solo Claude Code. El evento `experimental.session.compacting` de OC solo customiza el prompt de compactación, no expone un punto de acción previa (por eso el snapshot WIP no se porta) |
 | — (shell env) | `shell.env` | Modifica vars de entorno del shell antes de ejecutar |
 | — (bash command) | `command.execute.before` | Solo para comandos del Task tool interno, NO para Bash directo |
 
