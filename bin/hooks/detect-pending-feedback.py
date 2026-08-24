@@ -79,6 +79,16 @@ def _failing_plugins(chunk: str, plugins: list) -> set:
     return hits
 
 
+def _keywords() -> tuple:
+    """FRICTION_KEYWORDS + frases aprendidas del léxico del store. Si el store
+    falla, solo las base — el hook nunca se rompe por el léxico."""
+    try:
+        from gateway import friction_lexicon
+        return FRICTION_KEYWORDS + tuple(friction_lexicon())
+    except Exception:
+        return FRICTION_KEYWORDS
+
+
 def _friction_message(transcript_path: str) -> str:
     if not transcript_path:
         return ""
@@ -94,7 +104,7 @@ def _friction_message(transcript_path: str) -> str:
         return ""
     lower = chunk.lower()
     mentioned = [n for n in plugins if n.lower() in lower]
-    complained = mentioned and any(k in _user_text(chunk) for k in FRICTION_KEYWORDS)
+    complained = mentioned and any(k in _user_text(chunk) for k in _keywords())
     failing = _failing_plugins(chunk, plugins)
     if not complained and not failing:
         return ""

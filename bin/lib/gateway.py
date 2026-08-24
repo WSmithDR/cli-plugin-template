@@ -512,3 +512,36 @@ def feedback_watch_install(plugin: str, remove: bool = False) -> str:
     hook.write_text(body, encoding="utf-8")
     hook.chmod(0o755)
     return f"instalado: {hook}"
+
+
+# ── léxico de fricción (aprendido del harvester, consumido por el Stop hook) ──
+
+_LEXICON_CAP = 200
+
+
+def friction_lexicon() -> list:
+    """Frases de fricción aprendidas (solo las frases, listo para matchear)."""
+    lex = _read_json(paths.friction_lexicon_file(), {}) or {}
+    return [v["phrase"] for v in lex.values()]
+
+
+def feedback_learn(plugin: str, phrase: str) -> dict:
+    """Cachea una frase de fricción que el harvester (LLM) encontró y que ninguna
+    keyword base cubría. El análisis de sentimiento corre UNA vez en el LLM; el
+    léxico lo vuelve matcheo barato para siempre."""
+    phrase = " ".join(phrase.split()).strip().lower()
+    if len(phrase) < 4:
+        return {"ok": False, "reason": "frase demasiado corta (<4)"}
+    lex = _read_json(paths.friction_lexicon_file(), {}) or {}
+    key = paths.slugify(phrase)
+    if key in lex:
+        lex[key]["hits"] += 1
+    else:
+        # ponytail: cap simple FIFO-por-menos-usado — si el ruido crece, pasar a hits con decay.
+        if len(lex) >= _LEXICON_CAP:
+            victim = min(lex, key=lambda k: (lex[k]["hits"], lex[k]["learned_at"]))
+            del lex[victim]
+        lex[key] = {"phrase": phrase, "plugin": paths.slugify(plugin),
+                    "hits": 1, "learned_at": _today()}
+    _write_json(paths.friction_lexicon_file(), lex)
+    return {"ok": True, "key": key, "total": len(lex)}

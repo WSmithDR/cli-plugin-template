@@ -105,6 +105,14 @@ python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" feedback save "$PLUGIN" "<slug>" -
 
 Escribe a `<data_dir>/<plugin>/feedbacks/feedback_<slug>.md`. No hay otra vía.
 
+Además, si la queja original del usuario usa una frase característica que NO esté
+entre las keywords base ("no me gusta", "está mal", "no funciona"...), enseñásela
+al Stop hook para que la próxima vez la cace sola:
+
+```bash
+python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" feedback learn "$PLUGIN" "<frase literal>"
+```
+
 ---
 
 ## Step 5: Confirmar

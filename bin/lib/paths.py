@@ -55,6 +55,11 @@ def harvest_offsets_file() -> Path:
     return data_dir() / "harvest-offsets.json"
 
 
+def friction_lexicon_file() -> Path:
+    """Léxico auto-creciente de frases de fricción que consume el Stop hook."""
+    return data_dir() / "friction-lexicon.json"
+
+
 def slugify(text: str) -> str:
     """Slug estable y filesystem-safe: lowercase, no-alnum→'-', colapsa, trunc 40."""
     s = re.sub(r"[^a-z0-9]+", "-", text.strip().lower())

@@ -237,6 +237,17 @@ python3 "$CPT" feedback watch plugtest --remove
     && _pass "watch --remove: quita el hook" \
     || _fail "watch --remove: el hook sigue ahí"
 
+# léxico de fricción: learn + dedupe + consumo del hook
+python3 "$CPT" feedback learn plugtest "esto es un bardo" >/dev/null
+python3 "$CPT" feedback learn plugtest "esto es un bardo" >/dev/null
+python3 "$CPT" feedback learn plugtest "otra vez este tema" >/dev/null
+short=$(python3 "$CPT" feedback learn plugtest "no")
+echo "$short" | grep -q '"ok": false' \
+    && _pass "learn: frase corta rechazada" || _fail "learn corto: '$short'"
+lex=$(LEXDIR="$DATA" python3 -c "import json,sys; sys.path.insert(0,'$SCRIPT_DIR/lib'); import gateway, paths; print(json.dumps(gateway._read_json(paths.friction_lexicon_file(), {})))")
+echo "$lex" | grep -q '"hits": 2' && echo "$lex" | grep -q 'otra vez este tema' \
+    && _pass "learn: dedupe suma hits y frases distintas conviven" || _fail "lexicon: '$lex'"
+
 # stop hook: _drift_message detecta el hallazgo y se calla en la segunda pasada (dedupe)
 HOOKS="$SCRIPT_DIR/hooks"
 drift_run() {
@@ -254,6 +265,17 @@ drift=$(drift_run)
 echo "$drift" | grep -q "normalizador-fantasma" \
     && _pass "stop-hook: _drift_message lista el hallazgo" \
     || _fail "stop-hook drift vacío: '$drift'"
+kw=$(cd "$REPO" && HOOKS="$HOOKS" python3 - <<'PYEOF'
+import importlib.util, os
+spec = importlib.util.spec_from_file_location(
+    "dpf", os.environ["HOOKS"] + "/detect-pending-feedback.py")
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+print(any("bardo" in k for k in m._keywords()) and "otra vez este tema" in m._keywords())
+PYEOF
+)
+[ "$kw" = "True" ] && _pass "hook: _keywords() incluye el léxico aprendido" \
+    || _fail "hook keywords: '$kw'"
 drift2=$(drift_run)
 [ -z "$drift2" ] && _pass "stop-hook: segunda pasada callada (dedupe por stamp)" \
     || _fail "stop-hook repite mensaje: '$drift2'"
