@@ -8,7 +8,6 @@ _Última revisión: 2026-08-23_
 ## Q2 — No urgente e Importante
 > Planificar. Features críticas, bugs no bloqueantes, mejoras arquitectónicas.
 
-- [ ] intent-nudge: `startswith(local_path)` hereda el nudge a dirs hermanos con prefijo (`/tmp/proj-ankify2` matchea `/tmp/proj-ankify`) — comparar por segmento de ruta (`cwd == lp or cwd.startswith(lp + "/"`), en paridad py (`bin/hooks/intent-nudge.py:31`) y TS (`.opencode/hooks/bootstrap-inject/intent.ts:20`). Caso de test en ambas suites.
 
 ## Q3 — Urgente y No importante
 > Hacer rápido o delegar. Cambios de bajo impacto que no pueden esperar.
