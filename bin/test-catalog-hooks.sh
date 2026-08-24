@@ -57,6 +57,14 @@ printf '[{"name":"ankify","local_path":"/tmp/proj-ankify","skill_namespaces":["a
 out=$(cd /tmp/proj-ankify && printf '%s' '{"prompt":"integrá versionado al plugin"}' | python3 "$INTENT")
 if echo "$out" | grep -q "plugin-dev"; then echo "  PASS: intención en plugin registrado → sugiere router"; pass=$((pass+1)); else echo "  FAIL: intención sin sugerencia"; fail=$((fail+1)); fi
 
+mkdir -p /tmp/proj-ankify/sub /tmp/proj-ankify2
+
+out=$(cd /tmp/proj-ankify/sub && printf '%s' '{"prompt":"integrá versionado al plugin"}' | python3 "$INTENT")
+if echo "$out" | grep -q "plugin-dev"; then echo "  PASS: subdirectorio del registrado → sugiere router"; pass=$((pass+1)); else echo "  FAIL: subdirectorio dejó de matchear"; fail=$((fail+1)); fi
+
+out=$(cd /tmp/proj-ankify2 && printf '%s' '{"prompt":"integrá versionado al plugin"}' | python3 "$INTENT")
+if [ -z "$out" ]; then echo "  PASS: hermano con prefijo (proj-ankify2) → silencio"; pass=$((pass+1)); else echo "  FAIL: colisión de prefijo"; fail=$((fail+1)); fi
+
 out=$(cd "$REPO_ROOT" && printf '%s' '{"prompt":"integrá versionado al plugin"}' | python3 "$INTENT")
 if [ -z "$out" ]; then echo "  PASS: repo propio (sentinel) → silencio"; pass=$((pass+1)); else echo "  FAIL: en el catálogo sobra el nudge"; fail=$((fail+1)); fi
 

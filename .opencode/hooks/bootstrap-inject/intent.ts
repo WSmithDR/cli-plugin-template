@@ -15,9 +15,13 @@ function stripAccents(text: string): string {
 function registeredCwd(): boolean {
   const dir = process.env.CLI_PLUGIN_TEMPLATE_DATA_DIR
     ?? join(process.env.HOME ?? "", ".local/share/cli-plugin-template");
+  const cwd = process.cwd();
   try {
     const registry = JSON.parse(readFileSync(join(dir, "registry.json"), "utf8")) as Array<{ local_path?: string }>;
-    return registry.some((e) => e.local_path && process.cwd().startsWith(e.local_path));
+    return registry.some((e) => {
+      const lp = (e.local_path ?? "").replace(/\/+$/, "");
+      return lp !== "" && (cwd === lp || cwd.startsWith(lp + "/"));
+    });
   } catch {
     return false;
   }

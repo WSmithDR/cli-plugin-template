@@ -28,7 +28,7 @@ def registered_cwd() -> bool:
     cwd = os.getcwd()
     for entry in registry:
         lp = (entry.get("local_path") or "").rstrip("/")
-        if lp and cwd.startswith(lp):
+        if lp and (cwd == lp or cwd.startswith(lp + "/")):
             return True
     return False
 

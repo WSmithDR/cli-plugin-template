@@ -131,6 +131,23 @@ for (const texto of ["sumá el feature x al catálogo", "plugin-dev me sirve par
 }
 console.log("  PASS: triggers de intención restaurados (sumá / plugin-dev)"); pass++;
 
+// frontera de ruta: subdirectorio del registrado sí, hermano con prefijo de cadena no
+const extBase = process.cwd();
+fsmod.mkdirSync(extBase + "/sub", { recursive: true });
+process.chdir(extBase + "/sub");
+const outSub = { messages: [{ info: { role: "user" }, parts: [{ type: "text", text: "integrá health-check acá" }] }] };
+await caps["experimental.chat.messages.transform"]({}, outSub);
+assert(outSub.messages[0].parts.some((p) => p.text?.includes("plugin-dev")), "subdirectorio debe nudgear");
+console.log("  PASS: subdirectorio del registrado → con nudge"); pass++;
+
+process.chdir(extBase);
+fsmod.mkdirSync(extBase + "-hermano", { recursive: true });
+process.chdir(extBase + "-hermano");
+const outSib = { messages: [{ info: { role: "user" }, parts: [{ type: "text", text: "integrá health-check acá" }] }] };
+await caps["experimental.chat.messages.transform"]({}, outSib);
+assert(!outSib.messages[0].parts.some((p) => p.text?.includes("plugin-dev")), "colisión de prefijo");
+console.log("  PASS: dir hermano con prefijo → sin nudge"); pass++;
+
 console.log(`\nResultado externo: ${pass} passed, 0 failed`);
 '
 )
