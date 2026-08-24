@@ -4,7 +4,7 @@ aplicar y sugiere plugin-hotpatch; (2) escanea el tramo NUEVO del transcript bus
 fricción con plugins registrados — queja del usuario O fallo observado del plugin — y
 sugiere delegar la cosecha al subagente feedback-harvester, fuera del hilo principal;
 (3) si el repo actual es un plugin registrado con cambios sin commitear en su infra,
-sugiere promover al catálogo.
+sugiere promover al catálogo; (4) drift: pendientes que commits del repo ya resolvieron.
 
 Lee el input del hook (JSON con transcript_path) por stdin. Emite JSON con
 `systemMessage` (misma convención que el Stop hook de ankify) si hay algo que
@@ -141,6 +141,38 @@ def _promote_message() -> str:
             f"Skill(\"cli-plugin-template:plugin-promote\") to move it to the catalog.")
 
 
+def _drift_message() -> str:
+    """Feedbacks pendientes que commits del repo ya resolvieron: el store quedó atrás.
+    Mismo mecanismo de dedupe que _promote_message: un stamp por conjunto de hallazgos,
+    así no repite mientras sea el mismo set."""
+    found = []
+    try:
+        from gateway import feedback_audit, harvest_offset_get, harvest_offset_set, registry_list
+        cwd = Path.cwd().resolve()
+        plugin = next((r for r in registry_list()
+                       if r.get("local_path")
+                       and cwd.is_relative_to(Path(r["local_path"]).resolve())), None)
+        if not plugin:
+            return ""
+        found = feedback_audit(plugin["name"])
+        if not found:
+            return ""
+        import zlib
+        stamp = zlib.crc32(",".join(sorted(f["slug"] for f in found)).encode())
+        key = f"drift:{plugin['name']}"
+        if harvest_offset_get(key) == stamp:
+            return ""
+        harvest_offset_set(key, stamp)
+    except Exception:
+        return ""
+    items = "; ".join(f"{f['slug']} ({','.join(f['commits'])})" for f in found[:3])
+    suffix = "..." if len(found) > 3 else ""
+    return (f"FEEDBACK DRIFT in {plugin['name']}: {len(found)} feedback(s) still marked "
+            f"pending look ALREADY FIXED by commits: [{items}{suffix}]. Run "
+            f"'python3 $CLAUDE_PLUGIN_ROOT/bin/cpt feedback audit {plugin['name']}', "
+            f"verify each, close with 'cpt feedback apply' (or discard if obsolete).")
+
+
 def main() -> int:
     try:
         transcript_path = str(json.load(sys.stdin).get("transcript_path", ""))
@@ -169,6 +201,10 @@ def main() -> int:
     promote = _promote_message()
     if promote:
         msgs.append(promote)
+
+    drift = _drift_message()
+    if drift:
+        msgs.append(drift)
 
     if msgs:
         print(json.dumps({"systemMessage": " | ".join(msgs)}))

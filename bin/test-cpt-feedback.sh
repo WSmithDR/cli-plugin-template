@@ -237,6 +237,27 @@ python3 "$CPT" feedback watch plugtest --remove
     && _pass "watch --remove: quita el hook" \
     || _fail "watch --remove: el hook sigue ahí"
 
+# stop hook: _drift_message detecta el hallazgo y se calla en la segunda pasada (dedupe)
+HOOKS="$SCRIPT_DIR/hooks"
+drift_run() {
+    (cd "$REPO" && HOOKS="$HOOKS" python3 - <<'PYEOF'
+import importlib.util, os
+spec = importlib.util.spec_from_file_location(
+    "dpf", os.environ["HOOKS"] + "/detect-pending-feedback.py")
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+print(m._drift_message())
+PYEOF
+)
+}
+drift=$(drift_run)
+echo "$drift" | grep -q "normalizador-fantasma" \
+    && _pass "stop-hook: _drift_message lista el hallazgo" \
+    || _fail "stop-hook drift vacío: '$drift'"
+drift2=$(drift_run)
+[ -z "$drift2" ] && _pass "stop-hook: segunda pasada callada (dedupe por stamp)" \
+    || _fail "stop-hook repite mensaje: '$drift2'"
+
 # audit sin plugin conocido no explota
 python3 "$CPT" feedback audit plugtest-inexistente >/dev/null 2>&1 \
     && _pass "audit: plugin desconocido devuelve vacío sin error" \
