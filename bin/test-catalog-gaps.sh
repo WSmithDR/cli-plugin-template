@@ -82,6 +82,32 @@ result=$(run_in_tmpdir '
 ')
 [ "$result" = "OK" ] && _pass "default cwd sin plugin → exit 2" || _fail "default cwd → $result"
 
+# Caso N: datos embebidos → sección de candidatos
+FIX=$(mktemp -d)
+mkdir -p "$FIX/.claude-plugin" "$FIX/bin" "$FIX/tests"
+printf '{"name":"fx","version":"0.0.1"}' > "$FIX/.claude-plugin/plugin.json"
+cat > "$FIX/bin/hooks.py" <<'PYX'
+KEYWORDS = (
+    "uno", "dos", "tres", "cuatro", "cinco",
+)
+MAX_RETRIES = 100
+SMALL = ("a", "b")
+PYX
+mkdir -p "$FIX/lib"
+printf 'export const PHRASES = ["aa", "bb", "cc", "dd"];\n' > "$FIX/lib/phrases.ts"
+printf 'BIG = ("x", "y", "z", "w")\n' > "$FIX/tests/fixture.py"
+
+out=$(python3 "$SCRIPT_DIR/audit-catalog-gaps.py" "$FIX")
+echo "$out" | grep -q "DATOS EMBEBIDOS DESACOPLABLES — 3 candidato" \
+    && echo "$out" | grep -q "bin/hooks.py:1 · KEYWORDS (5 ítems)" \
+    && echo "$out" | grep -q "lib/phrases.ts:1 · PHRASES (4 ítems)" \
+    && echo "$out" | grep -q "MAX_RETRIES" \
+    && ! echo "$out" | grep -q "tests/fixture.py" \
+    && ! echo "$out" | grep -q "SMALL" \
+    && _pass "embedded-data: tupla py + array ts + umbral; excluye tests y <4 ítems" \
+    || _fail "embedded-data: '$out'"
+rm -rf "$FIX"
+
 echo ""
 echo "Resultado: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ] && exit 0 || exit 1

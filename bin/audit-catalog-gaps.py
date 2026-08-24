@@ -221,6 +221,56 @@ def detect_proposal_gate(dirs: list[Path], root: Path) -> bool:
 # Cada entrada: (clave-feature, función-detectora). Las marcadas con None en el
 # detector se reportan como n/d (requieren juicio).
 
+# --- Datos embebidos desacoplables -------------------------------------------
+
+_MIN_ITEMS = 4
+
+_ASSIGN_RE = re.compile(
+    r"^\s*(?:export\s+)?(?:const\s+)?([A-Z][A-Z0-9_]{2,})\s*"
+    r"(?::\s*[\w\[\]<>, ]+)?\s*=\s*([\[\(])",
+    re.MULTILINE,
+)
+_QUOTED = re.compile(r"'[^']*'|\"[^\"]*\"")
+_THRESH_NAME = re.compile(
+    r"^(?:MAX_[A-Z0-9_]+|[A-Z0-9_]+_(?:THRESHOLD|LIMIT)|[A-Z0-9_]*UMBRAL[A-Z0-9_]*)$")
+_THRESH_RE = re.compile(r"^\s*([A-Z][A-Z0-9_]{2,})\s*=\s*\d+\s*$", re.MULTILINE)
+
+
+def find_embedded_data(root: Path) -> list:
+    """Candidatos a desacoplar: colecciones de strings (≥4) asignadas a constante
+    MAYÚSCULA, y constantes de umbral numérico. Heurística — puede mentir; reporta,
+    no actúa. ponytail: corta el cuerpo en el primer cierre; strings con paréntesis
+    o corchetes adentro pueden confundirlo, se acepta por simple."""
+    findings = []
+    for path in _iter_files(root):
+        if "test" in path.name.lower() or any("test" in p.lower() for p in path.parts):
+            continue
+        if path.suffix not in (".py", ".ts"):
+            continue
+        text = _read(path)
+        found = []
+        for m in _ASSIGN_RE.finditer(text):
+            name, open_ch = m.group(1), m.group(2)
+            close = "]" if open_ch == "[" else ")"
+            end = text.find(close, m.end())
+            if end == -1:
+                continue
+            n = len(_QUOTED.findall(text[m.end():end]))
+            if n >= _MIN_ITEMS:
+                line = text.count("\n", 0, m.start()) + 1
+                found.append({"name": name, "line": line, "detail": f"{n} ítems"})
+        for m in _THRESH_RE.finditer(text):
+            if _THRESH_NAME.match(m.group(1)):
+                line = text.count("\n", 0, m.start()) + 1
+                found.append({"name": m.group(1), "line": line, "detail": "umbral"})
+        if not found:
+            continue
+        rel = str(path.relative_to(root))
+        for f in found:
+            findings.append({"file": rel, **f})
+    return sorted(findings, key=lambda f: (f["file"], f["line"]))
+
+
 def build_report(root: Path) -> list[dict]:
     files = list(_iter_files(root))
     dirs = list(_iter_dirs(root))
@@ -317,6 +367,16 @@ def main(argv: list[str]) -> int:
 
     print(f"Gap de catálogo — {root.name}/\n")
     print(render_table(report))
+
+    embedded = find_embedded_data(root)
+    if embedded:
+        print(f"\nDATOS EMBEBIDOS DESACOPLABLES — {len(embedded)} candidato(s)")
+        for e in embedded[:8]:
+            print(f"   {e['file']}:{e['line']} · {e['name']} ({e['detail']})")
+        if len(embedded) > 8:
+            print(f"   … y {len(embedded) - 8} más")
+        print("   → patrón de referencia: friction-lexicon.json "
+              "+ cpt feedback learn (store + verbo + consumidor)")
     return 0
 
 
