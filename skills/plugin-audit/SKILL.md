@@ -117,7 +117,8 @@ solo la invocación (≤2 líneas). El feature que lo resuelve y lo hace cumplir
 ## Parte D — Drift de afirmaciones sobre hosts
 
 Los READMEs y comentarios del plugin a veces afirman cosas negativas sobre un host
-("OpenCode no expone transcript", "Gemini sin equivalente de PostToolUse"). Esas frases
+(p. ej., qué eventos, tools o archivos expone — o no — cada CLI, o qué no tiene
+equivalente). Esas frases
 se pudren: el host evoluciona, el claim queda falso y nadie se entera (así se perdió la
 paridad de PreCompact con `session.compacted` en OpenCode).
 
