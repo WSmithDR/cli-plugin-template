@@ -204,15 +204,17 @@ def main() -> int:
         by_plugin = {}
         for item in pending:
             by_plugin.setdefault(item.split("/", 1)[0], []).append(item)
-        resumen = ", ".join(f"{p} ({len(v)})" for p, v in sorted(by_plugin.items()))
-        items = "\n".join(f"  · {i}" for i in pending[:3])
-        suffix = "\n  · ..." if len(pending) > 3 else ""
+        resumen = " · ".join(f"{p} ({len(v)})" for p, v in sorted(by_plugin.items()))
+        items = "\n".join(f"   {i}. {s}" for i, s in enumerate(pending[:3], 1))
+        resto = len(pending) - 3
+        if resto > 0:
+            items += f"\n   … y {resto} más"
         msgs.append(
-            f"PENDING PLUGIN FEEDBACK — {len(pending)} sin aplicar: {resumen}\n"
-            f"{items}{suffix}\n"
-            "Procesalos con la skill cli-plugin-template:plugin-hotpatch "
-            "(Skill tool), o mirá el detalle con:\n"
-            f"  python3 {_CPT} feedback list --pending")
+            f"◆ CLI-PLUGIN-TEMPLATE — PENDING PLUGIN FEEDBACK\n"
+            f"   {len(pending)} sin aplicar → {resumen}\n\n"
+            f"{items}\n\n"
+            f"  ▸ procesalos con la skill cli-plugin-template:plugin-hotpatch\n"
+            f"  ▸ detalle completo: python3 {_CPT} feedback list --pending")
 
     friction = _friction_message(transcript_path)
     if friction:
