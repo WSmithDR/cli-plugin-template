@@ -29,6 +29,7 @@ SKILL_PATH="$REPO_ROOT/skills/plugin-dev/SKILL.md"
 expect_block '{"tool_name":"Edit","tool_input":{"file_path":"'$SKILL_PATH'","content":"'"$BLOCK_MD"'"}}' "SKILL.md con bloque >2 líneas en content → block"
 expect_allow '{"tool_name":"Edit","tool_input":{"file_path":"'$SKILL_PATH'","content":"'"$ALLOW_MD"'"}}' "SKILL.md con bloque ≤2 líneas → allow"
 expect_block '{"tool_name":"Edit","tool_input":{"file_path":"'$SKILL_PATH'","new_string":"```bash\nl1\nl2\nl3\n```"}}' "SKILL.md con bloque >2 líneas en new_string → block"
+expect_block '{"tool_name":"MultiEdit","tool_input":{"file_path":"'$SKILL_PATH'","edits":[{"old_string":"a","new_string":"```bash\nl1\nl2\nl3\n```"}]}}' "SKILL.md con bloque >2 líneas vía MultiEdit edits[] → block"
 
 NUDGE="$REPO_ROOT/bin/hooks/test-failure-nudge.py"
 echo ""

@@ -30,6 +30,7 @@ firmas diferentes. Todos los hooks reciben `(input, output)` y mutan `output` po
 | `SessionStart` | `config` + `messages.transform` | `config` solo paths; bootstrap inyectado en el primer mensaje |
 | `PreToolUse` | `tool.execute.before` | `input.tool` = string ID del tool (`"bash"` para shell). Muta `output.args` para bloquear — el objeto args es el MISMO que ejecuta el tool. Bloqueo: OC lanza `Error`; CC usa exit 2 + stderr |
 | `PostToolUse` | `tool.execute.after` | `input.args` contiene args originales. `output.(output\|title\|metadata)` mutable. Firma: `(input, output)` — NO `(tool, input, output)`. CC inyecta stdout; OC muta `output.output` |
+| `PostToolUseFailure` | `tool.execute.after` | CC dispara solo si el tool falló al ejecutarse (`input.error` top-level = `"Exit code N\n<stdout/stderr>"`, sin `tool_response`; no se emite ante rechazo de validación ni denegación de permiso). OC no distingue éxito/fallo: el after-hook corre siempre y el hook decide inspeccionando el output (ej. regex de conteo de fallos) |
 | `UserPromptSubmit` | `experimental.chat.messages.transform` | OC: parte extra en el primer mensaje user |
 | `Stop` / `SubagentStop` | `event` | Captura `input.event.type === "global.disposed"` |
 | `PreCompact` | *(sin equivalente)* | knob: solo Claude Code. El evento `experimental.session.compacting` de OC solo customiza el prompt de compactación, no expone un punto de acción previa (por eso el snapshot WIP no se porta) |

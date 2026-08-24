@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """PreToolUse guard: hace cumplir el contrato del catálogo EN EL MOMENTO del edit,
-no recién en el pre-commit. Lee {tool_name, tool_input{file_path, content?}} por stdin.
+no recién en el pre-commit. Lee {tool_name, tool_input{file_path, content?|new_string?|edits[]?}} por stdin.
 exit 2 + stderr = bloquear (convención Claude Code); exit 0 = allow silencioso.
 Reglas v1:
   1. features/<name>/ sin meta.yml (y el archivo no ES meta.yml) → block.
@@ -45,7 +45,9 @@ def main() -> None:
     path = tool_input.get("file_path") or ""
     if not path:
         sys.exit(0)
-    found = violations(path, tool_input.get("content") or tool_input.get("new_string") or "")
+    payloads = [tool_input.get("content") or tool_input.get("new_string") or ""]
+    payloads += [e.get("new_string") or "" for e in tool_input.get("edits") or []]
+    found = [v for p in payloads for v in violations(path, p)]
     if not found:
         sys.exit(0)
     print("CATALOG-GUARD: " + "; ".join(found), file=sys.stderr)

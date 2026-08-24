@@ -166,6 +166,20 @@ await caps["tool.execute.after"]({ tool: "bash", args: { command: "bash bin/test
 assert(red.output.includes("Suite fallida"));
 console.log("  PASS: suite con fallos → nudge"); pass++;
 
+// paridad SUITE_RE: npm (run) test también es suite
+const npmRed = { output: "npm ERR! Test failed.  5 failing" };
+await caps["tool.execute.after"]({ tool: "bash", args: { command: "npm run test" } }, npmRed);
+assert(npmRed.output.includes("Suite fallida"));
+console.log("  PASS: npm test con fallos → nudge"); pass++;
+
+// paridad del before: MultiEdit con fence >2 líneas también bloquea
+let blocked = false;
+try {
+  await caps["tool.execute.before"]({}, { args: { file_path: process.cwd() + "/skills/plugin-dev/SKILL.md", edits: [{ old_string: "a", new_string: "```bash\nl1\nl2\nl3\n```" }] } });
+} catch { blocked = true; }
+assert(blocked, "MultiEdit con fence >2 líneas debía bloquear");
+console.log("  PASS: before bloquea fence vía edits[] (MultiEdit)"); pass++;
+
 // event: Stop dispara el hook (fricción via CPT_TRANSCRIPT_PATH → stdout)
 let captured = "";
 const write = process.stdout.write.bind(process.stdout);

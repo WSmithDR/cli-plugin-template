@@ -8,13 +8,16 @@ export async function beforeHook(
   const args = output?.args ?? {};
   const path = String(args.file_path ?? args.filePath ?? "");
   if (!path) return;
-  // paridad con el .py (`content or new_string`): los edits llegan por new_string
-  const text = String(args.content ?? args.new_string ?? "");
-  const found = violations(path, text);
+  // paridad con el .py (`content or new_string or edits[].new_string`)
+  const texts = [
+    String(args.content ?? args.new_string ?? ""),
+    ...(((args.edits as Array<{ new_string?: string }> | undefined) ?? [])).map((e) => String(e.new_string ?? "")),
+  ];
+  const found = texts.flatMap((t) => violations(path, t));
   if (found.length) throw new Error(`CATALOG-GUARD: ${found.join("; ")}`);
 }
 
-const SUITE_RE = /(bin\/test-[\w./-]+\.sh|\bpytest\b)/;
+const SUITE_RE = /(bin\/test-[\w./-]+\.sh|\bpytest\b|\bnpm (run )?test\b)/; // paridad con bin/hooks/test-failure-nudge.py
 
 export async function afterHook(
   input: { tool?: string; args?: Record<string, unknown> },
