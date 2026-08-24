@@ -9,9 +9,10 @@ import { STOP_HOOK } from "./paths.ts";
 export function runStopHook(): void {
   try {
     if (!existsSync(STOP_HOOK)) return;
-    // ponytail: OpenCode no expone un transcript .jsonl como Claude Code; si el
-    // host puede proveer uno lo pasa por CPT_TRANSCRIPT_PATH y la detección de
-    // fricción se activa sola. Sin transcript, igual reporta feedbacks pendientes.
+    // ponytail: OpenCode no expone un transcript .jsonl como Claude Code
+    // (verificado 2026-08-23, opencode.ai/docs/plugins); si el host puede proveer
+    // uno lo pasa por CPT_TRANSCRIPT_PATH y la detección de fricción se activa
+    // sola. Sin transcript, igual reporta feedbacks pendientes.
     const input = JSON.stringify({
       transcript_path: process.env.CPT_TRANSCRIPT_PATH || "",
     });

@@ -114,6 +114,35 @@ solo la invocación (≤2 líneas). El feature que lo resuelve y lo hace cumplir
 > El script soporta `--threshold ERROR` (sale 1 solo ante ERROR) — si el plugin tiene
 > `git-hooks`, sugerí engancharlo en pre-commit para que no vuelva a colarse.
 
+## Parte D — Drift de afirmaciones sobre hosts
+
+Los READMEs y comentarios del plugin a veces afirman cosas negativas sobre un host
+("OpenCode no expone transcript", "Gemini sin equivalente de PostToolUse"). Esas frases
+se pudren: el host evoluciona, el claim queda falso y nadie se entera (así se perdió la
+paridad de PreCompact con `session.compacted` en OpenCode).
+
+Corré:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit-doc-drift.py" .
+```
+
+Busca las frases de la convención — `no expone`, `no emite`, `sin equivalente` — fuera
+de code fences/backticks, y exige que la línea (±1) lleve `(verificado YYYY-MM-DD,
+fuente)` con fecha de menos de 180 días. Excluye por diseño: histórico point-in-time
+(`docs/plans/`, `.todo/`), tests (`test-*`) y ejemplos (`features/*/files/` — se
+re-escanean en cada plugin downstream que los integre).
+
+Interpretá la salida (no la repitas cruda):
+- **SIN FECHA** → verificá el claim contra la doc oficial del host HOY; si sigue válido,
+  fechalo; si ya no, corregilo (puede haber paridad nueva). No feches sin verificar:
+  la fecha es una promesa, no un trámite.
+- **FECHA VENCIDA** (>180 días) → mismo ciclo: re-verificar contra la doc y refrescar.
+
+Es report-only (exit 0 siempre): es insumo para tu juicio, no gate. Si el plugin tiene
+`git-hooks`, sugerí correrlo en CI mensual o pre-release, no en pre-commit (verificar
+docs de hosts es caro para cada push).
+
 ## Salida sugerida
 
 ```
@@ -132,6 +161,9 @@ B) Portabilidad y agnosticismo  (CRITICAL: 1  WARNING: 2  INFO: 0)
 
 C) Estructura de skills  (ERROR: 1  WARNING: 0)
   ✗ bloque embebido  skills/x/SKILL.md:24  bash de 19 líneas  → mover a scripts/
+
+D) Drift de claims sobre hosts
+  ⚠ SIN FECHA      .opencode/lib/stop-hook.ts:12  "no expone transcript"  → verificar hoy y fechar
 
 Sugerencia: primero el CRITICAL (no es portable), después el bloque embebido (skill-structure-audit), después versioning.
 ```
