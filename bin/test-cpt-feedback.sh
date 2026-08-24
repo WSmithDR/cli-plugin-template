@@ -195,5 +195,44 @@ grep -q "plugin_path: \"$OTRO\"" "$o" \
 rm -rf "$REPO" "$OTRO"
 
 echo ""
+echo "=== cpt feedback audit / watch ==="
+
+REPO=$(mktemp -d)
+git -C "$REPO" init -q
+git -C "$REPO" -c user.email=t@t -c user.name=t commit -q --allow-empty \
+    -m "carga: primer commit del repo de pruebas"
+HASH=$(git -C "$REPO" rev-parse HEAD)
+
+mkdir -p "$REPO/.claude-plugin"
+printf '{"name":"plugtest","version":"0.0.1"}' > "$REPO/.claude-plugin/plugin.json"
+python3 "$CPT" registry register plugtest "$REPO" >/dev/null
+
+# caso A: marker RESUELTO con hash real en el cuerpo
+python3 "$CPT" feedback save plugtest normalizador-fantasma \
+    "el gate inventó formas.
+
+**RESUELTO 2026-08-24, commit \`$HASH\`.**" >/dev/null
+# caso B: sin ninguna evidencia
+python3 "$CPT" feedback save plugtest otra-cosa "no hay evidencia acá" >/dev/null
+# caso C: slug en el subject de un commit posterior
+git -C "$REPO" -c user.email=t@t -c user.name=t commit -q --allow-empty \
+    -m "gate: cierra plugtest-buscar-sin-proyeccion de raíz"
+python3 "$CPT" feedback save plugtest buscar-sin-proyeccion "sin proyección de campos" >/dev/null
+
+out=$(python3 "$CPT" feedback audit plugtest)
+echo "$out" | grep -q "plugtest/normalizador-fantasma" \
+    && echo "$out" | grep -q "plugtest/buscar-sin-proyeccion" \
+    && ! echo "$out" | grep -q "otra-cosa" \
+    && echo "$out" | grep -q "$(git -C "$REPO" rev-parse --short HEAD)" \
+    && _pass "audit: marker RESUELTO + slug-en-subject detectados; sin-evidencia excluido" \
+    || _fail "audit salida inesperada: '$out'"
+
+# audit sin plugin conocido no explota
+python3 "$CPT" feedback audit plugtest-inexistente >/dev/null 2>&1 \
+    && _pass "audit: plugin desconocido devuelve vacío sin error" \
+    || _fail "audit falló con plugin desconocido"
+rm -rf "$REPO"
+
+echo ""
 echo "Resultado: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ] && exit 0 || exit 1

@@ -76,6 +76,11 @@ def main() -> int:
     f_disc.add_argument("slug")
     f_disc.add_argument("--at", default=None, help="fecha last_updated (default: hoy UTC)")
 
+    f_audit = fb_sub.add_parser("audit",
+                                help="pendientes con evidencia de ya-aplicados en su repo")
+    f_audit.add_argument("plugin", nargs="?", default=None)
+    f_audit.add_argument("--json", action="store_true")
+
     # proposal ─────────────────────────────────────────────────
     pr = sub.add_parser("proposal", help="gate de aprobación de patches")
     pr_sub = pr.add_subparsers(dest="op", required=True)
@@ -131,6 +136,20 @@ def main() -> int:
             print(gateway.feedback_set_status(ns.plugin, ns.slug, "applied", at=ns.at))
         elif ns.op == "discard":
             print(gateway.feedback_set_status(ns.plugin, ns.slug, "discarded", at=ns.at))
+        elif ns.op == "audit":
+            names = [ns.plugin] if ns.plugin else \
+                    [e["name"] for e in gateway.registry_list()]
+            found = [{"plugin": n, **f}
+                     for n in names for f in gateway.feedback_audit(n)]
+            if ns.json:
+                print(json.dumps(found, ensure_ascii=False))
+            elif found:
+                print(f"DRIFT: {len(found)} feedback(s) pendientes con evidencia "
+                      f"de aplicación:")
+                for f in found:
+                    print(f"  {f['plugin']}/{f['slug']} | commits: "
+                          f"{', '.join(f['commits'])}")
+                print("Revisá cada uno y cerrá con: cpt feedback apply <plugin> <slug>")
 
     elif ns.group == "proposal":
         if ns.op == "save":

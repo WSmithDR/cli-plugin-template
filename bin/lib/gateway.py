@@ -414,3 +414,54 @@ def growth_summary(plugin: Optional[str] = None) -> dict:
         "proposals_approved": sum(r["proposals"]["approved"] for r in rows),
     }
     return {"plugins": rows, "totals": totals}
+
+
+# ── drift audit (pendientes ya resueltos en el repo del plugin) ──
+
+_RESUELTO_RE = re.compile(r"RESUELTO[^\n]*?commit [`']?([0-9a-f]{7,40})", re.IGNORECASE)
+
+
+def _repo_commits(local_path: str) -> dict:
+    """hash completo → subject, de todo el historial. UNA llamada git por auditoría."""
+    import subprocess
+    out = subprocess.run(["git", "-C", local_path, "log", "--format=%H%x00%s"],
+                         capture_output=True, text=True, timeout=30)
+    commits = {}
+    for line in out.stdout.splitlines():
+        h, sep, subj = line.partition("\x00")
+        if sep:
+            commits[h] = subj
+    return commits
+
+
+def feedback_audit(plugin: str) -> list:
+    """Feedbacks PENDIENTES con evidencia de que ya fueron arreglados en su repo.
+
+    Dos señales, ambas mecánicas (el juicio final lo tiene quien cierra):
+      - marker: el cuerpo trae 'RESUELTO ..., commit <hash>' y ese hash existe en el repo.
+      - subject: el slug aparece textual en el subject de algún commit.
+    Devuelve [{"slug": str, "commits": [hash7]}]; [] si no hay hallazgos/repo."""
+    entry = registry_get(plugin)
+    if not entry or not entry.get("local_path"):
+        return []
+    repo = Path(entry["local_path"])
+    if not repo.exists():
+        return []
+    commits = _repo_commits(str(repo))
+    findings = []
+    for item in feedback_list(plugin=entry["name"], pending_only=True):
+        slug = item.split("/", 1)[1]
+        body = feedback_load(entry["name"], slug)
+        hits = []
+        for short in _RESUELTO_RE.findall(body):
+            full = next((h for h in commits if h.startswith(short)), None)
+            if full:
+                hits.append(full)
+        # ponytail: substring literal del slug (truncado a 40 por slugify) contra subjects;
+        # si algún día miente, subir a intersección de palabras del slug.
+        for h, subj in commits.items():
+            if slug.lower() in subj.lower() and h not in hits:
+                hits.append(h)
+        if hits:
+            findings.append({"slug": slug, "commits": sorted({h[:7] for h in hits})})
+    return findings
