@@ -79,6 +79,27 @@ await caps["tool.execute.before"](
 );
 console.log("  PASS: tool.execute.before homologa el guard"); pass++;
 
+// ruta absoluta hacia un feature CON meta.yml existente → NO debe bloquear
+const fs0 = await import("node:fs");
+fs0.mkdirSync(process.cwd() + "/features/real/files", { recursive: true });
+fs0.writeFileSync(process.cwd() + "/features/real/meta.yml", "version: 1.0.0\n");
+await caps["tool.execute.before"](
+  { tool: "write", sessionID: "s", callID: "c" },
+  { args: { filePath: process.cwd() + "/features/real/files/a.md", content: "x" } },
+);
+console.log("  PASS: ruta absoluta con meta.yml existente no bloquea"); pass++;
+
+// edit sobre SKILL.md con new_string que embebe script >2 líneas → bloquear
+let threwEdit = false;
+try {
+  await caps["tool.execute.before"](
+    { tool: "edit", sessionID: "s", callID: "c" },
+    { args: { file_path: process.cwd() + "/skills/alfa/SKILL.md", new_string: "```bash\nuno\ndos\ntres\n```" } },
+  );
+} catch { threwEdit = true; }
+assert(threwEdit, "guard escanea new_string");
+console.log("  PASS: tool.execute.before escanea new_string"); pass++;
+
 // tool.execute.after: bash con suite fallida agrega hint al output
 const after = { title: "t", output: "FAIL: algo", metadata: {} };
 await caps["tool.execute.after"](
@@ -98,6 +119,17 @@ const out2 = { messages: [{ info: { role: "user" }, parts: [{ type: "text", text
 await caps["experimental.chat.messages.transform"]({}, out2);
 assert(out2.messages[0].parts.some((p) => p.text?.includes("plugin-dev")), "nudge de intención inyectado");
 console.log("  PASS: transform agrega nudge de intención"); pass++;
+
+// triggers restaurados: sumá (verbo) y plugin-dev (literal)
+for (const texto of ["sumá el feature x al catálogo", "plugin-dev me sirve para esto"]) {
+  const out3 = { messages: [{ info: { role: "user" }, parts: [{ type: "text", text: texto }] }] };
+  await caps["experimental.chat.messages.transform"]({}, out3);
+  assert(
+    out3.messages[0].parts.some((p) => p.text?.includes("plugin-dev")),
+    `nudge faltante para trigger: ${texto}`,
+  );
+}
+console.log("  PASS: triggers de intención restaurados (sumá / plugin-dev)"); pass++;
 
 console.log(`\nResultado externo: ${pass} passed, 0 failed`);
 '

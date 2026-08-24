@@ -16,7 +16,11 @@ export function violations(filePath: string, content: string): string[] {
     // paridad con el .py: busca el ancestro llamado <feature> (p. ej. features/<n>/files/x.md),
     // no solo dirname() — si no, falsos positivos para archivos anidados.
     const idx = segs.lastIndexOf(m[2]);
-    if (idx >= 0 && !existsSync(join(segs.slice(0, idx + 1).join("/"), "meta.yml"))) {
+    // paridad con el .py: la normalización (split + filter) pierde la "/" inicial
+    // de rutas absolutas — sin re-prefijarla, existsSync resuelve relativo a cwd
+    // y bloquea features que SÍ tienen meta.yml.
+    const featRoot = (norm.startsWith("/") ? "/" : "") + segs.slice(0, idx + 1).join("/");
+    if (idx >= 0 && !existsSync(join(featRoot, "meta.yml"))) {
       out.push(`features/${m[2]}/ no tiene meta.yml — crealo junto al resto del feature`);
     }
   }

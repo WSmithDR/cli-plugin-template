@@ -8,7 +8,9 @@ export async function beforeHook(
   const args = output?.args ?? {};
   const path = String(args.file_path ?? args.filePath ?? "");
   if (!path) return;
-  const found = violations(path, String(args.content ?? ""));
+  // paridad con el .py (`content or new_string`): los edits llegan por new_string
+  const text = String(args.content ?? args.new_string ?? "");
+  const found = violations(path, text);
   if (found.length) throw new Error(`CATALOG-GUARD: ${found.join("; ")}`);
 }
 

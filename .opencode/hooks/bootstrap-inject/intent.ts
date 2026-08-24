@@ -4,9 +4,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-// ponytail: stems suaves sin frontera ni exigencia de "plugin" — imperativos
-// con tilde ("integrá health-check acá") y el gate real es registeredCwd().
-const INTENT_RE = /(integra|agrega|promov|audit|revis)|que (me )?falta/i;
+// ponytail: stems suaves sin frontera — imperativos con tilde ("integrá",
+// "sumá") y el literal plugin-dev; el gate real es registeredCwd().
+const INTENT_RE = /(integra|agrega|sum[ae]|promov|audit|revis)|que (me )?falta|plugin[- ]dev/i;
 
 function stripAccents(text: string): string {
   return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
