@@ -167,9 +167,12 @@ def _drift_message() -> str:
         return ""
     items = "; ".join(f"{f['slug']} ({','.join(f['commits'])})" for f in found[:3])
     suffix = "..." if len(found) > 3 else ""
+    # ponytail: ruta absoluta resuelta de __file__, no $CLAUDE_PLUGIN_ROOT —
+    # OpenCode ejecuta este mismo script y no tiene esa variable.
+    cpt = Path(__file__).resolve().parents[1] / "cpt"
     return (f"FEEDBACK DRIFT in {plugin['name']}: {len(found)} feedback(s) still marked "
             f"pending look ALREADY FIXED by commits: [{items}{suffix}]. Run "
-            f"'python3 $CLAUDE_PLUGIN_ROOT/bin/cpt feedback audit {plugin['name']}', "
+            f"'python3 {cpt} feedback audit {plugin['name']}', "
             f"verify each, close with 'cpt feedback apply' (or discard if obsolete).")
 
 
