@@ -52,7 +52,7 @@ Instalado en otro proyecto, expone las skills `plugin-dev` (router), `plugin-aud
 invoca al expresar la intención (evita chocar con el `/plugin` nativo de Claude Code). El
 hook `SessionStart` sugiere una auditoría la primera vez en un proyecto de plugin. El
 propio repo se excluye con el sentinel `.catalog-root`.
-Hooks activos: `SessionStart` (sugiere auditoría la primera vez), `Stop` (cosecha fricción pendiente), `PreToolUse` en Edit/Write (guard del contrato del catálogo: meta.yml y modularización de skills), `PostToolUseFailure` en Bash (sugiere `cpt feedback save` ante fallos de suite), `UserPromptSubmit` (nudge del router plugin-dev en plugins registrados) y `PreCompact` (snapshot WIP al store; en OpenCode vía `event` `session.compacted`).
+Hooks activos: `SessionStart` (sugiere auditoría la primera vez), `Stop` (cosecha fricción pendiente + detecta drift de feedbacks ya resueltos en el repo), `PreToolUse` en Edit/Write (guard del contrato del catálogo: meta.yml y modularización de skills), `PostToolUseFailure` en Bash (sugiere `cpt feedback save` ante fallos de suite), `UserPromptSubmit` (nudge del router plugin-dev en plugins registrados) y `PreCompact` (snapshot WIP al store; en OpenCode vía `event` `session.compacted`).
 
 Codex usa `.codex-plugin/plugin.json` y consume `skills/` de forma nativa; en este repo
 no hay hooks, apps ni symlinks para Codex.

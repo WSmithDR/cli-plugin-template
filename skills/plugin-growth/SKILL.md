@@ -44,6 +44,15 @@ Según lo que el usuario quiera ver:
 
 ## Step 3: Siguiente acción
 
+- Si hay **feedbacks pendientes** → ANTES de parchear, descartar drift:
+  ```bash
+  python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" feedback audit <name>
+  ```
+  Cada hallazgo lista commits que ya parecen resolverlo: verificar contra el código
+  (APLICADO / PARCIAL / OBSOLETO / NO_APLICADO) y cerrar con `feedback apply` /
+  `feedback discard`. Solo los genuinamente pendientes van a `plugin-hotpatch`.
+  Opcional por repo: `cpt feedback watch <name>` instala un post-commit que avisa
+  cuando un commit nuevo cierra un pendiente — preguntarle al usuario antes.
 - Si hay **feedbacks pendientes** → ofrecer procesarlos: invocar `Skill("plugin-hotpatch")`.
 - Si hay **propuestas `approved` sin aplicar** (caso raro: aprobada pero no aplicada) →
   retomar con `plugin-hotpatch` desde Step 5.
