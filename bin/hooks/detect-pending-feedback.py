@@ -204,16 +204,8 @@ def main() -> int:
         by_plugin = {}
         for item in pending:
             by_plugin.setdefault(item.split("/", 1)[0], []).append(item)
-        # ponytail: barra proporcional al máximo — la deuda relativa se ve, no se lee.
-        ancho = 20
-        mayor = max(len(v) for v in by_plugin.values())
         pw = max(len(p) for p in by_plugin)
-
-        def _fila(p: str, v: list) -> str:
-            barra = "█" * max(round(ancho * len(v) / mayor), 1)
-            return f"   {p:<{pw}}  {barra} {len(v)}"
-
-        filas = "\n".join(_fila(p, v) for p, v in sorted(by_plugin.items()))
+        filas = "\n".join(f"   • {p:<{pw}} ({len(v)})" for p, v in sorted(by_plugin.items()))
         items = "\n".join(f"   {i}. {s}" for i, s in enumerate(pending[:3], 1))
         resto = len(pending) - 3
         if resto > 0:
