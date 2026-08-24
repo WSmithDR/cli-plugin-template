@@ -81,6 +81,11 @@ def main() -> int:
     f_audit.add_argument("plugin", nargs="?", default=None)
     f_audit.add_argument("--json", action="store_true")
 
+    f_watch = fb_sub.add_parser("watch",
+                                help="instala/quita el aviso post-commit en el repo")
+    f_watch.add_argument("plugin")
+    f_watch.add_argument("--remove", action="store_true")
+
     # proposal ─────────────────────────────────────────────────
     pr = sub.add_parser("proposal", help="gate de aprobación de patches")
     pr_sub = pr.add_subparsers(dest="op", required=True)
@@ -150,6 +155,10 @@ def main() -> int:
                     print(f"  {f['plugin']}/{f['slug']} | commits: "
                           f"{', '.join(f['commits'])}")
                 print("Revisá cada uno y cerrá con: cpt feedback apply <plugin> <slug>")
+        elif ns.op == "watch":
+            msg = gateway.feedback_watch_install(ns.plugin, remove=ns.remove)
+            if msg:
+                print(msg)
 
     elif ns.group == "proposal":
         if ns.op == "save":

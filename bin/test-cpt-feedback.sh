@@ -227,6 +227,16 @@ echo "$out" | grep -q "plugtest/normalizador-fantasma" \
     && _pass "audit: marker RESUELTO + slug-en-subject detectados; sin-evidencia excluido" \
     || _fail "audit salida inesperada: '$out'"
 
+python3 "$CPT" feedback watch plugtest
+[ -x "$REPO/.git/hooks/post-commit" ] \
+    && _pass "watch: instala post-commit ejecutable" \
+    || _fail "watch: no instaló el hook"
+
+python3 "$CPT" feedback watch plugtest --remove
+[ ! -e "$REPO/.git/hooks/post-commit" ] \
+    && _pass "watch --remove: quita el hook" \
+    || _fail "watch --remove: el hook sigue ahí"
+
 # audit sin plugin conocido no explota
 python3 "$CPT" feedback audit plugtest-inexistente >/dev/null 2>&1 \
     && _pass "audit: plugin desconocido devuelve vacío sin error" \

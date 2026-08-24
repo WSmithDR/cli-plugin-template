@@ -465,3 +465,50 @@ def feedback_audit(plugin: str) -> list:
         if hits:
             findings.append({"slug": slug, "commits": sorted({h[:7] for h in hits})})
     return findings
+
+
+_WATCH_BODY = """#!/bin/bash
+# cli-plugin-template feedback watch — avisa si este commit cierra un feedback pendiente.
+# ponytail: cada slug se reporta UNA vez (estado en cli-plugin-template.drift-seen);
+# si el ruido molesta, migrar el estado al store del meta-plugin.
+CPT="__CPT__"
+PLUGIN="__PLUGIN__"
+OUT=$(python3 "$CPT" feedback audit "$PLUGIN" 2>/dev/null | grep '^  ' || true)
+[ -z "$OUT" ] && exit 0
+SEEN="$(git rev-parse --git-dir)/cli-plugin-template.drift-seen"
+while IFS= read -r line; do
+  slug=$(printf '%s' "$line" | sed 's/^ *//;s/ .*//')
+  grep -qx "$slug" "$SEEN" 2>/dev/null && continue
+  echo "$slug" >> "$SEEN"
+  echo "$line"
+done <<< "$OUT"
+echo "feedback watch: revisá arriba y cerrá con 'cpt feedback apply $PLUGIN <slug>'"
+"""
+
+
+def feedback_watch_install(plugin: str, remove: bool = False) -> str:
+    """Gancho post-commit OPT-IN en el repo del plugin registrado: tras cada commit,
+    corre audit y reporta hallazgos nuevos (una vez por slug). El usuario decide
+    por repo — nunca se instala solo."""
+    import subprocess
+    entry = registry_get(plugin)
+    if not entry or not entry.get("local_path"):
+        return ""
+    r = subprocess.run(["git", "-C", entry["local_path"],
+                        "rev-parse", "--absolute-git-dir"],
+                       capture_output=True, text=True, timeout=10)
+    gitdir = Path(r.stdout.strip())
+    if not gitdir.is_dir():
+        return ""
+    hook = gitdir / "hooks" / "post-commit"
+    if remove:
+        if hook.exists():
+            hook.unlink()
+            return f"removido: {hook}"
+        return ""
+    cpt = Path(__file__).resolve().parents[1] / "cpt"
+    body = _WATCH_BODY.replace("__CPT__", str(cpt)).replace("__PLUGIN__", entry["name"])
+    hook.parent.mkdir(parents=True, exist_ok=True)
+    hook.write_text(body, encoding="utf-8")
+    hook.chmod(0o755)
+    return f"instalado: {hook}"
