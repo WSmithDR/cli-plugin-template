@@ -8,7 +8,6 @@ _Última revisión: 2026-08-23_
 ## Q2 — No urgente e Importante
 > Planificar. Features críticas, bugs no bloqueantes, mejoras arquitectónicas.
 
-- [ ] Paridad OpenCode del snapshot WIP: PreCompact quedó CC-only porque OC no exponía evento de compactación, pero la API actual ya tiene session.compacted — handler event nuevo (.opencode/hooks/compact-event/) que espawnee bin/hooks/wip-snapshot.py, casos en el shim, y actualización de AGENTS.md/CLAUDE.md + tool-mapping.md.
 
 
 ## Q3 — Urgente y No importante

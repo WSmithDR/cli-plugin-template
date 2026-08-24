@@ -5,18 +5,23 @@
 //   skills + agentes → config
 //   SessionStart     → experimental.chat.messages.transform
 //   Stop             → event global.disposed
+//   PreCompact       → event session.compacted
 
 import type { Plugin } from "@opencode-ai/plugin";
 import { injectConfig } from "../hooks/config-inject";
 import { injectBootstrap } from "../hooks/bootstrap-inject";
 import { onStop } from "../hooks/stop-event";
+import { onCompacted } from "../hooks/compact-event";
 import { afterHook, beforeHook } from "../hooks/tool-guard/index.ts";
 
 export default (async () => {
   return {
     config: injectConfig,
     "experimental.chat.messages.transform": injectBootstrap,
-    event: onStop,
+    event: async (input) => {
+      await onStop(input);
+      onCompacted(input);
+    },
     "tool.execute.before": beforeHook,
     "tool.execute.after": afterHook,
   };

@@ -214,5 +214,20 @@ process.stdout.write = write;
 assert(!captured.includes("POSSIBLE PLUGIN FRICTION"));
 console.log("  PASS: segundo Stop no repite"); pass++;
 
+// paridad PreCompact: session.compacted → snapshot WIP; otros eventos, no
+const fsm = await import("node:fs");
+const wipDir = process.env.CLI_PLUGIN_TEMPLATE_DATA_DIR + "/wip";
+fsm.mkdirSync(wipDir, { recursive: true });
+await caps.event({ event: { type: "session.updated" } });
+assert(fsm.readdirSync(wipDir).length === 0, "evento ajeno no debe snapshottear");
+console.log("  PASS: evento no-compact → sin snapshot"); pass++;
+await caps.event({ event: { type: "session.compacted" } });
+const snaps = fsm.readdirSync(wipDir);
+assert(
+  snaps.length === 1 && fsm.readFileSync(`${wipDir}/${snaps[0]}`, "utf8").includes("## Branch"),
+  "session.compacted debe dejar snapshot con branch",
+);
+console.log("  PASS: session.compacted → snapshot WIP"); pass++;
+
 console.log(`\nResultado propio: ${pass} passed, 0 failed`);
 '

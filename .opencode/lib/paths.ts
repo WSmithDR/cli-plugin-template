@@ -9,6 +9,7 @@ export const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..
 export const SKILLS_DIR = join(REPO_ROOT, "skills");
 export const AGENTS_DIR = join(REPO_ROOT, "agents");
 export const STOP_HOOK = join(REPO_ROOT, "bin", "hooks", "detect-pending-feedback.py");
+export const WIP_SNAPSHOT = join(REPO_ROOT, "bin", "hooks", "wip-snapshot.py");
 export const SESSION_START_SH = join(REPO_ROOT, "bin", "hooks", "session-start.sh");
 export const AGENTS_MD = join(REPO_ROOT, "AGENTS.md");
 

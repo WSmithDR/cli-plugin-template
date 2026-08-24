@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""PreCompact: antes de compactar contexto, deja un snapshot mínimo del estado del repo
-(branch, status, commits recientes) en el store, para que la sesión post-compacto no
-arranque ciega. CC-only: OpenCode no expone evento equivalente."""
+"""PreCompact / session.compacted: antes de compactar contexto, deja un snapshot mínimo del estado del repo
+(branch, status, commits recientes) en el store, para que la sesión post-compacto no arranque ciega.
+Dual-CLI: Claude Code lo dispara con PreCompact; OpenCode vía event session.compacted (.opencode/hooks/compact-event/)."""
 import json
 import subprocess
 import sys

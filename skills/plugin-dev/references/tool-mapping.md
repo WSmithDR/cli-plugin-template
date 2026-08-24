@@ -33,7 +33,7 @@ firmas diferentes. Todos los hooks reciben `(input, output)` y mutan `output` po
 | `PostToolUseFailure` | `tool.execute.after` | CC dispara solo si el tool falló al ejecutarse (`input.error` top-level = `"Exit code N\n<stdout/stderr>"`, sin `tool_response`; no se emite ante rechazo de validación ni denegación de permiso). OC no distingue éxito/fallo: el after-hook corre siempre y el hook decide inspeccionando el output (ej. regex de conteo de fallos) |
 | `UserPromptSubmit` | `experimental.chat.messages.transform` | OC: parte extra en el primer mensaje user |
 | `Stop` / `SubagentStop` | `event` | Captura `input.event.type === "global.disposed"` |
-| `PreCompact` | *(sin equivalente)* | knob: solo Claude Code. El evento `experimental.session.compacting` de OC solo customiza el prompt de compactación, no expone un punto de acción previa (por eso el snapshot WIP no se porta) |
+| `PreCompact` | `event` → `session.compacted` | paridad completa: ambos disparan `bin/hooks/wip-snapshot.py` (CC directo por hooks config; OC vía `.opencode/hooks/compact-event/`, best-effort). La API vieja de OC solo exponía `experimental.session.compacting` (customización del prompt de compactación); `session.compacted` llegó después y habilitó el port |
 | — (shell env) | `shell.env` | Modifica vars de entorno del shell antes de ejecutar |
 | — (bash command) | `command.execute.before` | Solo para comandos del Task tool interno, NO para Bash directo |
 
