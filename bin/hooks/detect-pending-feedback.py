@@ -17,6 +17,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
 
 # ponytail: heurística por keywords — el análisis real lo hace el subagente feedback-harvester.
+# Ruta absoluta resuelta de __file__, no $CLAUDE_PLUGIN_ROOT — OpenCode ejecuta este
+# mismo script y no tiene esa variable.
+_CPT = str(Path(__file__).resolve().parents[1] / "cpt")
+
 FRICTION_KEYWORDS = (
     "no me gusta", "prefiero", "está mal", "esta mal", "estuvo mal",
     "no funciona", "no sirve", "incompleto", "no lo cubre", "no lo contempla",
@@ -167,12 +171,9 @@ def _drift_message() -> str:
         return ""
     items = "; ".join(f"{f['slug']} ({','.join(f['commits'])})" for f in found[:3])
     suffix = "..." if len(found) > 3 else ""
-    # ponytail: ruta absoluta resuelta de __file__, no $CLAUDE_PLUGIN_ROOT —
-    # OpenCode ejecuta este mismo script y no tiene esa variable.
-    cpt = Path(__file__).resolve().parents[1] / "cpt"
     return (f"FEEDBACK DRIFT in {plugin['name']}: {len(found)} feedback(s) still marked "
             f"pending look ALREADY FIXED by commits: [{items}{suffix}]. Run "
-            f"'python3 {cpt} feedback audit {plugin['name']}', "
+            f"'python3 {_CPT} feedback audit {plugin['name']}', "
             f"verify each, close with 'cpt feedback apply' (or discard if obsolete).")
 
 
@@ -190,12 +191,18 @@ def main() -> int:
         pending = []
 
     if pending:
-        count = len(pending)
-        items = "; ".join(pending[:3])
-        suffix = "..." if count > 3 else ""
-        msgs.append(f"PENDING PLUGIN FEEDBACK: {count} feedback(s) sin aplicar: "
-                    f"[{items}{suffix}]. Call Skill(\"cli-plugin-template:plugin-hotpatch\") "
-                    f"using the Skill tool to review and patch.")
+        by_plugin = {}
+        for item in pending:
+            by_plugin.setdefault(item.split("/", 1)[0], []).append(item)
+        resumen = ", ".join(f"{p} ({len(v)})" for p, v in sorted(by_plugin.items()))
+        items = "\n".join(f"  · {i}" for i in pending[:3])
+        suffix = "\n  · ..." if len(pending) > 3 else ""
+        msgs.append(
+            f"PENDING PLUGIN FEEDBACK — {len(pending)} sin aplicar: {resumen}\n"
+            f"{items}{suffix}\n"
+            "Procesalos con la skill cli-plugin-template:plugin-hotpatch "
+            "(Skill tool), o mirá el detalle con:\n"
+            f"  python3 {_CPT} feedback list --pending")
 
     friction = _friction_message(transcript_path)
     if friction:
