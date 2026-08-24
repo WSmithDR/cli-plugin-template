@@ -24,6 +24,7 @@ export async function afterHook(
   const cmd = String(input?.args?.command ?? "");
   const resp = String(output?.output ?? "");
   if (!SUITE_RE.test(cmd)) return;
-  if (!/(FAIL|failed|✗)/i.test(resp)) return;
+  // requiere conteo >0: "0 failed" en corridas verdes no debe hablar
+  if (!/[1-9]\d* +fail/i.test(resp)) return;
   output.output += "\nSuite fallida — ¿fricción del plugin? bin/cpt feedback save cli-plugin-template '<síntoma>' --status pending";
 }

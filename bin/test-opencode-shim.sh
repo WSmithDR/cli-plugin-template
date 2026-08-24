@@ -100,8 +100,8 @@ try {
 assert(threwEdit, "guard escanea new_string");
 console.log("  PASS: tool.execute.before escanea new_string"); pass++;
 
-// tool.execute.after: bash con suite fallida agrega hint al output
-const after = { title: "t", output: "FAIL: algo", metadata: {} };
+// tool.execute.after: bash con suite fallida agrega hint al output (conteo >0)
+const after = { title: "t", output: "Resultado: 3 passed, 2 failed", metadata: {} };
 await caps["tool.execute.after"](
   { tool: "bash", sessionID: "s", callID: "c", args: { command: "bash bin/test-x.sh" } },
   after,
@@ -155,6 +155,16 @@ assert(output.messages[0].parts[0].text.includes("cli-plugin-template — bootst
 await caps["experimental.chat.messages.transform"]({}, output); // guard
 assert(output.messages[0].parts.length === 2);
 console.log("  PASS: bootstrap inyectado una sola vez"); pass++;
+
+// tool.execute.after: suite verde no habla; con fallos sí sugiere feedback
+const green = { output: "Resultado: 3 passed, 0 failed" };
+await caps["tool.execute.after"]({ tool: "bash", args: { command: "bash bin/test-catalog-hooks.sh" } }, green);
+assert(!green.output.includes("Suite fallida"));
+console.log("  PASS: suite verde → silencio"); pass++;
+const red = { output: "Resultado: 3 passed, 2 failed" };
+await caps["tool.execute.after"]({ tool: "bash", args: { command: "bash bin/test-catalog-hooks.sh" } }, red);
+assert(red.output.includes("Suite fallida"));
+console.log("  PASS: suite con fallos → nudge"); pass++;
 
 // event: Stop dispara el hook (fricción via CPT_TRANSCRIPT_PATH → stdout)
 let captured = "";
