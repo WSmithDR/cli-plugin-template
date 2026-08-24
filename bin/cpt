@@ -25,6 +25,26 @@ def _read_content(arg: str) -> str:
     return sys.stdin.read() if arg == "-" else arg
 
 
+def _c(code: str, s: str) -> str:
+    """Color ANSI solo en tty real y sin NO_COLOR — en pipes/tests sale plano."""
+    import os
+    if sys.stdout.isatty() and not os.environ.get("NO_COLOR"):
+        return f"\033[{code}m{s}\033[0m"
+    return s
+
+def _warn(s: str) -> str:
+    return _c("33", s)
+
+def _ok(s: str) -> str:
+    return _c("32", s)
+
+def _dim(s: str) -> str:
+    return _c("2", s)
+
+def _bold(s: str) -> str:
+    return _c("1", s)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(prog="cpt")
     sub = parser.add_subparsers(dest="group", required=True)
@@ -149,16 +169,15 @@ def main() -> int:
             if ns.json:
                 print(json.dumps(found, ensure_ascii=False))
             elif found:
-                print(f"DRIFT: {len(found)} feedback(s) pendientes con evidencia "
-                      f"de aplicación:")
+                print(_warn(f"DRIFT: {len(found)} feedback(s) pendientes con "
+                            f"evidencia de aplicación:"))
                 for f in found:
-                    print(f"  {f['plugin']}/{f['slug']} | commits: "
-                          f"{', '.join(f['commits'])}")
-                print("Revisá cada uno y cerrá con: cpt feedback apply <plugin> <slug>")
+                    print(f"  {f['plugin']}/{f['slug']} {_dim('| commits: ' + ', '.join(f['commits']))}")
+                print(_dim("Revisá cada uno y cerrá con: cpt feedback apply <plugin> <slug>"))
         elif ns.op == "watch":
             msg = gateway.feedback_watch_install(ns.plugin, remove=ns.remove)
             if msg:
-                print(msg)
+                print(_ok(msg) if msg.startswith("instalado") else msg)
 
     elif ns.group == "proposal":
         if ns.op == "save":
@@ -187,20 +206,22 @@ def _print_status(summary: dict) -> None:
         print("EVOLUCIÓN DE PLUGINS — sin plugins registrados ni datos en el store.")
         print("Registrá uno con la skill plugin-register.")
         return
-    print(f"EVOLUCIÓN DE PLUGINS  ({t['plugins']} plugins · "
+    print(_bold(f"EVOLUCIÓN DE PLUGINS  ({t['plugins']} plugins · "
           f"{t['feedbacks_pending']} feedbacks pendientes · "
-          f"{t['proposals_pending']} propuestas pending)")
+          f"{t['proposals_pending']} propuestas pending)"))
     print("─" * 72)
     width = max(len(r["name"]) for r in rows)
     for r in rows:
         fb, pr = r["feedbacks"], r["proposals"]
+        pend = _warn(str(fb['pending'])) if fb['pending'] else _ok("0")
         flag = "" if r["registered"] else " (no registrado)"
-        print(f"{r['name']:<{width}}  ▸ feedbacks: {fb['pending']} pend / {fb['applied']} aplicados"
+        print(f"{_bold(r['name']):<{width + 8}}  ▸ feedbacks: {pend} pend / {fb['applied']} aplicados"
               f" / {fb['discarded']} descartados"
-              f"   propuestas: {pr['pending']} pending · {pr['approved']} approved · "
+              f"   propuestas: {_warn(str(pr['pending'])) if pr['pending'] else '0'} pending · "
+              f"{pr['approved']} approved · "
               f"{pr['discarded']} discarded{flag}")
         if r["local_path"]:
-            print(f"{'':<{width}}    {r['local_path']}")
+            print(f"{'':<{width}}    {_dim(r['local_path'])}")
 
 
 if __name__ == "__main__":
