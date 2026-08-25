@@ -218,13 +218,18 @@ python3 "$CPT" feedback save plugtest otra-cosa "no hay evidencia acá" >/dev/nu
 git -C "$REPO" -c user.email=t@t -c user.name=t commit -q --allow-empty \
     -m "gate: cierra plugtest-buscar-sin-proyeccion de raíz"
 python3 "$CPT" feedback save plugtest buscar-sin-proyeccion "sin proyección de campos" >/dev/null
+# caso D: palabras del slug en el subject SIN el slug literal (drift era ciego acá)
+git -C "$REPO" -c user.email=t@t -c user.name=t commit -q --allow-empty \
+    -m "feat: núcleo del loop de aprendizajes vivos"
+python3 "$CPT" feedback save plugtest loop-aprendizajes-vivos-por-todo "memoria viva del taller" >/dev/null
 
 out=$(python3 "$CPT" feedback audit plugtest)
 echo "$out" | grep -q "plugtest/normalizador-fantasma" \
     && echo "$out" | grep -q "plugtest/buscar-sin-proyeccion" \
+    && echo "$out" | grep -q "plugtest/loop-aprendizajes-vivos-por-todo" \
     && ! echo "$out" | grep -q "otra-cosa" \
     && echo "$out" | grep -q "$(git -C "$REPO" rev-parse --short HEAD)" \
-    && _pass "audit: marker RESUELTO + slug-en-subject detectados; sin-evidencia excluido" \
+    && _pass "audit: marker + slug-en-subject + solapamiento-de-palabras detectados" \
     || _fail "audit salida inesperada: '$out'"
 
 python3 "$CPT" feedback watch plugtest

@@ -462,10 +462,22 @@ def feedback_audit(plugin: str) -> list:
             full = next((h for h in commits if h.startswith(short)), None)
             if full:
                 hits.append(full)
-        # ponytail: substring literal del slug (truncado a 40 por slugify) contra subjects;
-        # si algún día miente, subir a intersección de palabras del slug.
+        # ponytail: solapamiento de palabras significativas (≥4 chars, sin tildes) entre
+        # slug y subject, tolerando una palabra de diferencia — el substring literal del
+        # slug era ciego cuando el commit describe la idea con otras palabras
+        # (ej. "loop-de-aprendizajes-vivos-por-plugin" vs "núcleo del loop de aprendizajes vivos").
+        import unicodedata
+
+        def _norm(text: str) -> str:
+            decomposed = unicodedata.normalize("NFD", text.lower())
+            return "".join(c for c in decomposed if not unicodedata.combining(c))
+
+        sig = [w for w in re.split(r"[^a-z0-9]+", _norm(slug)) if len(w) >= 4]
         for h, subj in commits.items():
-            if slug.lower() in subj.lower() and h not in hits:
+            if h in hits:
+                continue
+            subj_w = set(re.split(r"[^a-z0-9]+", _norm(subj)))
+            if sig and sum(w in subj_w for w in sig) >= max(1, len(sig) - 1):
                 hits.append(h)
         if hits:
             findings.append({"slug": slug, "commits": sorted({h[:7] for h in hits})})
