@@ -287,5 +287,60 @@ python3 "$CPT" feedback audit plugtest-inexistente >/dev/null 2>&1 \
 rm -rf "$REPO"
 
 echo ""
+echo "=== cpt feedback dedup + defer ==="
+
+# save new feedback creates it
+python3 "$CPT" feedback save test-plugin "new-feature" - >/dev/null <<'EOF'
+---
+name: feedback-new-feature
+plugin: test-plugin
+---
+nuevo feedback
+EOF
+f="$DATA/test-plugin/feedbacks/feedback_new-feature.md"
+[ -f "$f" ] && _pass "save creates new feedback" || _fail "save: no existe $f"
+
+# re-save with same slug and pending status → skip (dedup)
+out=$(python3 "$CPT" feedback save test-plugin "new-feature" - <<< "duplicado" 2>&1)
+echo "$out" | grep -q "ya existe con status pending" && _pass "dedup: pending feedback not duplicated" \
+    || _fail "dedup: should have returned pending dedup message, got: $out"
+
+# defer a feedback
+python3 "$CPT" feedback defer test-plugin "new-feature" >/dev/null
+grep -q "^status: deferred" "$f" && _pass "defer: status changes to deferred" \
+    || _fail "defer: '$(cat "$f")'"
+
+# re-save with same slug while deferred → skip (dedup)
+out=$(python3 "$CPT" feedback save test-plugin "new-feature" - <<< "duplicado" 2>&1)
+echo "$out" | grep -q "ya existe con status deferred" && _pass "dedup: deferred feedback not duplicated" \
+    || _fail "dedup: should have returned deferred dedup message, got: $out"
+
+# apply then re-save → preserves applied status, dedup does not block
+python3 "$CPT" feedback apply test-plugin "new-feature" >/dev/null
+python3 "$CPT" feedback save test-plugin "new-feature" - >/dev/null <<'EOF'
+---
+name: feedback-new-feature
+plugin: test-plugin
+---
+reactivado
+EOF
+grep -q "^status: applied" "$f" && grep -q "reactivado" "$f" \
+    && _pass "re-save: applied feedback preserves status, updates body" \
+    || _fail "re-save applied: '$(cat "$f")'"
+
+# discard then re-save → preserves discarded status, dedup does not block
+python3 "$CPT" feedback discard test-plugin "new-feature" >/dev/null
+python3 "$CPT" feedback save test-plugin "new-feature" - >/dev/null <<'EOF'
+---
+name: feedback-new-feature
+plugin: test-plugin
+---
+reactivado2
+EOF
+grep -q "^status: discarded" "$f" && grep -q "reactivado2" "$f" \
+    && _pass "re-save: discarded feedback preserves status, updates body" \
+    || _fail "re-save discarded: '$(cat "$f")'"
+
+echo ""
 echo "Resultado: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ] && exit 0 || exit 1
