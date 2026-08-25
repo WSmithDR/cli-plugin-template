@@ -250,6 +250,38 @@ def _drift_message() -> str:
             f"verify each, close with 'cpt feedback apply' (or discard if obsolete).")
 
 
+def _pending_learnings_message() -> str:
+    """Aprendizajes modificados hoy: si los tocaste en esta sesion, verificalos."""
+    from datetime import date
+    today = date.today().isoformat()
+    try:
+        from paths import learnings_dir, GLOBAL_SCOPE
+    except Exception:
+        return ""
+    found = []
+    for scope_dir in learnings_dir(GLOBAL_SCOPE).parent.parent.glob("*/learnings"):
+        if not scope_dir.is_dir():
+            continue
+        scope = scope_dir.parent.name
+        for path in scope_dir.glob("learning_*.md"):
+            body = path.read_text(encoding="utf-8", errors="replace")
+            last_updated = ""
+            for line in body.splitlines():
+                if line.startswith("last_updated:"):
+                    last_updated = line.split(":", 1)[1].strip()
+                    break
+            if last_updated == today:
+                slug = path.stem[len("learning_"):]
+                found.append(f"{scope}/{slug}")
+    if not found:
+        return ""
+    items = ", ".join(found[:5])
+    suffix = f" +{len(found)-5}" if len(found) > 5 else ""
+    return (f"LEARNINGS MODIFIED TODAY ({len(found)}): [{items}{suffix}]. "
+            f"Verify they are still correct or delete obsolete ones: "
+            f"python3 {_CPT} learning list --plugin <name> --full")
+
+
 def main() -> int:
     try:
         transcript_path = str(json.load(sys.stdin).get("transcript_path", ""))
@@ -292,6 +324,10 @@ def main() -> int:
     drift = _drift_message()
     if drift:
         msgs.append(drift)
+
+    learnings = _pending_learnings_message()
+    if learnings:
+        msgs.append(learnings)
 
     if msgs:
         print(json.dumps({"systemMessage": " | ".join(msgs)}))

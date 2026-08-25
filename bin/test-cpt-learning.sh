@@ -210,5 +210,25 @@ out=$(printf '{"tool_input":{"command":"bash bin/test-miplugin.sh"},"error":"Exi
 [ -z "$out" ] && _pass "suite exitosa -> silencio" || _fail "exitosa: $out"
 
 echo ""
+echo "=== detect-pending-feedback.py + learnings ==="
+
+STOP="$SCRIPT_DIR/hooks/detect-pending-feedback.py"
+
+# Guardar un aprendizaje y modificarlo (last_updated = hoy)
+python3 "$CPT" learning save sweep-test "aprendizaje de prueba para sweep" \
+    --plugin miplugin --category convencion >/dev/null
+
+# El Stop hook debe reportar learnings modificados hoy
+out=$(echo '{"transcript_path":"/nonexistent"}' | python3 "$STOP" 2>&1)
+echo "$out" | grep -q "LEARNINGS" \
+    && _pass "Stop hook reporta learnings modificados hoy" || _fail "sweep: $out"
+
+# Sin learnings recientes -> sin mencion (limpiar todos los learnings)
+find "$DATA" -name "learning_*.md" -delete
+out=$(echo '{"transcript_path":"/nonexistent"}' | python3 "$STOP" 2>&1)
+! echo "$out" | grep -q "LEARNINGS" \
+    && _pass "sin learnings -> sin mencion LEARNINGS" || _fail "sin sweep: $out"
+
+echo ""
 echo "Resultado: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ] && exit 0 || exit 1
