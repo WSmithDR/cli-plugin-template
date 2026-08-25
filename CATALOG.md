@@ -41,6 +41,7 @@ Para el flujo de uso completo ver [AGENTS.md](AGENTS.md).
 | [`proposal-gate`](features/proposal-gate/README.md) | 1.0.0 | todos | Aprobación humana explícita antes de acciones irreversibles, vía archivo de propuesta revisable |
 | [`vocabulary-guardian`](features/vocabulary-guardian/README.md) | 1.0.0 | todos | Fuente única de verdad para términos/estados de dominio; escáner que detecta valores no registrados |
 | [`growth-engine`](features/growth-engine/README.md) | 1.2.0 | todos | Auto-mejora: captura feedback/fricción (manual, proactiva o auto-harvest) y un motor de hotpatch lo procesa, parchea y commitea |
+| [`learning-system`](features/learning-system/README.md) | 1.0.0 | claude-code, opencode (parcial), gemini-cli | Memoria de aprendizajes vigentes con loop de hooks que los aplica al momento justo: nudge PreToolUse al editar, detección de convenciones/contradicciones PostToolUse, cruce con fallos de suite y barrido Stop de lo tocado hoy |
 | [`planning-workflow`](features/planning-workflow/README.md) | 1.0.0 | todos | Planear tareas multi-paso con tasks de criterios concretos, self-review y ejecución con checkpoints |
 
 ## Autoría de skills y agents

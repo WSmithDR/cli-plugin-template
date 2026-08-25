@@ -1,0 +1,16 @@
+name: learning-system
+version: 1.0.0
+cli_compat: [claude-code, opencode, gemini-cli, any]
+depends_on: [growth-engine]
+description: >
+  Memoria de aprendizajes vigentes sobre cómo se desarrolla el plugin. Store
+  markdown con upsert por tema (corregir, no acumular), y un loop de hooks que
+  la aplica en el momento justo: nudge PreToolUse al editar, detección de
+  convenciones/contradicciones PostToolUse, cruce con fallos de suite, y
+  barrido de learnings tocados hoy al cierre.
+provides:
+  - learning_store.py (store standalone: save/list/load/delete con upsert)
+  - hooks/<plugin>-learning-nudge.py (PreToolUse: recuerda learnings al editar)
+  - hooks/<plugin>-detect-learning.py (PostToolUse: detecta convención o contradicción en el diff)
+  - extensión test-failure-nudge (fallo de suite que contradice un aprendizaje)
+  - sweep para el Stop hook (learnings modificados hoy → verificar)
