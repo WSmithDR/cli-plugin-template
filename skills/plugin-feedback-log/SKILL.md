@@ -27,9 +27,12 @@ otro proyecto.
    ```bash
    PLUGIN=$(python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" registry resolve "<skill_namespace>")
    ```
-3. **Si NO resuelve** (vacío / rc=1): el plugin no está en el allowlist. NO guardar.
-   Avisar: *"Ese plugin no está registrado. Decime 'registrá este plugin' en su repo
-   (skill plugin-register) para que cli-plugin-template administre su evolución."* y terminar.
+3. **Si NO resuelve** (vacío / rc=1): el plugin no está en el allowlist. NO guardar
+   todavía — pero **tampoco termines mandando al usuario a otro repo**: está describiendo
+   la fricción justo ahora, es el peor momento para interrumpirlo. Ofrecé el alta en el
+   acto: *"`<plugin>` no está registrado. ¿Lo doy de alta ahora y sigo con el feedback?"*
+   Si acepta → corré `plugin-register` desde acá (resuelve el repo por nombre o ruta, no
+   hace falta moverse) y volvé a este Step 1. Si no acepta, terminá sin guardar.
 
 El registry es la baranda: el meta-plugin solo administra plugins dados de alta.
 
@@ -135,21 +138,31 @@ sea conveniente (con tu aprobación)."*
 Mientras usás un plugin registrado, auto-detectá fricción **en el momento**, sin esperar a
 que el usuario invoque la skill.
 
+**Registrá en el acto, no pidas permiso.** Guardar un feedback es barato y reversible
+(`feedback discard`); lo que sí necesita aprobación es el patch, y de eso ya se ocupa
+`plugin-hotpatch`. Preguntar por cada hallazgo convierte al usuario en cuello de botella
+de su propia sesión, y el costo real es que los hallazgos se pierden cuando no está
+mirando. El principio: **se pide permiso para cambiar código, no para tomar nota.**
+
 **Señales de capability-gap** (el plugin no tiene código para lo pedido):
 - vas a implementar algo a mano porque no hay skill para eso
 - el flujo se desvía del pipeline normal del plugin por falta de una pieza
 
-→ Preguntá: *"Esto que pedís el plugin no lo cubre con código. ¿Lo registro como
-`capability-gap` para desarrollarlo después?"*
+→ Registralo como `capability-gap` (Step 1→4) y avisá en una línea:
+*"Anotado: `<slug>` · capability-gap — el plugin no cubre esto con código."*
 
 **Señales de fricción / desacuerdo del usuario:**
 - "no me gusta" / "prefiero" → `preferencia`
 - "está mal" / "no funciona" → `correccion`
 - "no sirve" / "incompleto" / "falta algo" → `friccion`
 
-→ Preguntá: *"Veo que esto no te convenció. ¿Lo registro como feedback del plugin?"*
+→ Registralo (Step 1→4, resolviendo el plugin por la skill namespace activa) y avisá en
+una línea: *"Anotado: `<slug>` · `<signal>`."* Después seguí con lo que estabas haciendo:
+el aviso no abre una conversación.
 
-Si confirma → Step 1→4 (resolvé el plugin por la skill namespace activa). Si no, seguí el flujo.
+**El único caso que sí se pregunta** es el dudoso: cuando no está claro si la fricción es
+del plugin o del usuario (un error propio, una decisión que el usuario tomó a sabiendas).
+Ahí preguntá antes de guardar — un feedback mal atribuido ensucia el store de otro plugin.
 
 ---
 
