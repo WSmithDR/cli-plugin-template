@@ -127,6 +127,88 @@ rc=0; out=$(_nudge "$REPO/x.md" s9) || rc=$?
 [ "$rc" -eq 0 ] && [ -z "$out" ] && _pass "registry corrupto → exit 0 silencioso" \
     || _fail "registry corrupto: rc=$rc $out"
 
+# restaurar registry para los tests siguientes
+python3 "$CPT" registry register miplugin "$REPO" >/dev/null
+
+echo ""
+echo "=== detect-learning.py (PostToolUse) ==="
+
+DETECT="$SCRIPT_DIR/hooks/detect-learning.py"
+
+_detect() {  # $1=file_path $2=session_id $3=tool_output (diff)
+    printf '{"tool_input":{"file_path":"%s"},"tool_output":{"diff":"%s"},"session_id":"%s"}' \
+        "$1" "$3" "$2" | python3 "$DETECT" 2>&1
+}
+
+# Crear un aprendizaje para que detect-learning lo conozca
+python3 "$CPT" learning save detect-test "los hooks usan json.load(sys.stdin)" \
+    --plugin miplugin --category convencion >/dev/null
+
+# Edit en plugin registrado con diff que contradice aprendizaje -> propone save
+out=$(python3 -c "
+import json, sys
+payload = {'tool_input': {'file_path': sys.argv[1]},
+           'tool_output': {'diff': 'hook uses json.load\nimport json'},
+           'session_id': sys.argv[2]}
+json.dump(payload, sys.stdout)
+" "$REPO/skills/x/SKILL.md" s1 | python3 "$DETECT" 2>&1)
+echo "$out" | grep -q "hookSpecificOutput" \
+    && _pass "diff que contradice aprendizaje -> propone save" || _fail "contradiccion: $out"
+
+# Segunda edicion del mismo archivo en la misma sesion -> callado (cooldown)
+out=$(_detect "$REPO/skills/x/SKILL.md" s1 "hook uses regex")
+[ -z "$out" ] && _pass "segunda edicion mismo archivo misma sesion -> callado" || _fail "repite: $out"
+
+# Edit fuera de plugin -> silencio
+out=$(_detect "/tmp/suelto.md" s1 "hook uses json.load")
+[ -z "$out" ] && _pass "edit fuera de plugin -> silencio" || _fail "fuera: $out"
+
+# Sesion nueva -> vuelve a hablar (diff con patron de convencion)
+python3 -c "
+import json, sys
+payload = {'tool_input': {'file_path': sys.argv[1]},
+           'tool_output': {'diff': 'hook uses json.load\ntry:\n    sys.path.insert'},
+           'session_id': sys.argv[2]}
+json.dump(payload, sys.stdout)
+" "$REPO/skills/x/SKILL.md" s2 | python3 "$DETECT" 2>&1 | \
+    grep -q "hookSpecificOutput" \
+    && _pass "sesion nueva -> vuelve a proponer" || _fail "sesion nueva"
+
+# Plugin registrado SIN aprendizajes -> silencio
+REPO3=$(mktemp -d); trap 'rm -rf "$DATA" "$REPO" "$REPO2" "$REPO3"' EXIT
+python3 "$CPT" registry register vacio2 "$REPO3" >/dev/null
+out=$(_detect "$REPO3/a.md" s3 "add something")
+[ -z "$out" ] && _pass "plugin sin aprendizajes -> silencio" || _fail "sin learnings: $out"
+
+# Input basura no rompe el hook
+rc=0; echo "no-json" | python3 "$DETECT" >/dev/null 2>&1 || rc=$?
+[ "$rc" -eq 0 ] && _pass "input no-JSON -> exit 0" || _fail "no-JSON: rc=$rc"
+
+echo ""
+echo "=== test-failure-nudge.py + learnings ==="
+
+FAILURE_NUDGE="$SCRIPT_DIR/hooks/test-failure-nudge.py"
+
+# Aprendizaje vigente sobre hooks (bajo cli-plugin-template, que es el plugin que el hook inspecciona)
+python3 "$CPT" learning save hooks-en-ts "el shim delega en el .py" --plugin cli-plugin-template >/dev/null
+
+# Suite fallida con output que menciona keywords del aprendizaje -> sugiere learning
+out=$(printf '{"tool_input":{"command":"bash bin/test-miplugin.sh"},"error":"Exit code 1\\nshim delega failed"}' \
+    | python3 "$FAILURE_NUDGE" 2>&1)
+echo "$out" | grep -q "aprendizaje" \
+    && _pass "suite fallida contradice aprendizaje -> sugiere learning" || _fail "contradice: $out"
+
+# Suite fallida sin mencion de aprendizajes -> solo feedback (sin learning)
+out=$(printf '{"tool_input":{"command":"bash bin/test-miplugin.sh"},"error":"Exit code 1\\nunrelated error"}' \
+    | python3 "$FAILURE_NUDGE" 2>&1)
+! echo "$out" | grep -q "aprendizaje" \
+    && _pass "suite fallida sin mention -> solo feedback" || _fail "sin learning: $out"
+
+# Suite exitosa -> silencio (misma behaviour que antes)
+out=$(printf '{"tool_input":{"command":"bash bin/test-miplugin.sh"},"error":"Exit code 0"}' \
+    | python3 "$FAILURE_NUDGE" 2>&1)
+[ -z "$out" ] && _pass "suite exitosa -> silencio" || _fail "exitosa: $out"
+
 echo ""
 echo "Resultado: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ] && exit 0 || exit 1
