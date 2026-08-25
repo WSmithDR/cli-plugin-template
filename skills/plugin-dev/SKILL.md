@@ -87,3 +87,33 @@ tuyos y dónde viven); cada plugin tiene su subdir con `feedbacks/` y `proposals
 `plugin-register` (alta) → `plugin-feedback-log` (captura fricción, `status: pending`) →
 `plugin-hotpatch` (propone y aplica el fix en el repo del plugin, con gate de aprobación).
 Solo se administran plugins dados de alta.
+
+### Aprendizajes vivos (`cpt learning`)
+
+Los feedbacks tienen ciclo lineal —nacen `pending`, mueren aplicados o descartados— y por
+eso se acumulan. Un **aprendizaje** es lo contrario: conocimiento vigente sobre *cómo se
+desarrollan estos plugins* (convenciones de estilo, cómo se integra un CLI nuevo, qué
+difiere entre CLIs). Se corrige cuando la realidad lo desmiente y se borra cuando deja de
+valer; nunca se "cierra". Por eso vive aparte, en `<scope>/learnings/`.
+
+```bash
+python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" learning list --plugin <plugin> --full
+```
+
+**Cuándo guardar uno:** cuando resolvés algo y la decisión vale para la próxima vez —
+propia o de otro plugin. Guardar es upsert por slug: el mismo tema se corrige, no se
+duplica.
+
+```bash
+python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" learning save <slug> - --category convencion
+```
+
+- Sin `--plugin` va al taller (`_global`): lo ve cualquier plugin. Ahí van `convencion`
+  e `integracion-cli`, que es el conocimiento que querés que se propague.
+- Con `--plugin <name>` queda acotado a ese plugin. Usalo solo cuando de verdad no
+  aplica a los demás.
+- Categorías: `convencion` · `integracion-cli` · `compat-multi-cli`.
+
+El hook `learning-nudge` (PreToolUse) recuerda consultarlos al editar un plugin
+registrado, una vez por sesión y plugin. Solo habla si ya hay aprendizajes: el primero
+lo escribís vos.

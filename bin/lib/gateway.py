@@ -545,3 +545,84 @@ def feedback_learn(plugin: str, phrase: str) -> dict:
                     "hits": 1, "learned_at": _today()}
     _write_json(paths.friction_lexicon_file(), lex)
     return {"ok": True, "key": key, "total": len(lex)}
+
+
+# ── aprendizajes vivos ────────────────────────────────────────────────────────
+# Los feedbacks tienen ciclo lineal (pending → applied/discarded) y por eso se
+# acumulan. Un aprendizaje es lo contrario: conocimiento VIGENTE sobre cómo se
+# desarrollan estos plugins. Se corrige cuando la realidad lo desmiente y se borra
+# cuando deja de valer — nunca se "cierra". De ahí que no viva en el feedback store.
+
+LEARNING_CATEGORIES = ("convencion", "integracion-cli", "compat-multi-cli")
+# Las dos primeras describen cómo trabaja el taller, no un plugin: su lugar natural
+# es el scope global, para que un aprendizaje nacido en un plugin se aplique en todos.
+_GLOBAL_BY_DEFAULT = ("convencion", "integracion-cli")
+
+
+def _learning_scope(category: Optional[str], plugin: Optional[str]) -> str:
+    """`--plugin` explícito manda; si no, la categoría decide."""
+    if plugin:
+        return paths.slugify(plugin)
+    if category in _GLOBAL_BY_DEFAULT or category is None:
+        return paths.GLOBAL_SCOPE
+    return paths.GLOBAL_SCOPE
+
+
+def learning_save(slug: str, content: str, plugin: Optional[str] = None,
+                  category: Optional[str] = None) -> str:
+    """Upsert por tema: guardar dos veces el mismo slug CORRIGE el aprendizaje, no
+    duplica. `created` se preserva del archivo previo; `last_updated` es siempre hoy.
+    La categoría del contenido gana sobre la del argumento (el documento manda sobre
+    el body, igual que en feedback_save)."""
+    category = _fm_get(content, "category") or category
+    if category and category not in LEARNING_CATEGORIES:
+        raise SystemExit(f"categoría inválida: {category} "
+                         f"(usá una de {', '.join(LEARNING_CATEGORIES)})")
+    scope = _learning_scope(category, plugin)
+    path = paths.learnings_dir(scope) / f"learning_{paths.slugify(slug)}.md"
+    prev = _read(path)
+    stamped = {"scope": scope,
+               "created": _fm_get(prev, "created") or _fm_get(content, "created") or _today(),
+               "last_updated": _today()}
+    if category:
+        stamped["category"] = category
+    _write(path, _fm_set(content, stamped))
+    return str(path)
+
+
+def _learning_scopes(plugin: Optional[str]) -> list[str]:
+    """Lo que aplica al editar `plugin`: lo suyo MÁS lo del taller. Sin plugin, solo
+    el taller — no tiene sentido volcar los aprendizajes de todos los plugins."""
+    if plugin:
+        return [paths.slugify(plugin), paths.GLOBAL_SCOPE]
+    return [paths.GLOBAL_SCOPE]
+
+
+def learning_list(plugin: Optional[str] = None, category: Optional[str] = None) -> list[str]:
+    """`<scope>/<slug>` de los aprendizajes vigentes, global incluido."""
+    out = []
+    for scope in _learning_scopes(plugin):
+        d = paths.learnings_dir(scope)
+        if not d.exists():
+            continue
+        for path in sorted(d.glob("learning_*.md")):
+            if category and _fm_get(_read(path), "category") != category:
+                continue
+            out.append(f"{scope}/{path.stem[len('learning_'):]}")
+    return out
+
+
+def learning_load(scope: str, slug: str) -> str:
+    path = paths.learnings_dir(scope) / f"learning_{paths.slugify(slug)}.md"
+    if not path.exists():
+        raise SystemExit(f"no existe el aprendizaje: {scope}/{slug}")
+    return _read(path)
+
+
+def learning_delete(scope: str, slug: str) -> str:
+    """Borrado real: un aprendizaje que dejó de valer no se archiva, estorba."""
+    path = paths.learnings_dir(scope) / f"learning_{paths.slugify(slug)}.md"
+    if not path.exists():
+        raise SystemExit(f"no existe el aprendizaje: {scope}/{slug}")
+    path.unlink()
+    return str(path)

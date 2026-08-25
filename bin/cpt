@@ -9,6 +9,7 @@ Las skills y hooks lo invocan:
 Grupos:
     registry  register | list | resolve   (allowlist de plugins propios)
     feedback  save | list                 (captura de fricción por plugin)
+    learning  save | list | show | delete (conocimiento vigente del taller)
 """
 import argparse
 import json
@@ -134,6 +135,30 @@ def main() -> int:
     p_status.add_argument("status")
 
     # status (dashboard) ───────────────────────────────────────
+    # learning ────────────────────────────────────────────────
+    lr = sub.add_parser("learning", help="aprendizajes vivos del taller y por plugin")
+    lr_sub = lr.add_subparsers(dest="op", required=True)
+
+    l_save = lr_sub.add_parser("save", help="guardar/corregir un aprendizaje (upsert por slug)")
+    l_save.add_argument("slug")
+    l_save.add_argument("content", help="'-' lee stdin")
+    l_save.add_argument("--plugin", default=None,
+                        help="scope: el plugin al que aplica. Sin esto va al taller (global).")
+    l_save.add_argument("--category", default=None, choices=gateway.LEARNING_CATEGORIES)
+
+    l_list = lr_sub.add_parser("list", help="aprendizajes vigentes (los del plugin + los del taller)")
+    l_list.add_argument("--plugin", default=None)
+    l_list.add_argument("--category", default=None, choices=gateway.LEARNING_CATEGORIES)
+    l_list.add_argument("--full", action="store_true", help="imprimir el contenido, no solo los slugs")
+
+    l_show = lr_sub.add_parser("show", help="imprimir un aprendizaje")
+    l_show.add_argument("scope", help="nombre del plugin, o _global")
+    l_show.add_argument("slug")
+
+    l_del = lr_sub.add_parser("delete", help="borrar un aprendizaje que dejó de valer")
+    l_del.add_argument("scope")
+    l_del.add_argument("slug")
+
     st = sub.add_parser("status", help="dashboard de evolución de los plugins")
     st.add_argument("--plugin", default=None)
     st.add_argument("--json", action="store_true")
@@ -196,6 +221,23 @@ def main() -> int:
             print("\n".join(gateway.proposal_list(plugin=ns.plugin, status=ns.status)))
         elif ns.op == "set-status":
             print(gateway.proposal_set_status(ns.plugin, ns.slug, ns.status))
+
+    elif ns.group == "learning":
+        if ns.op == "save":
+            print(gateway.learning_save(ns.slug, _read_content(ns.content),
+                                        plugin=ns.plugin, category=ns.category))
+        elif ns.op == "list":
+            refs = gateway.learning_list(plugin=ns.plugin, category=ns.category)
+            if not ns.full:
+                print("\n".join(refs))
+            else:
+                for ref in refs:
+                    scope, slug = ref.split("/", 1)
+                    print(f"# {ref}\n{gateway.learning_load(scope, slug)}")
+        elif ns.op == "show":
+            print(gateway.learning_load(ns.scope, ns.slug), end="")
+        elif ns.op == "delete":
+            print(gateway.learning_delete(ns.scope, ns.slug))
 
     elif ns.group == "status":
         summary = gateway.growth_summary(plugin=ns.plugin)

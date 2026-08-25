@@ -46,6 +46,24 @@ def proposals_dir(plugin: str) -> Path:
     return plugin_dir(plugin) / "proposals"
 
 
+# Scope de los aprendizajes que no son de un plugin en particular: convenciones de
+# estilo e integración de CLIs valen para CUALQUIER plugin del taller, y guardarlas
+# dentro de uno las volvería invisibles al editar otro. No se slugifica (el guión bajo
+# lo perdería) y por eso tampoco puede chocar con el subdir de un plugin real.
+GLOBAL_SCOPE = "_global"
+
+
+def learnings_dir(scope: str) -> Path:
+    """Aprendizajes vivos de un plugin, o del taller si scope es GLOBAL_SCOPE.
+
+    A diferencia de los feedbacks —que nacen pending y mueren aplicados o descartados—,
+    un aprendizaje es conocimiento vigente: se corrige o se borra, no se cierra.
+    """
+    if scope == GLOBAL_SCOPE:
+        return data_dir() / GLOBAL_SCOPE / "learnings"
+    return plugin_dir(scope) / "learnings"
+
+
 def session_id_file() -> Path:
     return data_dir() / "current-session.id"
 
