@@ -80,6 +80,8 @@ def main() -> int:
     f_list = fb_sub.add_parser("list", help="listar feedbacks")
     f_list.add_argument("--plugin", default=None)
     f_list.add_argument("--pending", action="store_true")
+    f_list.add_argument("--deferred", action="store_const", const="deferred", dest="state",
+                        help="solo los pospuestos (alias de --state deferred)")
     f_list.add_argument("--state", default=None,
                         choices=("pending", "applied", "discarded", "deferred"))
 
@@ -186,7 +188,12 @@ def main() -> int:
 
     elif ns.group == "feedback":
         if ns.op == "save":
-            print(gateway.feedback_save(ns.plugin, ns.slug, _read_content(ns.content)))
+            result = gateway.feedback_save(ns.plugin, ns.slug, _read_content(ns.content))
+            if result.startswith("exists:"):
+                _, status, _ = result.split(":", 2)
+                print(f"Feedback ya existe con status {status}, no se creó duplicado.")
+            else:
+                print(result)
         elif ns.op == "list":
             print("\n".join(gateway.feedback_list(plugin=ns.plugin, pending_only=ns.pending,
                                                   state=ns.state)))

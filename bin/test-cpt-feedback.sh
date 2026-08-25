@@ -341,6 +341,21 @@ grep -q "^status: discarded" "$f" && grep -q "reactivado2" "$f" \
     && _pass "re-save: discarded feedback preserves status, updates body" \
     || _fail "re-save discarded: '$(cat "$f")'"
 
+# list --deferred shows only deferred feedbacks
+python3 "$CPT" feedback save test-plugin "deferred-test" - >/dev/null <<'EOF'
+---
+name: feedback-deferred-test
+plugin: test-plugin
+---
+para deferir
+EOF
+python3 "$CPT" feedback defer test-plugin "deferred-test" >/dev/null
+out=$(python3 "$CPT" feedback list --deferred 2>&1)
+echo "$out" | grep -q "test-plugin/deferred-test" \
+    && ! echo "$out" | grep -q "test-plugin/new-feature" \
+    && _pass "list --deferred: solo los pospuestos" \
+    || _fail "list --deferred: '$out'"
+
 echo ""
 echo "Resultado: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ] && exit 0 || exit 1

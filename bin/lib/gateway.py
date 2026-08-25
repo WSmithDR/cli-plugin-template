@@ -198,6 +198,11 @@ def feedback_save(plugin: str, slug: str, content: str) -> str:
     quien captura, y solo sobrevive si difiere de `local_path` — ver `_foreign_path`."""
     path = paths.feedbacks_dir(plugin) / f"feedback_{paths.slugify(slug)}.md"
     prev = _read(path)
+    # Dedup: if already active or deferred, skip save
+    if prev:
+        existing_status = _state_of(prev)
+        if existing_status in ("pending", "deferred"):
+            return f"exists:{existing_status}:{path}"
     today = _today()
     created = (_fm_get(prev, "created") or _fm_get(prev, "created_at")
                or _fm_get(content, "created") or _fm_get(content, "created_at") or today)
