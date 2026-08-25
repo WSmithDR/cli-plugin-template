@@ -226,7 +226,7 @@ def _strip_prefix(stem: str) -> str:
     return stem[len("feedback_"):] if stem.startswith("feedback_") else stem
 
 
-FEEDBACK_STATUSES = ("pending", "applied", "discarded")
+FEEDBACK_STATUSES = ("pending", "applied", "discarded", "deferred")
 
 
 def _state_of(content: str) -> str:

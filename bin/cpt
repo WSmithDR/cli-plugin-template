@@ -81,7 +81,7 @@ def main() -> int:
     f_list.add_argument("--plugin", default=None)
     f_list.add_argument("--pending", action="store_true")
     f_list.add_argument("--state", default=None,
-                        choices=("pending", "applied", "discarded"))
+                        choices=("pending", "applied", "discarded", "deferred"))
 
     f_show = fb_sub.add_parser("show", help="imprimir el contenido de un feedback")
     f_show.add_argument("plugin")
@@ -96,6 +96,11 @@ def main() -> int:
     f_disc.add_argument("plugin")
     f_disc.add_argument("slug")
     f_disc.add_argument("--at", default=None, help="fecha last_updated (default: hoy UTC)")
+
+    f_defer = fb_sub.add_parser("defer", help="posponer un feedback para revisión futura")
+    f_defer.add_argument("plugin")
+    f_defer.add_argument("slug")
+    f_defer.add_argument("--at", default=None, help="fecha last_updated (default: hoy UTC)")
 
     f_audit = fb_sub.add_parser("audit",
                                 help="pendientes con evidencia de ya-aplicados en su repo")
@@ -191,6 +196,8 @@ def main() -> int:
             print(gateway.feedback_set_status(ns.plugin, ns.slug, "applied", at=ns.at))
         elif ns.op == "discard":
             print(gateway.feedback_set_status(ns.plugin, ns.slug, "discarded", at=ns.at))
+        elif ns.op == "defer":
+            print(gateway.feedback_set_status(ns.plugin, ns.slug, "deferred", at=ns.at))
         elif ns.op == "audit":
             names = [ns.plugin] if ns.plugin else \
                     [e["name"] for e in gateway.registry_list()]
