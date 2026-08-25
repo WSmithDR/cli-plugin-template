@@ -15,6 +15,9 @@ Categorías de hallazgo (severidad):
   INFO      portable-shebang  shebang/intérprete no portable (python en vez de python3, etc.)
 
 Excluir falsos positivos (docs con ejemplos, fixtures, esqueletos):
+  - Archivos que **git ignora** (automático): si no viajan en el commit, no pueden
+    romper portabilidad. Se resuelve con una sola llamada a `git check-ignore`;
+    sin git o fuera de un working tree, no se excluye nada.
   - Archivo `.portabilityignore` en la raíz escaneada: un glob por línea
     (estilo .gitignore, `#` comenta). Ej: `docs/**`, `tests/fixtures/**`.
   - Marcador inline: cualquier línea que contenga el literal `audit-ignore`
@@ -33,6 +36,7 @@ from __future__ import annotations
 import fnmatch
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -135,7 +139,41 @@ def is_ignored(rel_posix: str, patterns: list[str]) -> bool:
     return False
 
 
+def git_ignored(root: Path, rels: list[str]) -> set[str]:
+    """Subconjunto de `rels` que git ignora, en UNA sola invocación.
+
+    Un archivo gitignoreado nunca viaja en el commit, así que no puede romper la
+    portabilidad de nadie: reportarlo es un falso positivo. Caso típico:
+    `.claude/settings.local.json`, que Claude Code auto-edita con rutas absolutas
+    al aprobar comandos, y que frenaría el pre-commit sin motivo.
+
+    Se usa `--stdin` (un solo proceso, no uno por archivo: esto corre en el
+    pre-commit) y `-z` (paths con espacios/saltos de línea sobreviven intactos).
+    Los archivos *trackeados* nunca se reportan como ignorados — que es lo
+    correcto: si están en el índice, viajan igual y hay que auditarlos.
+
+    Fallback silencioso: sin git instalado, fuera de un working tree, o ante
+    cualquier error, devuelve vacío y el audit escanea todo como siempre.
+    """
+    if not rels:
+        return set()
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(root), "check-ignore", "-z", "--stdin"],
+            input=b"\0".join(r.encode("utf-8") for r in rels) + b"\0",
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return set()
+    # 0 = hay ignorados; 1 = ninguno ignorado (NO es error); >1 = error real
+    # (no hay repo, git roto…) → no excluimos nada.
+    if proc.returncode > 1:
+        return set()
+    return {p for p in proc.stdout.decode("utf-8", "replace").split("\0") if p}
+
+
 def walk(root: Path, ignore: list[str]):
+    candidates: list[tuple[str, Path]] = []
     for path in sorted(root.rglob("*")):
         if any(part in SKIP_DIRS for part in path.parts):
             continue
@@ -144,7 +182,13 @@ def walk(root: Path, ignore: list[str]):
         rel = path.relative_to(root).as_posix()
         if rel == IGNORE_FILE or is_ignored(rel, ignore):
             continue
-        yield path
+        candidates.append((rel, path))
+
+    # Filtro adicional (no reemplaza a .portabilityignore): lo que git ignora.
+    gitignored = git_ignored(root, [rel for rel, _ in candidates])
+    for rel, path in candidates:
+        if rel not in gitignored:
+            yield path
 
 
 def is_skill_or_command(rel: Path) -> bool:

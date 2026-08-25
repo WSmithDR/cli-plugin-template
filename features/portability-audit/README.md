@@ -41,11 +41,21 @@ evalúa `unrooted-ref` en líneas que parecen comando dentro de `skills/`/`comma
 
 ## Excluir falsos positivos legítimos
 
-Todo repo real tiene rutas de ejemplo en docs y `/home/...` en fixtures. Dos escapes,
-al estilo `.gitignore` + `# noqa`:
+Todo repo real tiene rutas de ejemplo en docs y `/home/...` en fixtures. Tres escapes,
+uno automático y dos al estilo `.gitignore` + `# noqa`:
 
+- **Lo que git ignora se saltea solo.** Si un archivo no viaja en el commit, no puede
+  romperle la portabilidad a nadie. El caso que motivó esto:
+  `.claude/settings.local.json`, que Claude Code auto-edita con rutas absolutas cada vez
+  que aprobás un comando — frenaba el pre-commit con `CRITICAL` falsos. Se resuelve con
+  **una sola** llamada a `git check-ignore --stdin` (no una por archivo: esto corre en
+  cada commit). Los archivos **trackeados** se auditan igual aunque matcheen un patrón
+  de `.gitignore` — están en el índice, así que viajan. Sin git, fuera de un working
+  tree, o ante cualquier error del comando, el audit sigue como antes y no excluye nada.
 - **`.portabilityignore`** en la raíz escaneada: un glob por línea (`#` comenta).
-  Ej.: `docs/**`, `tests/fixtures/**`, `examples/**`.
+  Ej.: `docs/**`, `tests/fixtures/**`, `examples/**`. Sigue vivo tal cual: el filtro de
+  git es **adicional**, no lo reemplaza (sirve para archivos versionados que igual son
+  falsos positivos, como prosa y fixtures).
 - **Marcador inline `audit-ignore`**: cualquier línea que contenga ese literal se
   omite. Ej.: `DATA="/home/ci/cache"  # audit-ignore` en un fixture.
 
@@ -86,6 +96,10 @@ generan hallazgos, y que un `/home/...` y un `model: inherit` **sí**.
 
 ## Changelog
 
+- **1.0.1** — el walk saltea los archivos que git ignora (una sola llamada a
+  `git check-ignore -z --stdin`, con fallback silencioso sin git). Elimina los
+  `CRITICAL` falsos de archivos gitignoreados como `.claude/settings.local.json`,
+  que bloqueaban el pre-commit. `.portabilityignore` sigue igual: el filtro es aditivo.
 - **1.0.0** — escáner inicial: rutas absolutas, refs sin rootear, paths `.claude/`,
   `model: inherit`, secretos, intérpretes no portables. Reporte por severidad + `--json`,
   exit 1 en CRITICAL.
