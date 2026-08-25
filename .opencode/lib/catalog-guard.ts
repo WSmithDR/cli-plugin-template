@@ -1,10 +1,25 @@
 // Espejo TS de bin/hooks/catalog-guard.py: mismas 2 reglas, un solo lugar por regla.
 import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 const FEATURES_RE = /(^|\/)features\/([^/]+)\//;
 const FENCE = /```(\w+)[^\n]*\n([\s\S]*?)```/g;
 const SCRIPT_LANGS = new Set(["bash", "sh", "python", "python3", "node", "ts", "typescript", "js", "javascript"]);
+const SENTINEL = ".catalog-root";
+
+/** True si el feature vive dentro del repo del catálogo, que se identifica con el
+ *  sentinel .catalog-root en su raíz (mismo criterio que paths.ts, session-start.sh
+ *  e intent-nudge.py). Sin sentinel en ningún ancestro, el `features/<x>/` es de otro
+ *  proyecto (p. ej. src/features/ de una app Next.js) y la regla 1 no corresponde. */
+function enElCatalogo(featRoot: string): boolean {
+  let dir = featRoot;
+  for (;;) {
+    if (existsSync(join(dir, SENTINEL))) return true;
+    const padre = dirname(dir);
+    if (padre === dir) return false;
+    dir = padre;
+  }
+}
 
 export function violations(filePath: string, content: string): string[] {
   const out: string[] = [];
@@ -20,7 +35,7 @@ export function violations(filePath: string, content: string): string[] {
     // de rutas absolutas — sin re-prefijarla, existsSync resuelve relativo a cwd
     // y bloquea features que SÍ tienen meta.yml.
     const featRoot = (norm.startsWith("/") ? "/" : "") + segs.slice(0, idx + 1).join("/");
-    if (idx >= 0 && !existsSync(join(featRoot, "meta.yml"))) {
+    if (idx >= 0 && enElCatalogo(featRoot) && !existsSync(join(featRoot, "meta.yml"))) {
       out.push(`features/${m[2]}/ no tiene meta.yml — crealo junto al resto del feature`);
     }
   }

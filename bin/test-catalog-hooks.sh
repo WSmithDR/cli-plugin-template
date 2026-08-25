@@ -14,14 +14,28 @@ expect_block() {
 expect_allow() {
   if run_guard "$1"; then echo "  PASS: $2"; pass=$((pass+1)); else echo "  FAIL: $2 (esperaba allow)"; fail=$((fail+1)); fi
 }
+# allow estricto: exit 0 Y stderr vacío (el guard no debe ni siquiera comentar).
+expect_allow_mudo() {
+  local err rc
+  err=$(printf '%s' "$1" | python3 "$REPO_ROOT/bin/hooks/catalog-guard.py" 2>&1 >/dev/null); rc=$?
+  if [ "$rc" -eq 0 ] && [ -z "$err" ]; then echo "  PASS: $2"; pass=$((pass+1));
+  else echo "  FAIL: $2 (rc=$rc stderr='$err')"; fail=$((fail+1)); fi
+}
 
 echo ""
 echo "=== catalog-guard.py (PreToolUse) ==="
-expect_block '{"tool_name":"Write","tool_input":{"file_path":"'$DATA'/features/nuevo-feature/files/x.md","content":"hola"}}' "feature sin meta.yml → block"
-mkdir -p "$DATA/features/nuevo-feature"
-printf '{"version":"1.0.0","name":"nuevo-feature"}' > "$DATA/features/nuevo-feature/meta.yml"
-expect_allow '{"tool_name":"Write","tool_input":{"file_path":"'$DATA'/features/nuevo-feature/files/x.md","content":"hola"}}' "feature con meta.yml → allow"
+# Árbol que SÍ es el catálogo: lleva el sentinel .catalog-root en la raíz.
+CAT="$DATA/catalogo"; mkdir -p "$CAT"; : > "$CAT/.catalog-root"
+# Árbol ajeno (app cualquiera): mismo nombre de carpeta features/, sin sentinel.
+AJENO="$DATA/app-ajena"; mkdir -p "$AJENO/src/features/checkout" "$AJENO/features/x"
+
+expect_block '{"tool_name":"Write","tool_input":{"file_path":"'$CAT'/features/nuevo-feature/files/x.md","content":"hola"}}' "regresión: feature sin meta.yml en árbol con .catalog-root → block"
+mkdir -p "$CAT/features/nuevo-feature"
+printf '{"version":"1.0.0","name":"nuevo-feature"}' > "$CAT/features/nuevo-feature/meta.yml"
+expect_allow '{"tool_name":"Write","tool_input":{"file_path":"'$CAT'/features/nuevo-feature/files/x.md","content":"hola"}}' "feature con meta.yml → allow"
 expect_allow '{"tool_name":"Write","tool_input":{"file_path":"'$REPO_ROOT'/README.md","content":"x"}}' "archivo fuera del catálogo → allow"
+expect_allow_mudo '{"tool_name":"Write","tool_input":{"file_path":"'$AJENO'/src/features/checkout/page.tsx","content":"export default function P(){}"}}' "src/features/<modulo>/ sin .catalog-root (repo ajeno) → allow mudo"
+expect_allow_mudo '{"tool_name":"Write","tool_input":{"file_path":"'$AJENO'/features/x/y.md","content":"hola"}}' "features/<x>/ top-level sin .catalog-root → allow mudo"
 
 BLOCK_MD='---\ndescription: x\n---\n# T\n```bash\nlinea1\nlinea2\nlinea3\n```\n'
 ALLOW_MD='---\ndescription: x\n---\n# T\n```bash\nlinea1\n```\n'

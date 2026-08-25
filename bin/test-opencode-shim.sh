@@ -65,11 +65,17 @@ assert(output.messages[0].parts.length === partes);
 console.log("  PASS: session-start externo inyectado una sola vez"); pass++;
 
 // tool.execute.before: feature sin meta.yml → throw; README suelto → pasa
+// La regla del meta.yml solo aplica dentro del catálogo → subárbol con sentinel.
+// (aparte del cwd: un .catalog-root ahí silenciaría el nudge de intención de más abajo)
+const fs0 = await import("node:fs");
+const CAT = process.cwd() + "/cat";
+fs0.mkdirSync(CAT, { recursive: true });
+fs0.writeFileSync(CAT + "/.catalog-root", "fake\n");
 let threw = false;
 try {
   await caps["tool.execute.before"](
     { tool: "write", sessionID: "s", callID: "c" },
-    { args: { filePath: process.cwd() + "/features/fanta/files/a.md", content: "x" } },
+    { args: { filePath: CAT + "/features/fanta/files/a.md", content: "x" } },
   );
 } catch { threw = true; }
 assert(threw, "guard bloquea feature sin meta.yml");
@@ -80,14 +86,20 @@ await caps["tool.execute.before"](
 console.log("  PASS: tool.execute.before homologa el guard"); pass++;
 
 // ruta absoluta hacia un feature CON meta.yml existente → NO debe bloquear
-const fs0 = await import("node:fs");
-fs0.mkdirSync(process.cwd() + "/features/real/files", { recursive: true });
-fs0.writeFileSync(process.cwd() + "/features/real/meta.yml", "version: 1.0.0\n");
+fs0.mkdirSync(CAT + "/features/real/files", { recursive: true });
+fs0.writeFileSync(CAT + "/features/real/meta.yml", "version: 1.0.0\n");
 await caps["tool.execute.before"](
   { tool: "write", sessionID: "s", callID: "c" },
-  { args: { filePath: process.cwd() + "/features/real/files/a.md", content: "x" } },
+  { args: { filePath: CAT + "/features/real/files/a.md", content: "x" } },
 );
 console.log("  PASS: ruta absoluta con meta.yml existente no bloquea"); pass++;
+
+// repo ajeno (sin .catalog-root): src/features/<modulo>/ no es un feature del catálogo
+await caps["tool.execute.before"](
+  { tool: "write", sessionID: "s", callID: "c" },
+  { args: { filePath: process.cwd() + "/src/features/checkout/page.tsx", content: "x" } },
+);
+console.log("  PASS: src/features/ sin sentinel no bloquea"); pass++;
 
 // edit sobre SKILL.md con new_string que embebe script >2 líneas → bloquear
 let threwEdit = false;
