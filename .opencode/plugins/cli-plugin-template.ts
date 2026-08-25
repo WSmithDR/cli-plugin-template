@@ -8,10 +8,10 @@
 //   PreCompact       → event session.compacted
 
 import type { Plugin } from "@opencode-ai/plugin";
-import { injectConfig } from "../hooks/config-inject";
-import { injectBootstrap } from "../hooks/bootstrap-inject";
-import { onStop } from "../hooks/stop-event";
-import { onCompacted } from "../hooks/compact-event";
+import { injectConfig } from "../hooks/config-inject/index.ts";
+import { injectBootstrap } from "../hooks/bootstrap-inject/index.ts";
+import { onStop } from "../hooks/stop-event/index.ts";
+import { onCompacted } from "../hooks/compact-event/index.ts";
 import { afterHook, beforeHook } from "../hooks/tool-guard/index.ts";
 
 export default (async () => {
