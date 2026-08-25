@@ -11,7 +11,9 @@ Lee el input del hook (JSON con transcript_path) por stdin. Emite JSON con
 reportar; nada si no.
 """
 import json
+import re
 import sys
+import unicodedata
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
@@ -25,6 +27,49 @@ FRICTION_KEYWORDS = (
     "no me gusta", "prefiero", "está mal", "esta mal", "estuvo mal",
     "no funciona", "no sirve", "incompleto", "no lo cubre", "no lo contempla",
 )
+
+# El usuario corrige mucho más seguido con imperativos de re-trabajo y juicios blandos
+# que con las frases literales de arriba («corrígelo también», «le falta coherencia»).
+# Todo se matchea sobre texto NORMALIZADO (minúsculas y sin tildes), así una sola forma
+# cubre voseo/tuteo y las dos ortografías del usuario.
+#
+# Regla anti-falso-positivo: solo formas IMPERATIVAS/enclíticas, nunca infinitivos.
+# «hay que corregir el import», «vamos a cambiar el path» es prosa de trabajo normal;
+# «corregilo», «cambialo» es el usuario rechazando lo que se hizo.
+FRICTION_PATTERNS = tuple(re.compile(p) for p in (
+    # corregí / corrige / corregilo / corrígelo / corregime  (no: corregir, corrección)
+    r"\bcorr[ie]g[ie](?:lo|la|los|las|me|melo)?\b",
+    # rehacé / rehace / rehacelo / rehazlo / rehazme  (no: rehacer)
+    r"\breha(?:ce|z)(?:lo|la|los|las|me|melo)?\b",
+    # cambiá / cambia / cambialo / cámbialo / cambiaselo  (no: cambiar, cambios)
+    r"\bcambia(?:lo|la|los|las|me|melo|selo)?\b",
+    # arreglá / arregla / arreglalo / arréglalo  (no: arreglar, arreglo)
+    r"\barregla(?:lo|la|los|las|me|melo)?\b",
+    # re-trabajo explícito: hacelo de nuevo, otra vez, volvé a / vuelve a hacerlo
+    r"\bde nuevo\b", r"\botra vez\b", r"\b(?:volve|volves|vuelve|vuelves) a\b",
+    # juicios blandos: le falta X, no está bien, quedó raro, no cuadra, incoherente
+    r"\b(?:le|les) falta\b", r"\bfalta(?:n)? (?:coherencia|contexto|consistencia)\b",
+    r"\bno esta bien\b", r"\bno quedo bien\b",
+    r"\bquedo (?:raro|rara|feo|fea|mal|cualquier cosa)\b",
+    r"\bno cuadra\b", r"\bincoheren(?:te|tes|cia|cias)\b",
+    r"\bno es (?:lo que|eso)\b", r"\bno era (?:lo que|eso)\b",
+))
+
+# Ruido que viaja DENTRO de entradas type=user pero que el usuario no tipeó:
+# recordatorios de sistema, comandos slash y su stdout. Con la heurística ampliada,
+# matchear contra eso haría disparar el hook en casi cualquier sesión.
+_NOISE_RE = re.compile(
+    r"<system-reminder>.*?</system-reminder>"
+    r"|<command-(?:name|message|args)>.*?</command-(?:name|message|args)>"
+    r"|<local-command-(?:stdout|stderr)>.*?</local-command-(?:stdout|stderr)>",
+    re.DOTALL | re.IGNORECASE,
+)
+
+
+def _normalize(text: str) -> str:
+    """Minúsculas y sin tildes: «corrígelo» y «corregilo» caen en la misma forma."""
+    decomposed = unicodedata.normalize("NFD", text.lower())
+    return "".join(c for c in decomposed if not unicodedata.combining(c))
 
 # Señal de fallo: el plugin rompió solo, sin que el usuario se queje. Se exige que el
 # nombre del plugin aparezca en la MISMA línea del transcript que el marcador de error
@@ -53,19 +98,26 @@ def _new_chunk(transcript_path: str) -> str:
 
 
 def _user_text(chunk: str) -> str:
+    """Solo lo que TIPEÓ el usuario, normalizado. En el transcript los tool results
+    también son entradas type=user (y traen prosa del asistente citada, stack traces,
+    diffs): se descartan por `toolUseResult`/bloques no-texto, igual que las entradas
+    meta. Con la heurística ampliada esa poda es lo que evita que dispare siempre."""
     out = []
     for line in chunk.splitlines():
         try:
             entry = json.loads(line)
         except Exception:
             continue
-        if entry.get("type") != "user":
+        if entry.get("type") != "user" or entry.get("isMeta") or "toolUseResult" in entry:
             continue
         content = (entry.get("message") or {}).get("content", "")
         if isinstance(content, list):
-            content = " ".join(b.get("text", "") for b in content if isinstance(b, dict))
-        out.append(str(content))
-    return " ".join(out).lower()
+            content = " ".join(
+                b.get("text", "") for b in content
+                if isinstance(b, dict) and b.get("type", "text") == "text"
+            )
+        out.append(_NOISE_RE.sub(" ", str(content)))
+    return _normalize(" ".join(out))
 
 
 def _failing_plugins(chunk: str, plugins: list) -> set:
@@ -80,13 +132,24 @@ def _failing_plugins(chunk: str, plugins: list) -> set:
 
 
 def _keywords() -> tuple:
-    """FRICTION_KEYWORDS + frases aprendidas del léxico del store. Si el store
-    falla, solo las base — el hook nunca se rompe por el léxico."""
+    """FRICTION_KEYWORDS + frases aprendidas del léxico del store, todas normalizadas
+    (el texto del usuario también lo está). Si el store falla, solo las base — el hook
+    nunca se rompe por el léxico."""
+    base = FRICTION_KEYWORDS
     try:
         from gateway import friction_lexicon
-        return FRICTION_KEYWORDS + tuple(friction_lexicon())
+        base = base + tuple(friction_lexicon())
     except Exception:
-        return FRICTION_KEYWORDS
+        pass
+    return tuple(dict.fromkeys(_normalize(k) for k in base))
+
+
+def _has_friction(user_text: str) -> bool:
+    """user_text ya viene normalizado por _user_text()."""
+    if not user_text:
+        return False
+    return (any(k in user_text for k in _keywords())
+            or any(p.search(user_text) for p in FRICTION_PATTERNS))
 
 
 def _friction_message(transcript_path: str) -> str:
@@ -104,7 +167,7 @@ def _friction_message(transcript_path: str) -> str:
         return ""
     lower = chunk.lower()
     mentioned = [n for n in plugins if n.lower() in lower]
-    complained = mentioned and any(k in _user_text(chunk) for k in _keywords())
+    complained = bool(mentioned) and _has_friction(_user_text(chunk))
     failing = _failing_plugins(chunk, plugins)
     if not complained and not failing:
         return ""

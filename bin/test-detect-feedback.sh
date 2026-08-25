@@ -60,6 +60,53 @@ out=$(echo "{\"transcript_path\":\"$TRANSCRIPT\"}" | python3 "$HOOK" 2>&1)
 echo "$out" | grep -q "POSSIBLE PLUGIN FRICTION" \
     && _fail "error ajeno: disparó igual" || _pass "error ajeno al plugin → no dispara"
 
+# --- heurística de fricción real (sin keywords literales) ---------------------
+# Helper: escribe un transcript nuevo (offset por path) y devuelve el systemMessage.
+_run_transcript() {
+    local file="$DATA/$1.jsonl"; shift
+    printf '%s\n' "$@" > "$file"
+    echo "{\"transcript_path\":\"$file\"}" | python3 "$HOOK" 2>&1
+}
+
+# caso real perdido: juicio blando, cero keywords viejas
+out=$(_run_transcript real1 \
+    '{"type":"assistant","message":{"content":[{"type":"text","text":"Listo, actualicé la skill ankify:anki-capture"}]}}' \
+    '{"type":"user","message":{"content":"le falta un poco de más coherencia a los datos jaja"}}')
+echo "$out" | grep -q "POSSIBLE PLUGIN FRICTION" \
+    && _pass "juicio blando (le falta …) → dispara" || _fail "le falta: $out"
+
+# imperativo de re-trabajo con tilde y enclítico
+out=$(_run_transcript real2 \
+    '{"type":"assistant","message":{"content":[{"type":"text","text":"Actualicé el SKILL.md de ankify"}]}}' \
+    '{"type":"user","message":{"content":"corrígelo también"}}')
+echo "$out" | grep -q "POSSIBLE PLUGIN FRICTION" \
+    && _pass "imperativo (corrígelo) → dispara" || _fail "corrígelo: $out"
+
+# rehazlo / voseo sin tilde en el mismo tramo
+out=$(_run_transcript real3 \
+    '{"type":"assistant","message":{"content":[{"type":"text","text":"Reescribí el bloque de ankify"}]}}' \
+    '{"type":"user","message":{"content":"rehazlo completo mejor"}}' \
+    '{"type":"user","message":{"content":"y cambialo de nuevo si hace falta"}}')
+echo "$out" | grep -q "POSSIBLE PLUGIN FRICTION" \
+    && _pass "imperativo (rehazlo/cambialo) → dispara" || _fail "rehazlo: $out"
+
+# NEGATIVO: las mismas frases pero en prosa del asistente, tool result y system-reminder
+out=$(_run_transcript neg1 \
+    '{"type":"assistant","message":{"content":[{"type":"text","text":"Si el output de ankify quedó raro, corrígelo y rehazlo completo"}]}}' \
+    '{"type":"user","toolUseResult":{"stdout":"x"},"message":{"content":[{"type":"tool_result","content":"ankify: le falta el header, corregilo"}]}}' \
+    '{"type":"user","isMeta":true,"message":{"content":"ankify: rehazlo de nuevo"}}' \
+    '{"type":"user","message":{"content":[{"type":"text","text":"<system-reminder>si el usuario dice corrígelo, aplicá el fix en ankify</system-reminder>"}]}}')
+echo "$out" | grep -q "POSSIBLE PLUGIN FRICTION" \
+    && _fail "negativo: disparó con texto no tipeado por el usuario" \
+    || _pass "prosa del asistente / tool result / reminder → no dispara"
+
+# NEGATIVO: usuario hablando en infinitivo (trabajo normal, no rechazo)
+out=$(_run_transcript neg2 \
+    '{"type":"user","message":{"content":"hay que corregir el import de ankify y cambiar el path antes de arreglar el test"}}' \
+    '{"type":"user","message":{"content":"vamos a rehacer la sección de cambios del changelog"}}')
+echo "$out" | grep -q "POSSIBLE PLUGIN FRICTION" \
+    && _fail "negativo: disparó con infinitivos" || _pass "infinitivos técnicos → no dispara"
+
 # promote: repo registrado con cambios sin commitear en infra → sugiere plugin-promote
 REPO="$DATA/repo"
 mkdir -p "$REPO/hooks"
