@@ -78,6 +78,30 @@ def friction_lexicon_file() -> Path:
     return data_dir() / "friction-lexicon.json"
 
 
+def harvest_dir() -> Path:
+    return data_dir() / "harvest"
+
+
+def harvest_pending_file() -> Path:
+    return harvest_dir() / "pending.json"
+
+
+def harvest_snapshot_file() -> Path:
+    return harvest_dir() / "snapshot.json"
+
+
+def harvest_scorecard_file() -> Path:
+    return harvest_dir() / "scorecard.json"
+
+
+def harvest_homologies_file() -> Path:
+    return harvest_dir() / "homologies.json"
+
+
+def harvest_contested_file() -> Path:
+    return harvest_dir() / "contested.json"
+
+
 def slugify(text: str) -> str:
     """Slug estable y filesystem-safe: lowercase, no-alnum→'-', colapsa, trunc 40."""
     s = re.sub(r"[^a-z0-9]+", "-", text.strip().lower())
