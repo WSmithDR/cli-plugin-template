@@ -10,6 +10,7 @@ Grupos:
     registry  register | list | resolve   (allowlist de plugins propios)
     feedback  save | list                 (captura de fricción por plugin)
     learning  save | list | show | delete (conocimiento vigente del taller)
+    harvest   scan | run | status | models (escaneo y cosecha autónoma de plugins de terceros)
 """
 import argparse
 import json
@@ -166,6 +167,26 @@ def main() -> int:
     l_del.add_argument("scope")
     l_del.add_argument("slug")
 
+    # harvest ─────────────────────────────────────────────────
+    hv = sub.add_parser("harvest", help="escaneo y cosecha autónoma de plugins de terceros")
+    hv_sub = hv.add_subparsers(dest="op", required=True)
+
+    hv_scan = hv_sub.add_parser("scan", help="normaliza plugins a IR y encola cambios")
+    hv_scan.add_argument("--json", action="store_true")
+
+    hv_run = hv_sub.add_parser("run", help="consume la cola con panel LLM y persiste consenso")
+    hv_run.add_argument("--panel-size", type=int, default=3)
+    hv_run.add_argument("--max", dest="max_plugins", type=int, default=3)
+    hv_run.add_argument("--threshold", choices=("majority", "strict"), default="majority")
+    hv_run.add_argument("--dry-run", action="store_true")
+    hv_run.add_argument("--json", action="store_true")
+
+    hv_status = hv_sub.add_parser("status", help="cola + scorecard + homologies")
+    hv_status.add_argument("--json", action="store_true")
+
+    hv_models = hv_sub.add_parser("models", help="modelos gratuitos detectados")
+    hv_models.add_argument("--json", action="store_true")
+
     st = sub.add_parser("status", help="dashboard de evolución de los plugins")
     st.add_argument("--plugin", default=None)
     st.add_argument("--json", action="store_true")
@@ -252,6 +273,60 @@ def main() -> int:
             print(gateway.learning_load(ns.scope, ns.slug), end="")
         elif ns.op == "delete":
             print(gateway.learning_delete(ns.scope, ns.slug))
+
+    elif ns.group == "harvest":
+        import paths as _paths
+        if ns.op == "scan":
+            import harvest.scan as _scan
+            res = _scan.harvest_scan()
+            if ns.json:
+                print(json.dumps(res, ensure_ascii=False, indent=2))
+            else:
+                print(f"scan: {res['scanned']} plugins, {res['enqueued']} nuevos, "
+                      f"{res['pending_total']} pendientes")
+        elif ns.op == "run":
+            import harvest.runner as _runner
+            res = _runner.harvest_run(
+                panel_size=ns.panel_size, max_plugins=ns.max_plugins,
+                threshold=ns.threshold, dry_run=ns.dry_run)
+            if ns.json:
+                print(json.dumps(res, ensure_ascii=False, indent=2))
+            else:
+                if res.get("error"):
+                    print(_warn(res["error"]))
+                print(f"run: {res.get('processed', 0)} procesados, "
+                      f"{res.get('consensus_saved', 0)} learnings, "
+                      f"{len(res.get('homologies', []))} homologías")
+        elif ns.op == "status":
+            pending = []
+            try:
+                pending = json.loads(_paths.harvest_pending_file().read_text(encoding="utf-8"))
+            except Exception:
+                pass
+            sc = {}
+            try:
+                import harvest.scorecard as _sc
+                sc = _sc.scorecard_load()
+            except Exception:
+                pass
+            hom = []
+            try:
+                hom = json.loads(_paths.harvest_homologies_file().read_text(encoding="utf-8"))
+            except Exception:
+                pass
+            out = {"pending": len(pending), "scorecard": sc, "homologies": len(hom)}
+            if ns.json:
+                print(json.dumps(out, ensure_ascii=False, indent=2))
+            else:
+                print(f"pending: {out['pending']} · scorecard: {len(sc)} modelos "
+                      f"· homologías: {out['homologies']}")
+        elif ns.op == "models":
+            import harvest.scorecard as _sc
+            models = _sc.discover_free_models()
+            if ns.json:
+                print(json.dumps(models, ensure_ascii=False, indent=2))
+            else:
+                print("\n".join(models) if models else "sin modelos gratuitos (autenticá opencode)")
 
     elif ns.group == "status":
         summary = gateway.growth_summary(plugin=ns.plugin)

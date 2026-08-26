@@ -1,0 +1,19 @@
+name: harvest-engine
+version: 1.0.0
+cli_compat: [opencode]
+depends_on: [learning-system, growth-engine]
+description: >
+  Escaneo y cosecha autónoma de plugins de terceros. Cada 24h, scan descubre
+  plugins instalados en otros CLIs (Claude Code, Gemini, Kiro), los normaliza
+  a IR canónico, y run ejecuta un panel LLM con dossier resumido para extraer
+  aprendizajes. Scorecard prioriza modelos gratuitos por agreement rate.
+provides:
+  - harvest/ir.py (IR canónico v1 + hash determinista)
+  - harvest/scan.py (scan multi-CLI con dedup por ir_hash)
+  - harvest/dossier.py (resumen de archivos excluyendo deps)
+  - harvest/runner.py (panel LLM + scoring + consensus)
+  - harvest/consensus.py (agregación majority/strict)
+  - harvest/scorecard.py (preferencia de modelos por historial)
+  - harvest/snapshot.py (cambio mínimo del snapshot)
+  - bin/cpt harvest scan|run|status|models (CLI)
+  - bin/harvest-install.sh (systemd timer + path triggers)

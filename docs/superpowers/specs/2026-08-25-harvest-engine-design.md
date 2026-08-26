@@ -1,7 +1,7 @@
 # Harvest Engine — Diseño
 
 **Fecha:** 2026-08-25
-**Estado:** Borrador para revisión
+**Estado:** Aprobado 2026-08-26
 
 ## Objetivo
 

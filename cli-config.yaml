@@ -1,6 +1,6 @@
 plugin:
   name: cli-plugin-template
-  version: 1.41.8
+  version: 1.41.10
   description: Meta-plugin de desarrollo de plugins multi-CLI. Cataloga features reusables
     y los entrega on-demand (auditar, integrar, recomendar, promover) con un aviso
     proactivo en proyectos de plugin.
@@ -33,3 +33,10 @@ marketplace:
     category: developer-tools
     author:
       name: WSmithDR
+harvest:
+  schedule: "0 9 * * *"
+  executor:
+    cli: opencode
+    panel_size: 3
+  consensus_threshold: majority
+  max_plugins_per_run: 3

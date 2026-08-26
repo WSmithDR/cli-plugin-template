@@ -100,3 +100,65 @@ print(harvest_scan())
 " 2>&1)
 echo "$out2" | grep -q "'enqueued': 0" && _pass "segunda corrida sin cambios -> 0" || _fail "dedupe: $out2"
 rm -rf "$HOME_FIX" "$FAKE_PLUGIN"
+
+echo ""; echo "=== dossier ==="
+FIX=$(mktemp -d)
+mkdir -p "$FIX/skills/s" "$FIX/node_modules/dep"
+printf '{"name":"d","version":"0.0.1"}' > "$FIX/plugin.json"
+printf '# SKILL\nlinea1\nlinea2' > "$FIX/skills/s/SKILL.md"
+python3 -c "open('$FIX/node_modules/dep/index.js','w').write('x'*100)"
+out=$(python3 -c "
+import sys; sys.path.insert(0,'$SCRIPT_DIR/lib')
+from harvest.dossier import build_dossier
+d = build_dossier('$FIX','opencode', max_bytes=5000)
+print('files', d['files'])
+print('has_skill', any('SKILL.md' in f for f in d['files']))
+print('has_dep', any('node_modules' in f for f in d['files']))
+print('excerpts', len(d['excerpts']))
+" 2>&1)
+echo "$out" | grep -q "has_skill True" && _pass "dossier incluye SKILL.md" || _fail "skill: $out"
+echo "$out" | grep -q "has_dep False" && _pass "dossier excluye node_modules" || _fail "dep: $out"
+rm -rf "$FIX"
+
+echo ""; echo "=== runner (dry-run) ==="
+# Prepara pending.json con 2 plugins fake
+FAKE1=$(mktemp -d); FAKE2=$(mktemp -d)
+for d in "$FAKE1" "$FAKE2"; do mkdir -p "$d/skills/s"; printf '{"name":"f","version":"0.1"}' > "$d/plugin.json"; printf '# S\nx' > "$d/skills/s/SKILL.md"; done
+python3 -c "
+import json, pathlib
+import sys; sys.path.insert(0,'$SCRIPT_DIR/lib')
+import paths
+pending = [{'cli':'opencode','path':'$FAKE1','ir_hash':'aaa'},{'cli':'opencode','path':'$FAKE2','ir_hash':'bbb'}]
+paths.harvest_pending_file().parent.mkdir(parents=True, exist_ok=True)
+paths.harvest_pending_file().write_text(json.dumps(pending))
+" 2>/dev/null
+out=$(python3 -c "
+import sys; sys.path.insert(0,'$SCRIPT_DIR/lib')
+from harvest.runner import harvest_run
+# dry_run no invoca LLM, solo homologación exacta + dossier
+res = harvest_run(panel_size=2, max_plugins=1, dry_run=True)
+print(res)
+assert res['processed']==1, res
+print('ok')
+" 2>&1 || true)
+echo "$out" | grep -q "ok" && _pass "runner dry-run procesa 1" || _fail "runner: $out"
+rm -rf "$FAKE1" "$FAKE2"
+
+echo ""; echo "=== cpt harvest cli ==="
+out=$(python3 "$CPT" harvest scan --json 2>&1)
+echo "$out" | grep -q "scanned" && _pass "cpt harvest scan --json" || _fail "scan cli: $out"
+out=$(python3 "$CPT" harvest status --json 2>&1)
+echo "$out" | grep -q "pending" && _pass "cpt harvest status --json" || _fail "status: $out"
+out=$(python3 "$CPT" harvest run --dry-run --json 2>&1)
+echo "$out" | grep -q "processed" && _pass "cpt harvest run --dry-run" || _fail "run: $out"
+
+echo ""; echo "=== harvest-install ==="
+TMP_SYS=$(mktemp -d)
+out=$(SYSTEMD_USER_DIR="$TMP_SYS" bash "$SCRIPT_DIR/harvest-install.sh" --dry-run 2>&1)
+echo "$out" | grep -q "harvest" && _pass "install --dry-run menciona harvest" || _fail "install: $out"
+[ -z "$(ls -A "$TMP_SYS" 2>/dev/null)" ] && _pass "dry-run no escribe" || _fail "dry-run escribió"
+rm -rf "$TMP_SYS"
+
+echo ""
+echo "Resultado: passed=$((1-FAIL)), failed=$FAIL"
+[ "$FAIL" -eq 0 ] && echo "OK" || { echo "FALLÓ"; exit 1; }
