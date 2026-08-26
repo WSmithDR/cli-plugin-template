@@ -57,3 +57,20 @@ assert len(res['consensus'])==0, 'strict sin unanimidad -> vacio'
 print('ok')
 " 2>&1)
 echo "$out" | grep -q "ok" && _pass "strict exige unanimidad" || _fail "strict: $out"
+
+echo ""; echo "=== scorecard ==="
+out=$(python3 -c "
+import sys; sys.path.insert(0,'$SCRIPT_DIR/lib')
+from harvest.scorecard import scorecard_load, scorecard_update, pick_models
+# simula 2 modelos con historial: uno bueno, uno laggard
+scorecard_update('free-a', agreed=8, latency_ms=1200, failed=False)
+scorecard_update('free-a', agreed=9, latency_ms=1100, failed=False)
+scorecard_update('free-b', agreed=1, latency_ms=5000, failed=True)
+scorecard_update('free-b', agreed=0, latency_ms=6000, failed=True)
+picked = pick_models(1)
+print(picked)
+assert 'free-a' in picked, 'debe elegir free-a'
+assert 'free-b' not in picked, 'laggard fuera'
+print('ok')
+" 2>&1)
+echo "$out" | grep -q "ok" && _pass "scorecard degrada laggard" || _fail "scorecard: $out"
