@@ -74,3 +74,29 @@ assert 'free-b' not in picked, 'laggard fuera'
 print('ok')
 " 2>&1)
 echo "$out" | grep -q "ok" && _pass "scorecard degrada laggard" || _fail "scorecard: $out"
+
+echo ""; echo "=== harvest scan ==="
+# Fake HOME con opencode config y un plugin local declarado
+HOME_FIX=$(mktemp -d)
+mkdir -p "$HOME_FIX/.config/opencode" "$HOME_FIX/.local/share/opencode"
+FAKE_PLUGIN=$(mktemp -d)
+printf '{"name":"fake-p","version":"0.1.0"}' > "$FAKE_PLUGIN/plugin.json"
+mkdir -p "$FAKE_PLUGIN/skills/s"
+printf '# S\nhello' > "$FAKE_PLUGIN/skills/s/SKILL.md"
+printf '{"plugin":["%s"]}' "$FAKE_PLUGIN" > "$HOME_FIX/.config/opencode/opencode.json" 2>/dev/null || true
+# Test unitario directo del IR+scan sin tocar HOME: solo valida que harvest_scan existe y encola
+out=$(HOME="$HOME_FIX" python3 -c "
+import sys; sys.path.insert(0,'$SCRIPT_DIR/lib')
+from harvest.scan import harvest_scan
+res = harvest_scan()
+print(res)
+" 2>&1)
+echo "$out" | grep -q "scanned" && _pass "harvest_scan corre" || _fail "scan: $out"
+# segunda corrida sin cambios -> enqueued 0
+out2=$(HOME="$HOME_FIX" python3 -c "
+import sys; sys.path.insert(0,'$SCRIPT_DIR/lib')
+from harvest.scan import harvest_scan
+print(harvest_scan())
+" 2>&1)
+echo "$out2" | grep -q "'enqueued': 0" && _pass "segunda corrida sin cambios -> 0" || _fail "dedupe: $out2"
+rm -rf "$HOME_FIX" "$FAKE_PLUGIN"
