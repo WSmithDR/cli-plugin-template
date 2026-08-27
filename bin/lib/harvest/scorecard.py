@@ -1,5 +1,6 @@
 """Scorecard de modelos gratuitos + health-check + degradación de laggards."""
 import json
+import os
 import subprocess
 import time
 from pathlib import Path
@@ -23,7 +24,9 @@ def scorecard_load() -> dict:
 def scorecard_save(d: dict) -> None:
     p = paths.harvest_scorecard_file()
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp = p.with_suffix(".tmp")
+    tmp.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
+    os.replace(str(tmp), str(p))
 
 def discover_free_models() -> list[str]:
     """Ejecuta `opencode models` y filtra solo gratuitos. Sin hardcodear lista."""
@@ -62,7 +65,7 @@ def scorecard_update(model: str, agreed: int, latency_ms: int, failed: bool) -> 
     sc = scorecard_load()
     entry = sc.get(model, {"runs": 0, "agreed": 0, "total": 0, "failures": 0, "lat_ms": []})
     entry["runs"] += 1
-    entry["total"] += 10  # ventana de 10 claims por corrida (normalizado)
+    entry["total"] += agreed  # ponytail: total = triples efectivamente producidos (antes hardcode 10)
     entry["agreed"] += agreed
     if failed:
         entry["failures"] += 1

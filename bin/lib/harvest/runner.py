@@ -1,5 +1,6 @@
 """Orquestador harvest_run: cola -> dossier -> homologación exacta -> panel LLM -> consenso -> persistencia."""
 import json
+import os
 import subprocess
 import time
 from pathlib import Path
@@ -12,6 +13,19 @@ from harvest.dossier import build_dossier
 from harvest.consensus import aggregate, parse_llm_output
 from harvest.scorecard import pick_models, health_check, scorecard_update, discover_free_models
 
+def _atomic_write(path: Path, data) -> None:
+    """Escrítura atómica: tmp + os.replace. Evita carreras entre timer y path trigger."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    os.replace(str(tmp), str(path))
+
+def _read_json(path: Path, default=None):
+    try:
+        return json.loads(path.read_text(encoding="utf-8")) if path.exists() else (default if default is not None else [])
+    except Exception:
+        return default if default is not None else []
+
 def _homology_exact(pending: list) -> list:
     """Agrupa plugins con IR idéntico (hash igual) — homologación gratis sin LLM."""
     from collections import defaultdict
@@ -20,8 +34,8 @@ def _homology_exact(pending: list) -> list:
         try:
             ir = plugin_to_ir(p["path"], p["cli"])
             by_hash[ir_hash(ir)].append(p)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"harvest: IR falló para {p.get('path','?')}: {e}", file=sys.stderr)
     homologies = []
     for h, group in by_hash.items():
         if len(group) > 1:
@@ -50,15 +64,19 @@ def _run_panel(dossier: dict, models: list) -> list:
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True))
     for proc, model in zip(procs, models):
         try:
+            t0 = time.time()
             out, err = proc.communicate(timeout=120)
+            latency_ms = int((time.time() - t0) * 1000)
             triples = parse_llm_output(out or "")
             results.append(triples)
-            scorecard_update(model, agreed=len(triples), latency_ms=1000, failed=len(triples)==0)
+            scorecard_update(model, agreed=len(triples), latency_ms=latency_ms, failed=len(triples)==0)
         except subprocess.TimeoutExpired:
             proc.kill()
+            proc.wait()  # ponytail: reap zombie
             scorecard_update(model, agreed=0, latency_ms=120000, failed=True)
             results.append([])
-        except Exception:
+        except Exception as e:
+            print(f"harvest: panel falló para {model}: {e}", file=sys.stderr)
             results.append([])
     return results
 
@@ -66,23 +84,16 @@ def harvest_run(panel_size: int = 3, max_plugins: int = 3, threshold: str = "maj
     pending_file = paths.harvest_pending_file()
     homologies_file = paths.harvest_homologies_file()
     contested_file = paths.harvest_contested_file()
-    try:
-        pending = json.loads(pending_file.read_text(encoding="utf-8")) if pending_file.exists() else []
-    except Exception:
-        pending = []
+    pending = _read_json(pending_file, [])
     if not pending:
         return {"processed": 0, "consensus_saved": 0, "homologies": [], "contested": []}
 
     # homologación exacta primero (gratis)
     exact = _homology_exact(pending)
-    # persistir homologías exactas
-    try:
-        existing = json.loads(homologies_file.read_text(encoding="utf-8")) if homologies_file.exists() else []
-    except Exception:
-        existing = []
+    # persistir homologaciones exactas
+    existing = _read_json(homologies_file, [])
     existing.extend(exact)
-    homologies_file.parent.mkdir(parents=True, exist_ok=True)
-    homologies_file.write_text(json.dumps(existing, ensure_ascii=False, indent=2), encoding="utf-8")
+    _atomic_write(homologies_file, existing)
 
     # presupuesto por corrida
     batch = pending[:max_plugins]
@@ -92,7 +103,7 @@ def harvest_run(panel_size: int = 3, max_plugins: int = 3, threshold: str = "maj
         # en dry-run no hay LLM: solo dossier + homologación exacta
         for p in batch:
             build_dossier(p["path"], p["cli"])
-        pending_file.write_text(json.dumps(remaining, ensure_ascii=False, indent=2), encoding="utf-8")
+        _atomic_write(pending_file, remaining)
         return {"processed": len(batch), "consensus_saved": 0, "homologies": exact, "contested": []}
 
     models = pick_models(panel_size)
@@ -125,16 +136,13 @@ def harvest_run(panel_size: int = 3, max_plugins: int = 3, threshold: str = "maj
             try:
                 gateway.learning_save(slug, body, plugin=None, category=None)
                 total_saved += 1
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"harvest: learning_save falló: {e}", file=sys.stderr)
         all_contested.extend(res["contested"])
 
     # contested a disco
-    try:
-        prev_c = json.loads(contested_file.read_text(encoding="utf-8")) if contested_file.exists() else []
-    except Exception:
-        prev_c = []
+    prev_c = _read_json(contested_file, [])
     prev_c.extend(all_contested)
-    contested_file.write_text(json.dumps(prev_c, ensure_ascii=False, indent=2), encoding="utf-8")
-    pending_file.write_text(json.dumps(remaining, ensure_ascii=False, indent=2), encoding="utf-8")
+    _atomic_write(contested_file, prev_c)
+    _atomic_write(pending_file, remaining)
     return {"processed": len(batch), "consensus_saved": total_saved, "homologies": exact, "contested": all_contested}

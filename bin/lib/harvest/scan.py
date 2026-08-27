@@ -76,13 +76,19 @@ def _claude_plugins() -> list[Path]:
     base = Path.home() / ".claude/plugins"
     if not base.exists():
         return []
-    return [p for p in base.iterdir() if p.is_dir()]
+    try:
+        return [p for p in base.iterdir() if p.is_dir()]
+    except Exception:
+        return []
 
 def _gemini_plugins() -> list[Path]:
     base = Path.home() / ".gemini/extensions"
     if not base.exists():
         return []
-    return [p for p in base.iterdir() if p.is_dir() and (p / "gemini-extension.json").exists()]
+    try:
+        return [p for p in base.iterdir() if p.is_dir() and (p / "gemini-extension.json").exists()]
+    except Exception:
+        return []
 
 def resolve_plugins(cli: str) -> list[Path]:
     if cli == "opencode":
@@ -94,7 +100,10 @@ def resolve_plugins(cli: str) -> list[Path]:
     # kiro/codex/copilot: escanear dirs conocidos si existen
     base = Path.home() / f".{cli}"
     if base.exists():
-        return [p for p in base.iterdir() if p.is_dir()][:20]
+        try:
+            return [p for p in base.iterdir() if p.is_dir()][:20]
+        except Exception:
+            return []
     return []
 
 def harvest_scan() -> dict:
@@ -133,8 +142,10 @@ def harvest_scan() -> dict:
             else:
                 pending_by_key[key]["ir_hash"] = h
 
-    # persistir
+    # persistir (atómico)
     pending_file.parent.mkdir(parents=True, exist_ok=True)
-    pending_file.write_text(json.dumps(pending, ensure_ascii=False, indent=2), encoding="utf-8")
-    snapshot_file.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
+    for f, data in [(pending_file, pending), (snapshot_file, snapshot)]:
+        tmp = f.with_suffix(".tmp")
+        tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        os.replace(str(tmp), str(f))
     return {"scanned": scanned, "enqueued": enqueued, "pending_total": len(pending)}
