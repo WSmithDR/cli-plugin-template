@@ -1,5 +1,10 @@
 # Harvest Engine — Implementation Plan
 
+> **Estado: ejecutado** (verificado 2026-08-27) — evidencia: `bin/lib/harvest/` + `cpt harvest scan|run|status|models`, 19/19 tests.
+> Los checkboxes de abajo quedaron sin tildar: en este repo el estado real de una
+> tarea vive en `DONE.md` del store central, no en el plan. No los leas como pendientes.
+
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Implementar `cpt harvest scan|run` — escaneo diario autónomo de plugins instalados en CLIs IA (Claude, OpenCode, Gemini, Kiro...), con IR canónico + diff, dossier por plugin, panel multi-modelo gratuito con debate/consenso, y persistencia en learnings + homologies.json + scorecard.

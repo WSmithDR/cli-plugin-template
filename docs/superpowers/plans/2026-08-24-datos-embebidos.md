@@ -1,5 +1,10 @@
 # Datos Embebidos Desacoplables — Implementation Plan
 
+> **Estado: ejecutado** (verificado 2026-08-27) — evidencia: entrada propia en `DONE.md` del store.
+> Los checkboxes de abajo quedaron sin tildar: en este repo el estado real de una
+> tarea vive en `DONE.md` del store central, no en el plan. No los leas como pendientes.
+
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Que el audit de catálogo detecte y liste datos hardcodeados desacoplables (tuplas/listas de strings ≥4, umbrales numéricos) en los plugins auditados.

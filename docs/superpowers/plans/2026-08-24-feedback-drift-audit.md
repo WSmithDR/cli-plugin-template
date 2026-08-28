@@ -1,5 +1,10 @@
 # Feedback Drift Audit — Implementation Plan
 
+> **Estado: ejecutado** (verificado 2026-08-27) — evidencia: `gateway.feedback_audit()` + `cpt feedback audit`.
+> Los checkboxes de abajo quedaron sin tildar: en este repo el estado real de una
+> tarea vive en `DONE.md` del store central, no en el plan. No los leas como pendientes.
+
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Detectar automáticamente feedbacks marcados `pending` cuyo arreglo ya aterrizaron en el repo del plugin, y avisarlo en tres capas: comando manual, Stop hook nativo del meta-plugin, y post-commit opt-in por repo.

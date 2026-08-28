@@ -1,5 +1,10 @@
 # Plan: paridad OpenCode + capa TS
 
+> **Estado: ejecutado** (verificado 2026-08-27) — evidencia: `.opencode/hooks/` con paridad y `bin/test-opencode-shim.sh`.
+> Los checkboxes de abajo quedaron sin tildar: en este repo el estado real de una
+> tarea vive en `DONE.md` del store central, no en el plan. No los leas como pendientes.
+
+
 **Fecha:** 2026-08-23
 **Alcance decidido:** solo la capa `.opencode/` pasa a TypeScript; `bin/` (Python)
 queda como núcleo universal que consumen todos los CLIs.

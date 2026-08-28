@@ -1,5 +1,10 @@
 # 4 Hooks nuevos con paridad CC ↔ OpenCode — Implementation Plan
 
+> **Estado: ejecutado** (verificado 2026-08-27) — evidencia: commits `9757929..d1d182d`, suite `bin/test-catalog-hooks.sh`.
+> Los checkboxes de abajo quedaron sin tildar: en este repo el estado real de una
+> tarea vive en `DONE.md` del store central, no en el plan. No los leas como pendientes.
+
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Agregar 4 hooks (guard del contrato del catálogo, captura de fricción en fallos de test, nudge de intención, snapshot pre-compact) al meta-plugin, implementados para Claude Code y OpenCode.

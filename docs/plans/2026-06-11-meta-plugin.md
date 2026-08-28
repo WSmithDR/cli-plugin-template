@@ -1,5 +1,10 @@
 # Meta-plugin Implementation Plan
 
+> **Estado: ejecutado** (verificado 2026-08-27) — evidencia: `skills/` (10 skills), `.claude-plugin/plugin.json` y el sentinel `.catalog-root`.
+> Los checkboxes de abajo quedaron sin tildar: en este repo el estado real de una
+> tarea vive en `DONE.md` del store central, no en el plan. No los leas como pendientes.
+
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Convertir el repo `cli-plugin-template` en un meta-plugin instalable que, en cualquier proyecto de plugin, entrega las pautas del catálogo (auditar, integrar, recomendar, promover) con un aviso proactivo único.

@@ -1,5 +1,9 @@
 # Plan — feedbacks pendientes de cli-plugin-template
 
+> **Estado: ejecutado** (verificado 2026-08-27) — F0–F5 aplicados y F6 (learnings)
+> también: `cpt learning` + hook `learning-nudge.py`. Queda como registro, no como pendiente.
+
+
 7 pendientes en el store (`cpt feedback list --pending`). Uno ya está resuelto en el
 código y solo hay que cerrarlo; uno no es un patch sino una feature con spec propio.
 Quedan **4 patches reales + 1 cierre + 1 feature diferida**.
