@@ -373,6 +373,37 @@ echo "$err" | grep -q "filtrá con" \
     && _pass "list sin plugin y multi-plugin → hint por stderr" \
     || _fail "hint stderr: '$err'"
 
+# --update: sobrescribe un pending existente (acumular ocurrencias) sin duplicar
+python3 "$CPT" feedback save nuevo "recurrente" - >/dev/null <<'EOF'
+---
+status: pending
+---
+ocurrencia 1
+EOF
+out=$(python3 "$CPT" feedback save nuevo "recurrente" - <<'EOF'
+---
+status: pending
+---
+ocurrencia 1
+ocurrencia 2
+EOF
+)
+echo "$out" | grep -q "ya existe" \
+    && _pass "save sin --update: dedup intacto sobre pending" \
+    || _fail "dedup: '$out'"
+
+python3 "$CPT" feedback save nuevo "recurrente" - --update >/dev/null <<'EOF'
+---
+status: pending
+---
+ocurrencia 1
+ocurrencia 2
+EOF
+body="$DATA/nuevo/feedbacks/feedback_recurrente.md"
+grep -q "ocurrencia 2" "$body" && grep -qx "status: pending" "$body" \
+    && _pass "save --update: suma la ocurrencia y conserva status pending" \
+    || _fail "--update: '$(cat "$body")'"
+
 echo ""
 echo "Resultado: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ] && exit 0 || exit 1

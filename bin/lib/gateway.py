@@ -177,7 +177,7 @@ def _foreign_path(plugin: str, declared: Optional[str]) -> Optional[str]:
     return declared
 
 
-def feedback_save(plugin: str, slug: str, content: str) -> str:
+def feedback_save(plugin: str, slug: str, content: str, update: bool = False) -> str:
     """Guarda un feedback bajo el plugin con el frontmatter normalizado:
     `status` + `created` + `last_updated` + `plugin_version` + `plugin_path`.
     Devuelve la ruta escrita.
@@ -198,8 +198,10 @@ def feedback_save(plugin: str, slug: str, content: str) -> str:
     quien captura, y solo sobrevive si difiere de `local_path` — ver `_foreign_path`."""
     path = paths.feedbacks_dir(plugin) / f"feedback_{paths.slugify(slug)}.md"
     prev = _read(path)
-    # Dedup: if already active or deferred, skip save
-    if prev:
+    # Dedup: if already active or deferred, skip save. `update` lo saltea a pedido
+    # explícito de quien escribe: un feedback con needs_patch:false pide acumular
+    # ocurrencias, y sin esta puerta la única forma de sumarlas es no registrarlas.
+    if prev and not update:
         existing_status = _state_of(prev)
         if existing_status in ("pending", "deferred"):
             return f"exists:{existing_status}:{path}"

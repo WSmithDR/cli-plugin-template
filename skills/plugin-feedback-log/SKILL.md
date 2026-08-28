@@ -93,7 +93,15 @@ Verificar que no exista:
 ```bash
 python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" feedback list --plugin "$PLUGIN" | grep "<slug>"
 ```
-Si existe: sufijo `-2`, `-3`, etc.
+Si existe, mirá **qué** es lo que existe:
+
+- **La misma fricción, que volvió a pasar** → no crees un gemelo: enriquecé el que está,
+  sumándole la ocurrencia nueva (fecha + qué pasó esta vez) al cuerpo. El dedup del store
+  bloquea sobrescribir un `pending`/`deferred`, así que va con `--update`:
+  `cpt feedback save "$PLUGIN" <slug> - --update` (conserva `status` y `created`).
+  Un feedback con `needs_patch: false` pide justamente acumular ocurrencias: sin esto,
+  la segunda vez que pasa no queda registrada en ningún lado.
+- **Otra fricción distinta que colisiona en el slug** → ahí sí, sufijo `-2`, `-3`, etc.
 
 ---
 
