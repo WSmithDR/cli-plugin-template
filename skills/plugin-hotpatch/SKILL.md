@@ -24,6 +24,15 @@ Todas las ops de datos pasan por `python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt"`.
 
 ## Step 0: Elegir el feedback a procesar
 
+Si ya hay un plugin de referencia (el hook Stop lo señaló, el usuario lo nombró, o estás
+en su repo), listá **solo ese** — el volcado cross-plugin inunda el contexto:
+
+```bash
+python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" feedback list <plugin> --pending
+```
+
+Sin referencia, recién ahí el volcado completo:
+
 ```bash
 python3 "$CLAUDE_PLUGIN_ROOT/bin/cpt" feedback list --pending
 ```

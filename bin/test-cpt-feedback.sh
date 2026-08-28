@@ -361,6 +361,18 @@ echo "$out" | grep -q "test-plugin/deferred-test" \
     && _pass "list --deferred: solo los pospuestos" \
     || _fail "list --deferred: '$out'"
 
+# plugin como argumento posicional == --plugin, y el volcado cross-plugin avisa por stderr
+pos=$(python3 "$CPT" feedback list ankify)
+flag=$(python3 "$CPT" feedback list --plugin ankify)
+[ "$pos" = "$flag" ] && [ -n "$pos" ] \
+    && _pass "list <plugin> posicional == --plugin" \
+    || _fail "posicional: pos='$pos' flag='$flag'"
+
+err=$(python3 "$CPT" feedback list --pending 2>&1 >/dev/null)
+echo "$err" | grep -q "filtrá con" \
+    && _pass "list sin plugin y multi-plugin → hint por stderr" \
+    || _fail "hint stderr: '$err'"
+
 echo ""
 echo "Resultado: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ] && exit 0 || exit 1

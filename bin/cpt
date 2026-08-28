@@ -8,7 +8,7 @@ Las skills y hooks lo invocan:
 
 Grupos:
     registry  register | list | resolve   (allowlist de plugins propios)
-    feedback  save | list                 (captura de fricción por plugin)
+    feedback  save | list [plugin]        (captura de fricción por plugin)
     learning  save | list | show | delete (conocimiento vigente del taller)
     harvest   scan | run | status | models (escaneo y cosecha autónoma de plugins de terceros)
 """
@@ -79,6 +79,8 @@ def main() -> int:
                         help="'-' (default) lee stdin; o contenido literal")
 
     f_list = fb_sub.add_parser("list", help="listar feedbacks")
+    f_list.add_argument("plugin_pos", nargs="?", default=None, metavar="plugin",
+                        help="plugin a listar (equivale a --plugin)")
     f_list.add_argument("--plugin", default=None)
     f_list.add_argument("--pending", action="store_true")
     f_list.add_argument("--deferred", action="store_const", const="deferred", dest="state",
@@ -216,8 +218,16 @@ def main() -> int:
             else:
                 print(result)
         elif ns.op == "list":
-            print("\n".join(gateway.feedback_list(plugin=ns.plugin, pending_only=ns.pending,
-                                                  state=ns.state)))
+            items = gateway.feedback_list(plugin=ns.plugin_pos or ns.plugin,
+                                          pending_only=ns.pending, state=ns.state)
+            print("\n".join(items))
+            # Sin plugin explícito el volcado cross-plugin inunda el contexto del agente.
+            if not (ns.plugin_pos or ns.plugin):
+                names = sorted({i.split("/", 1)[0] for i in items})
+                if len(names) > 1:
+                    print(f"\n[{len(items)} feedbacks de {len(names)} plugins: "
+                          f"{', '.join(names)}]\n"
+                          f"[filtrá con: cpt feedback list <plugin>]", file=sys.stderr)
         elif ns.op == "show":
             print(gateway.feedback_load(ns.plugin, ns.slug), end="")
         elif ns.op == "apply":
