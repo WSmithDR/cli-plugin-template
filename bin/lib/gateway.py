@@ -177,6 +177,22 @@ def _foreign_path(plugin: str, declared: Optional[str]) -> Optional[str]:
     return declared
 
 
+_LEGACY_SLUG_MAX = 40  # slugify recortaba acá; los ids guardados antes quedaron truncados
+
+
+def _feedback_path(plugin: str, slug: str) -> Path:
+    """Ruta del feedback. Si el id completo no existe pero sí el truncado con el que se
+    guardó antes de que `slugify` dejara de recortar, devuelve ESE: pedir un feedback por
+    su slug entero tiene que caer en su archivo, no fundar un gemelo al lado. Es lo que
+    convierte una reparación en una reparación y no en una entrada nueva."""
+    d = paths.feedbacks_dir(plugin)
+    path = d / f"feedback_{paths.slugify(slug)}.md"
+    if path.exists():
+        return path
+    legacy = d / f"feedback_{paths.slugify(slug)[:_LEGACY_SLUG_MAX].strip('-')}.md"
+    return legacy if legacy.exists() else path
+
+
 def feedback_save(plugin: str, slug: str, content: str, update: bool = False) -> str:
     """Guarda un feedback bajo el plugin con el frontmatter normalizado:
     `status` + `created` + `last_updated` + `plugin_version` + `plugin_path`.
@@ -196,7 +212,7 @@ def feedback_save(plugin: str, slug: str, content: str, update: bool = False) ->
     `plugin_path` es su complemento para cuando el plugin corrió desde otro árbol que el
     del registry (`claude --plugin-dir <ruta>`, un worktree, otro clon). Solo lo declara
     quien captura, y solo sobrevive si difiere de `local_path` — ver `_foreign_path`."""
-    path = paths.feedbacks_dir(plugin) / f"feedback_{paths.slugify(slug)}.md"
+    path = _feedback_path(plugin, slug)
     prev = _read(path)
     # Dedup: if already active or deferred, skip save. `update` lo saltea a pedido
     # explícito de quien escribe: un feedback con needs_patch:false pide acumular
@@ -225,7 +241,7 @@ def feedback_save(plugin: str, slug: str, content: str, update: bool = False) ->
 
 
 def feedback_load(plugin: str, slug: str) -> str:
-    path = paths.feedbacks_dir(plugin) / f"feedback_{paths.slugify(slug)}.md"
+    path = _feedback_path(plugin, slug)
     return _read(path)
 
 
@@ -295,7 +311,7 @@ def feedback_set_status(plugin: str, slug: str, status: str, at: Optional[str] =
     única fuente de verdad y `created` se preserva."""
     if status not in FEEDBACK_STATUSES:
         raise ValueError(f"status inválido: {status} (esperado: {'|'.join(FEEDBACK_STATUSES)})")
-    path = paths.feedbacks_dir(plugin) / f"feedback_{paths.slugify(slug)}.md"
+    path = _feedback_path(plugin, slug)
     content = _read(path)
     if not content:
         raise FileNotFoundError(f"feedback no existe: {plugin}/{slug}")
@@ -429,15 +445,18 @@ _RESUELTO_RE = re.compile(r"RESUELTO[^\n]*?commit [`']?([0-9a-f]{7,40})", re.IGN
 
 
 def _repo_commits(local_path: str) -> dict:
-    """hash completo → subject, de todo el historial. UNA llamada git por auditoría."""
+    """hash completo → (fecha YYYY-MM-DD, subject), de todo el historial.
+    UNA llamada git por auditoría. La fecha es la del commit, no la del autor: interesa
+    cuándo ATERRIZÓ el cambio en el repo."""
     import subprocess
-    out = subprocess.run(["git", "-C", local_path, "log", "--format=%H%x00%s"],
+    out = subprocess.run(["git", "-C", local_path, "log", "--format=%H%x00%cs%x00%s"],
                          capture_output=True, text=True, timeout=30)
     commits = {}
     for line in out.stdout.splitlines():
-        h, sep, subj = line.partition("\x00")
-        if sep:
-            commits[h] = subj
+        h, sep, rest = line.partition("\x00")
+        date, sep2, subj = rest.partition("\x00")
+        if sep and sep2:
+            commits[h] = (date, subj)
     return commits
 
 
@@ -446,8 +465,14 @@ def feedback_audit(plugin: str) -> list:
 
     Dos señales, ambas mecánicas (el juicio final lo tiene quien cierra):
       - marker: el cuerpo trae 'RESUELTO ..., commit <hash>' y ese hash existe en el repo.
-      - subject: el slug aparece textual en el subject de algún commit.
-    Devuelve [{"slug": str, "commits": [hash7]}]; [] si no hay hallazgos/repo."""
+      - subject: varias palabras significativas del slug aparecen en el subject de un commit.
+
+    Con una guarda dura antes de las dos: un commit ANTERIOR al `created` del feedback no
+    puede ser evidencia de haberlo aplicado. Es puro cálculo y sola descarta la mayoría de
+    los falsos positivos — un instrumento que grita seguido enseña a no escucharlo.
+
+    Devuelve [{"slug": str, "commits": [hash7], "why": {hash7: motivo}}]; [] si no hay
+    hallazgos/repo. `why` existe para que verificar un hallazgo no obligue a abrir el commit."""
     entry = registry_get(plugin)
     if not entry or not entry.get("local_path"):
         return []
@@ -459,15 +484,20 @@ def feedback_audit(plugin: str) -> list:
     for item in feedback_list(plugin=entry["name"], pending_only=True):
         slug = item.split("/", 1)[1]
         body = feedback_load(entry["name"], slug)
-        hits = []
+        # Un commit anterior a la captura no pudo aplicar lo que todavía no se había escrito.
+        created = _fm_get(body, "created") or _fm_get(body, "created_at") or ""
+        eligible = {h: (d, s) for h, (d, s) in commits.items() if d >= created}
+        why = {}
         for short in _RESUELTO_RE.findall(body):
-            full = next((h for h in commits if h.startswith(short)), None)
+            full = next((h for h in eligible if h.startswith(short)), None)
             if full:
-                hits.append(full)
+                why[full] = "marker RESUELTO"
         # ponytail: solapamiento de palabras significativas (≥4 chars, sin tildes) entre
         # slug y subject, tolerando una palabra de diferencia — el substring literal del
         # slug era ciego cuando el commit describe la idea con otras palabras
         # (ej. "loop-de-aprendizajes-vivos-por-plugin" vs "núcleo del loop de aprendizajes vivos").
+        # El piso de DOS palabras es lo que separa la coincidencia de la casualidad: con una
+        # sola, `db-push-ya-habilitado` matcheaba cualquier commit que dijera "push".
         import unicodedata
 
         def _norm(text: str) -> str:
@@ -475,14 +505,17 @@ def feedback_audit(plugin: str) -> list:
             return "".join(c for c in decomposed if not unicodedata.combining(c))
 
         sig = [w for w in re.split(r"[^a-z0-9]+", _norm(slug)) if len(w) >= 4]
-        for h, subj in commits.items():
-            if h in hits:
+        for h, (_, subj) in eligible.items():
+            if h in why:
                 continue
             subj_w = set(re.split(r"[^a-z0-9]+", _norm(subj)))
-            if sig and sum(w in subj_w for w in sig) >= max(1, len(sig) - 1):
-                hits.append(h)
-        if hits:
-            findings.append({"slug": slug, "commits": sorted({h[:7] for h in hits})})
+            hit = [w for w in sig if w in subj_w]
+            if len(hit) >= max(2, len(sig) - 1):
+                why[h] = "palabras: " + ", ".join(hit)
+        if why:
+            findings.append({"slug": slug,
+                             "commits": sorted({h[:7] for h in why}),
+                             "why": {h[:7]: motivo for h, motivo in why.items()}})
     return findings
 
 

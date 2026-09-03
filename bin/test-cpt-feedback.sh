@@ -194,6 +194,42 @@ grep -q "plugin_path: \"$OTRO\"" "$o" \
     && _pass "plugin_path: se preserva al re-guardar" || _fail "plugin_path re-save: '$(cat "$o")'"
 rm -rf "$REPO" "$OTRO"
 
+# el id es el slug ENTERO: quien escribió el feedback lo busca con el slug que escribió
+LONG="desenvolver-lanzadores-como-ya-se-hace-con-bash-c"
+python3 "$CPT" feedback save ankify "$LONG" "cuerpo largo" >/dev/null
+[ -f "$DATA/ankify/feedbacks/feedback_$LONG.md" ] \
+    && python3 "$CPT" feedback list ankify | grep -qx "ankify/$LONG" \
+    && _pass "save: el slug no se trunca — el id del listado es el slug pedido" \
+    || _fail "save truncó el slug: $(ls "$DATA/ankify/feedbacks/")"
+
+# continuidad: un feedback guardado con el id viejo truncado responde al slug entero,
+# en vez de fundar un gemelo al lado (así reparar repara, no duplica)
+OLD="viejo-feedback-con-un-slug-largo-que-antes-se-recortaba"
+OLD40=$(python3 -c "print('$OLD'[:40].strip('-'))")
+printf -- '---\nstatus: pending\n---\n/tmp/fb-roto.md\n' \
+    > "$DATA/ankify/feedbacks/feedback_$OLD40.md"
+BEFORE=$(ls "$DATA/ankify/feedbacks/" | wc -l)
+python3 "$CPT" feedback save ankify "$OLD" "cuerpo reparado" --update >/dev/null
+[ "$(ls "$DATA/ankify/feedbacks/" | wc -l)" = "$BEFORE" ] \
+    && grep -q "cuerpo reparado" "$DATA/ankify/feedbacks/feedback_$OLD40.md" \
+    && _pass "save: el slug entero repara el archivo truncado viejo, sin gemelo" \
+    || _fail "save creó un gemelo: $(ls "$DATA/ankify/feedbacks/")"
+
+# y `show` con el slug entero encuentra ese archivo viejo
+python3 "$CPT" feedback show ankify "$OLD" | grep -q "cuerpo reparado" \
+    && _pass "show: el slug entero resuelve al id truncado viejo" \
+    || _fail "show no encontró el feedback por su slug entero"
+
+# una ruta como "contenido" es un error de uso: falla en vez de guardar el nombre del archivo
+TMPF=$(mktemp); echo "el cuerpo real del feedback" > "$TMPF"
+python3 "$CPT" feedback save ankify ruta-como-cuerpo "$TMPF" >/dev/null 2>&1 \
+    && _fail "save aceptó una ruta como cuerpo" \
+    || _pass "save: rechaza una ruta pasada como contenido literal"
+[ ! -f "$DATA/ankify/feedbacks/feedback_ruta-como-cuerpo.md" ] \
+    && _pass "save: al rechazar la ruta no escribió nada" \
+    || _fail "save escribió el feedback pese a rechazar la ruta"
+rm -f "$TMPF"
+
 echo ""
 echo "=== cpt feedback audit / watch ==="
 
@@ -231,6 +267,28 @@ echo "$out" | grep -q "plugtest/normalizador-fantasma" \
     && echo "$out" | grep -q "$(git -C "$REPO" rev-parse --short HEAD)" \
     && _pass "audit: marker + slug-en-subject + solapamiento-de-palabras detectados" \
     || _fail "audit salida inesperada: '$out'"
+
+# caso E: commit ANTERIOR al created del feedback — no puede ser su evidencia
+GIT_COMMITTER_DATE="2020-01-01T00:00:00" GIT_AUTHOR_DATE="2020-01-01T00:00:00" \
+    git -C "$REPO" -c user.email=t@t -c user.name=t commit -q --allow-empty \
+    -m "fix: repara el rescate de sesiones colgadas"
+python3 "$CPT" feedback save plugtest rescate-sesiones-colgadas "capturado hoy" >/dev/null
+python3 "$CPT" feedback audit plugtest | grep -q "rescate-sesiones-colgadas" \
+    && _fail "audit: reportó un commit anterior al created del feedback" \
+    || _pass "audit: commit anterior al created no cuenta como evidencia"
+
+# caso F: UNA sola palabra compartida es casualidad, no evidencia
+git -C "$REPO" -c user.email=t@t -c user.name=t commit -q --allow-empty \
+    -m "gate: checkpoint bloquea git commit/push y cobra el commit escapado"
+python3 "$CPT" feedback save plugtest push-ya-habilitado "contra la base de producción" >/dev/null
+python3 "$CPT" feedback audit plugtest | grep -q "push-ya-habilitado" \
+    && _fail "audit: una palabra suelta ('push') alcanzó para reportar drift" \
+    || _pass "audit: una palabra suelta no alcanza (umbral de 2)"
+
+# el hallazgo dice QUÉ matcheó, para no tener que abrir el commit
+python3 "$CPT" feedback audit plugtest | grep -q "palabras:" \
+    && _pass "audit: el hallazgo imprime qué matcheó" \
+    || _fail "audit: el hallazgo no dice por qué matcheó"
 
 python3 "$CPT" feedback watch plugtest
 [ -x "$REPO/.git/hooks/post-commit" ] \

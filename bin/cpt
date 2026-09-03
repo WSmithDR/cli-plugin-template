@@ -23,8 +23,18 @@ import gateway  # noqa: E402
 
 
 def _read_content(arg: str) -> str:
-    """'-' lee stdin (heredoc); cualquier otra cosa es contenido literal."""
-    return sys.stdin.read() if arg == "-" else arg
+    """'-' lee stdin (heredoc); cualquier otra cosa es contenido literal.
+
+    Una sola línea que además existe como archivo es un error de uso, no un cuerpo:
+    aceptarla en silencio deja el registro sin nada adentro y a quien lo escribió
+    convencido de haberlo guardado. Pasó con 15 de 22 feedbacks de un plugin."""
+    if arg == "-":
+        return sys.stdin.read()
+    candidate = arg.strip()
+    if candidate and "\n" not in candidate and Path(candidate).is_file():
+        sys.exit(f"parece una ruta, no el contenido: {candidate}\n"
+                 f"pasá el texto por stdin:  ... <slug> - < {candidate}")
+    return arg
 
 
 def _c(code: str, s: str) -> str:
@@ -251,7 +261,10 @@ def main() -> int:
                 print(_warn(f"DRIFT: {len(found)} feedback(s) pendientes con "
                             f"evidencia de aplicación:"))
                 for f in found:
-                    print(f"  {f['plugin']}/{f['slug']} {_dim('| commits: ' + ', '.join(f['commits']))}")
+                    why = f.get("why", {})
+                    ev = ", ".join(f"{h} ({why[h]})" if h in why else h
+                                   for h in f["commits"])
+                    print(f"  {f['plugin']}/{f['slug']} {_dim('| commits: ' + ev)}")
                 print(_dim("Revisá cada uno y cerrá con: cpt feedback apply <plugin> <slug>"))
         elif ns.op == "watch":
             msg = gateway.feedback_watch_install(ns.plugin, remove=ns.remove)

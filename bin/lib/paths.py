@@ -6,12 +6,16 @@ Ninguna skill arma paths a mano: todo path sale de acá.
 El store es plugin-aware: cada plugin administrado tiene su propio subdir
 (`<data_dir>/<plugin>/`), y el registry (`registry.json`) es el allowlist.
 """
+import hashlib
 import os
 import re
 from pathlib import Path
 
 # Nombre del store (no es el nombre de un plugin administrado, es el del meta-plugin)
 STORE_NAME = "cli-plugin-template"
+# Techo del slug: los 255 bytes del filesystem menos el prefijo/sufijo de los nombres
+# del store (`feedback_…​.md`, `learning_…​.md`), con margen.
+SLUG_MAX = 200
 # Override explícito del data dir (tests, instalaciones no estándar)
 DATA_ENV = "CLI_PLUGIN_TEMPLATE_DATA_DIR"
 
@@ -103,7 +107,15 @@ def harvest_contested_file() -> Path:
 
 
 def slugify(text: str) -> str:
-    """Slug estable y filesystem-safe: lowercase, no-alnum→'-', colapsa, trunc 40."""
+    """Slug estable y filesystem-safe: lowercase, no-alnum→'-', colapsa.
+
+    Sin recorte: el id que devuelven los listados tiene que ser el slug que se pidió,
+    o quien escribió un feedback no lo encuentra con el slug que escribió. Solo se
+    recorta si no entra en el filesystem, y ahí con un sufijo derivado del slug entero:
+    dos slugs con el mismo prefijo colapsarían en el mismo archivo y el segundo save
+    pisaría al primero creyéndolo el mismo."""
     s = re.sub(r"[^a-z0-9]+", "-", text.strip().lower())
     s = re.sub(r"-{2,}", "-", s).strip("-")
-    return s[:40].strip("-")
+    if len(s.encode()) <= SLUG_MAX:
+        return s
+    return s[:SLUG_MAX - 9].strip("-") + "-" + hashlib.sha1(s.encode()).hexdigest()[:8]
