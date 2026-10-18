@@ -16,18 +16,22 @@ plugin:
   - claude-code
   - multi-cli
   skills: ./skills/
+# Gemini's own wording: gemini_extension has no `description` field of its own — the generator
+# reads this shared i18n key instead, falling back to `plugin.description` when it's absent.
+i18n_description: Meta-plugin de desarrollo de plugins multi-CLI. Cataloga features reusables
+  y los entrega on-demand (auditar, integrar, recomendar, promover) vía skills.
 gemini_extension:
   name: cli-plugin-template
-  description: Meta-plugin de desarrollo de plugins multi-CLI. Cataloga features reusables
-    y los entrega on-demand (auditar, integrar, recomendar, promover) vía skills.
   contextFileName: GEMINI.md
 marketplace:
   owner:
     name: WSmithDR
     url: https://github.com/WSmithDR
-  metadata:
-    description: Catálogo vivo de features reusables para plugins multi-CLI, instalable
-      como meta-plugin de desarrollo.
+  metadata_description: Catálogo vivo de features reusables para plugins multi-CLI, instalable
+    como meta-plugin de desarrollo.
+  entry_description: Meta-plugin de desarrollo de plugins multi-CLI. Cataloga features reusables
+    y los entrega on-demand (auditar, integrar, recomendar, promover) con un aviso
+    proactivo en proyectos de plugin.
   plugins:
   - source: ./
     category: developer-tools
